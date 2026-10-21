@@ -1,0 +1,947 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Next Move Job Tracker</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: sticky header with view tabs; one working view at a time; modals for editing and data. */
+:root {
+  --bg: #eef2f5; --surface: #ffffff; --surface-2: #f6f8fa; --ink: #15202b; --muted: #586675; --line: #d6dee6;
+  --accent: #2647c2; --accent-ink: #ffffff; --accent-soft: #e3e9fb;
+  --good: #157f3b; --warn: #a75a00; --bad: #b42318;
+  --s-saved: #5f6f80; --s-applied: #2647c2; --s-interviewing: #a75a00; --s-offer: #157f3b; --s-rejected: #b42318; --s-withdrawn: #7b7f86;
+  --shadow: 0 1px 2px rgba(21,32,43,.06), 0 6px 20px rgba(21,32,43,.08);
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e1319; --surface: #161d25; --surface-2: #1b2430; --ink: #e5ebf1; --muted: #98a6b5; --line: #2a3542;
+  --accent: #8aa2ff; --accent-ink: #0b1020; --accent-soft: #1e2a4d;
+  --good: #52c784; --warn: #f0a640; --bad: #ff8070;
+  --s-saved: #9aa8b7; --s-applied: #8aa2ff; --s-interviewing: #f0a640; --s-offer: #52c784; --s-rejected: #ff8070; --s-withdrawn: #8d939b;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+  color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #0e1319; --surface: #161d25; --surface-2: #1b2430; --ink: #e5ebf1; --muted: #98a6b5; --line: #2a3542;
+  --accent: #8aa2ff; --accent-ink: #0b1020; --accent-soft: #1e2a4d;
+  --good: #52c784; --warn: #f0a640; --bad: #ff8070;
+  --s-saved: #9aa8b7; --s-applied: #8aa2ff; --s-interviewing: #f0a640; --s-offer: #52c784; --s-rejected: #ff8070; --s-withdrawn: #8d939b;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
+h2 { font-size: 1.5rem; }
+h3 { font-size: 1.05rem; }
+.mono, .date { font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-size: .85em; }
+.muted { color: var(--muted); }
+a { color: var(--accent); }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 7px 12px; font-weight: 500; }
+button:hover { border-color: var(--muted); }
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+button.primary:hover { filter: brightness(1.08); }
+button.ghost { background: transparent; border-color: transparent; color: var(--accent); padding: 4px 8px; }
+button.ghost:hover { background: var(--accent-soft); }
+button.danger { color: var(--bad); }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, .card:focus-visible, tr:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+input, select, textarea { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; width: 100%; min-width: 0; }
+textarea { resize: vertical; }
+label { display: grid; gap: 4px; font-size: .85rem; font-weight: 500; color: var(--muted); }
+label.check { display: flex; align-items: center; gap: 8px; color: var(--ink); }
+label.check input { width: auto; }
+
+/* Header */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--surface); border-bottom: 1px solid var(--line); }
+.top-in { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; padding-block: 12px; }
+.brand { display: flex; align-items: baseline; gap: 10px; margin-right: auto; }
+.brand h1 { font-size: 1.35rem; }
+.brand h1 span { color: var(--accent); }
+.brand small { color: var(--muted); font-size: .8rem; }
+.tabs { display: flex; gap: 2px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 3px; overflow-x: auto; max-width: 100%; }
+.tabs button { border: 0; background: transparent; padding: 6px 12px; border-radius: 7px; white-space: nowrap; color: var(--muted); }
+.tabs button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+.tabs .count { font-family: var(--f-mono); font-size: .75rem; margin-left: 4px; background: var(--bad); color: var(--surface); border-radius: 99px; padding: 0 6px; }
+.head-actions { display: flex; gap: 8px; }
+
+main { padding-block: 22px 40px; display: grid; gap: 18px; }
+main > * { min-width: 0; }
+.view-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; }
+.view-head p { margin: 4px 0 0; color: var(--muted); max-width: 65ch; }
+
+.banner { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); padding: 10px 14px; border-radius: 10px; }
+.banner p { margin: 0; flex: 1 1 280px; }
+.banner.warn { background: color-mix(in srgb, var(--warn) 12%, var(--surface)); border-color: color-mix(in srgb, var(--warn) 35%, transparent); }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; min-width: 0; }
+
+/* Status pills */
+.pill { --c: var(--s-saved); display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; font-weight: 600; padding: 2px 9px; border-radius: 99px; color: var(--c); background: color-mix(in srgb, var(--c) 13%, transparent); white-space: nowrap; }
+.pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
+[data-s="saved"] { --c: var(--s-saved); } [data-s="applied"] { --c: var(--s-applied); } [data-s="interviewing"] { --c: var(--s-interviewing); }
+[data-s="offer"] { --c: var(--s-offer); } [data-s="rejected"] { --c: var(--s-rejected); } [data-s="withdrawn"] { --c: var(--s-withdrawn); }
+.due { font-family: var(--f-mono); font-size: .78rem; padding: 1px 7px; border-radius: 6px; background: var(--surface-2); color: var(--muted); white-space: nowrap; }
+.due.over { background: color-mix(in srgb, var(--bad) 14%, transparent); color: var(--bad); font-weight: 500; }
+.due.soon { background: color-mix(in srgb, var(--warn) 14%, transparent); color: var(--warn); }
+.interest { font-family: var(--f-mono); font-size: .75rem; color: var(--muted); letter-spacing: .08em; white-space: nowrap; }
+.interest b { color: var(--accent); font-weight: 500; }
+
+/* Today */
+.today-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.group { display: grid; gap: 8px; }
+.group + .group { margin-top: 18px; }
+.group-h { display: flex; align-items: baseline; gap: 10px; text-transform: uppercase; letter-spacing: .08em; font-size: .75rem; font-weight: 600; color: var(--muted); }
+.group-h.over { color: var(--bad); }
+.task { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.task.over { border-left: 4px solid var(--bad); }
+.task .t-main { min-width: 0; }
+.task .t-what { font-weight: 600; }
+.task .t-who { color: var(--muted); font-size: .88rem; overflow-wrap: anywhere; }
+.task .t-kind { font-size: .7rem; text-transform: uppercase; letter-spacing: .07em; color: var(--accent); font-weight: 600; margin-right: 6px; }
+.task .t-side { display: flex; flex-wrap: wrap; justify-content: end; align-items: center; gap: 6px; }
+.donebox { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--line); padding: 0; background: var(--surface); }
+.donebox:hover { border-color: var(--good); background: color-mix(in srgb, var(--good) 15%, transparent); }
+.empty { color: var(--muted); padding: 22px; text-align: center; border: 1px dashed var(--line); border-radius: 10px; }
+.focus { display: grid; gap: 10px; }
+.focus .big { font-family: var(--f-display); font-size: 2.2rem; line-height: 1; }
+.mini-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.mini-list li { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.mini-list li span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.linkish { background: none; border: 0; padding: 0; color: var(--ink); text-align: left; font-weight: 500; }
+.linkish:hover { color: var(--accent); text-decoration: underline; }
+
+/* Board */
+.board-scroll { overflow-x: auto; padding-bottom: 8px; }
+.board { display: grid; grid-template-columns: repeat(6, minmax(170px, 1fr)); gap: 10px; min-width: 1100px; }
+.col { background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 240px; }
+.col.over { outline: 2px dashed var(--accent); outline-offset: -4px; }
+.col-h { display: flex; justify-content: space-between; align-items: center; padding: 2px 4px 6px; }
+.col-h .n { font-family: var(--f-mono); color: var(--muted); font-size: .8rem; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px; display: grid; gap: 6px; cursor: grab; }
+.card:hover { box-shadow: var(--shadow); }
+.card.dragging { opacity: .45; }
+.card .co { font-weight: 600; overflow-wrap: anywhere; }
+.card .ti { color: var(--muted); font-size: .88rem; overflow-wrap: anywhere; }
+.card .meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.card .nx { font-size: .82rem; border-top: 1px solid var(--line); padding-top: 6px; display: flex; justify-content: space-between; align-items: flex-start; gap: 6px; }
+.card .nx span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.card select { font-size: .8rem; padding: 3px 6px; }
+.col-hint { color: var(--muted); font-size: .8rem; text-align: center; padding: 14px 4px; border: 1px dashed var(--line); border-radius: 8px; }
+
+/* List */
+.filters { display: grid; grid-template-columns: minmax(0, 2fr) repeat(4, minmax(0, 1fr)); gap: 10px; }
+.table-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 860px; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: .72rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); background: var(--surface-2); font-weight: 600; }
+th button { border: 0; background: none; padding: 0; font: inherit; color: inherit; text-transform: inherit; letter-spacing: inherit; }
+th button:hover { color: var(--accent); }
+tbody tr { cursor: pointer; }
+tbody tr:hover { background: var(--surface-2); }
+tbody tr:last-child td { border-bottom: 0; }
+td .sub { color: var(--muted); font-size: .85rem; }
+
+/* Dashboard */
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.kpi { display: grid; gap: 2px; }
+.kpi .v { font-family: var(--f-display); font-size: 2rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.kpi .l { font-size: .75rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 600; }
+.kpi .s { font-size: .82rem; color: var(--muted); }
+.dash-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.bars { display: grid; gap: 8px; margin-top: 12px; }
+.bar-row { display: grid; grid-template-columns: 110px minmax(0, 1fr) 32px; gap: 10px; align-items: center; font-size: .88rem; }
+.bar-track { height: 14px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }
+.bar-fill { height: 100%; background: var(--c); border-radius: 4px; }
+.bar-row .num { font-family: var(--f-mono); text-align: right; }
+.chart svg { width: 100%; height: auto; display: block; margin-top: 8px; }
+.chart text { fill: var(--muted); font-family: var(--f-mono); font-size: 11px; }
+
+/* Modal */
+.overlay { position: fixed; inset: 0; z-index: 50; background: color-mix(in srgb, var(--ink) 45%, transparent); display: flex; align-items: flex-start; justify-content: center; overflow-y: auto; padding: max(24px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) 24px max(12px, env(safe-area-inset-left, 0px)); }
+.modal { background: var(--surface); border-radius: 14px; width: 100%; max-width: 760px; box-shadow: var(--shadow); border: 1px solid var(--line); }
+.modal-h { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--line); gap: 12px; }
+.modal-b { padding: 16px 20px; display: grid; gap: 18px; }
+.modal-f { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; padding: 14px 20px; border-top: 1px solid var(--line); background: var(--surface-2); border-radius: 0 0 14px 14px; }
+.modal-f .left { margin-right: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+fieldset .full { grid-column: 1 / -1; }
+legend { font-family: var(--f-display); font-weight: 600; font-size: 1rem; padding: 0; margin-bottom: 10px; }
+.jd { background: var(--accent-soft); border-radius: 10px; padding: 12px; display: grid; gap: 8px; }
+.jd summary { cursor: pointer; font-weight: 600; }
+.tag { display: inline-block; font-size: .68rem; text-transform: uppercase; letter-spacing: .07em; font-weight: 600; padding: 1px 6px; border-radius: 4px; background: var(--surface); color: var(--muted); border: 1px solid var(--line); margin-left: 6px; vertical-align: middle; }
+.data-sec { display: grid; gap: 8px; }
+.data-sec p { margin: 0; color: var(--muted); }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.err { color: var(--bad); font-size: .88rem; }
+
+.toast { position: fixed; z-index: 60; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 10px 14px; border-radius: 10px; display: flex; gap: 12px; align-items: center; box-shadow: var(--shadow); max-width: calc(100% - 32px); }
+.toast button { background: transparent; color: var(--bg); border-color: color-mix(in srgb, var(--bg) 40%, transparent); padding: 4px 10px; }
+
+footer { padding-block: 0 32px; color: var(--muted); font-size: .85rem; }
+footer p { margin: 0; max-width: 80ch; }
+
+@media (max-width: 900px) {
+  .today-grid, .dash-grid { grid-template-columns: minmax(0, 1fr); }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .filters .search { grid-column: 1 / -1; }
+}
+@media (max-width: 560px) {
+  fieldset { grid-template-columns: minmax(0, 1fr); }
+  .brand small { display: none; }
+  .tabs { width: 100%; }
+  .tabs button { flex: 1 0 auto; }
+  .task { grid-template-columns: auto minmax(0, 1fr); }
+  .task .t-side { grid-column: 2; justify-content: start; }
+  .bar-row { grid-template-columns: 90px minmax(0, 1fr) 28px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .card, .task, button { transition: box-shadow .15s, border-color .15s, background-color .15s; }
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap top-in">
+    <div class="brand"><h1>Next<span>Move</span></h1><small>Job &amp; internship tracker</small></div>
+    <nav class="tabs" role="tablist" aria-label="Views">
+      <button role="tab" data-view="today" id="tab-today">Today</button>
+      <button role="tab" data-view="board" id="tab-board">Board</button>
+      <button role="tab" data-view="list" id="tab-list">All opportunities</button>
+      <button role="tab" data-view="dash" id="tab-dash">Dashboard</button>
+    </nav>
+    <div class="head-actions">
+      <button id="btnData" type="button">Import / Export</button>
+      <button id="btnAdd" class="primary" type="button">+ Add opportunity</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="banners" class="group"></div>
+  <section id="view"></section>
+</main>
+
+<footer class="wrap">
+  <p><strong>Where your data lives:</strong> everything is saved in this browser's local storage on this device. Nothing is sent to a server. Clearing your browser data or switching devices will lose it, so use <button class="ghost" id="btnFooterData" type="button">Import / Export</button> to back up or move your tracker.</p>
+</footer>
+
+<div id="modalRoot"></div>
+<div id="toastRoot"></div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "nextmove.tracker.v1";
+  var VIEW_KEY = "nextmove.view";
+  var STATUSES = [
+    { id: "saved", label: "Saved" },
+    { id: "applied", label: "Applied" },
+    { id: "interviewing", label: "Interviewing" },
+    { id: "offer", label: "Offer" },
+    { id: "rejected", label: "Rejected" },
+    { id: "withdrawn", label: "Withdrawn" }
+  ];
+  var CLOSED = { rejected: 1, withdrawn: 1 };
+  var INTEREST = { high: 3, medium: 2, low: 1 };
+  var FOLLOW_UP_DAYS = 14; // Career Services guide: reach out two weeks after applying / posting closes
+
+  // ---------- Dates ----------
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function iso(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function today() { return iso(new Date()); }
+  function parseISO(s) { var p = s.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]); }
+  function addDays(s, n) { var d = parseISO(s); d.setDate(d.getDate() + n); return iso(d); }
+  function diffDays(a, b) { return Math.round((parseISO(a) - parseISO(b)) / 86400000); } // a - b
+  var MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  function fmt(s) { if (!s) return ""; var d = parseISO(s); return MONTHS[d.getMonth()] + " " + d.getDate(); }
+  function rel(s) {
+    var n = diffDays(s, today());
+    if (n === 0) return "today";
+    if (n === 1) return "tomorrow";
+    if (n === -1) return "yesterday";
+    if (n < 0) return -n + "d overdue";
+    if (n < 7) return "in " + n + "d";
+    return fmt(s);
+  }
+  function dueChip(s, label) {
+    if (!s) return "";
+    var n = diffDays(s, today());
+    var cls = n < 0 ? "due over" : n <= 3 ? "due soon" : "due";
+    return '<span class="' + cls + '" title="' + esc(fmt(s)) + '">' + (label ? esc(label) + " " : "") + esc(rel(s)) + "</span>";
+  }
+
+  // ---------- Utils ----------
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function $(sel, root) { return (root || document).querySelector(sel); }
+  function $all(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
+  function statusLabel(id) { for (var i = 0; i < STATUSES.length; i++) if (STATUSES[i].id === id) return STATUSES[i].label; return id; }
+  function pill(s) { return '<span class="pill" data-s="' + esc(s) + '">' + esc(statusLabel(s)) + "</span>"; }
+  function interestDots(v) { var n = INTEREST[v] || 0; return '<span class="interest" title="Interest: ' + esc(v || "not set") + '"><b>' + "●".repeat(n) + "</b>" + "○".repeat(3 - n) + "</span>"; }
+  function safeUrl(u) { return /^https?:\/\//i.test(u || "") ? u : ""; }
+
+  // ---------- Storage ----------
+  var storageOK = true;
+  var state = { opps: [], seeded: false };
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (raw) { var d = JSON.parse(raw); state.opps = Array.isArray(d.opps) ? d.opps : []; state.seeded = !!d.seeded; return; }
+      state.opps = sampleData(); state.seeded = true; save();
+    } catch (e) { storageOK = false; state.opps = sampleData(); state.seeded = true; }
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify({ version: 1, savedAt: new Date().toISOString(), seeded: state.seeded, opps: state.opps })); storageOK = true; }
+    catch (e) { storageOK = false; }
+  }
+  function getPref(k, d) { try { return localStorage.getItem(k) || d; } catch (e) { return d; } }
+  function setPref(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+
+  function blank() {
+    return { id: uid(), company: "", title: "", link: "", location: "", arrangement: "", deadline: "", status: "saved", interest: "medium",
+      nextAction: "", nextDue: "", appliedDate: "", resume: "", contact: "", interviewDate: "", thankYouSent: false, followUpDate: "",
+      notes: "", createdAt: today(), updatedAt: today(), history: [] };
+  }
+  function normalize(o) {
+    var b = blank();
+    Object.keys(b).forEach(function (k) { if (o[k] !== undefined && o[k] !== null) b[k] = o[k]; });
+    if (!INTEREST[b.interest]) b.interest = "medium";
+    if (!STATUSES.some(function (s) { return s.id === b.status; })) b.status = "saved";
+    b.thankYouSent = b.thankYouSent === true || b.thankYouSent === "true" || b.thankYouSent === "yes" || b.thankYouSent === "Yes";
+    if (o.example) b.example = true;
+    if (!Array.isArray(b.history)) b.history = [];
+    return b;
+  }
+  function byId(id) { for (var i = 0; i < state.opps.length; i++) if (state.opps[i].id === id) return state.opps[i]; return null; }
+  function setStatus(o, s) {
+    if (o.status === s) return;
+    o.history.push({ date: today(), from: o.status, to: s });
+    o.status = s;
+    if (s === "applied" && !o.appliedDate) o.appliedDate = today();
+    o.updatedAt = today();
+  }
+
+  // ---------- Sample data (dates relative to today so the demo always looks current) ----------
+  function sampleData() {
+    var t = today();
+    var rows = [
+      { company: "Harborview Health", title: "Business Analytics Intern", location: "San Luis Obispo, CA", arrangement: "Hybrid", deadline: addDays(t, 4), status: "saved", interest: "high",
+        nextAction: "Tailor resume to emphasize SQL + Tableau", nextDue: addDays(t, 1), contact: "Priya N. (MSBA '24) via LinkedIn", link: "https://example.com/jobs/harborview-ba-intern", notes: "Posting mentions patient-flow forecasting. Bring up the capstone time-series project." },
+      { company: "Sierra Analytics Group", title: "Junior Data Scientist", location: "Remote (US)", arrangement: "Remote", deadline: addDays(t, 9), status: "saved", interest: "medium",
+        nextAction: "Message alum about team culture", nextDue: addDays(t, -1), contact: "Jordan L. (Career Connections)", link: "https://example.com/jobs/sierra-jds" },
+      { company: "Pacific Grid Energy", title: "Pricing Analyst", location: "Oakland, CA", arrangement: "On-site", deadline: addDays(t, -12), status: "applied", interest: "high",
+        appliedDate: addDays(t, -17), resume: "Resume v3 (energy) + cover letter A", nextAction: "", nextDue: "", notes: "Applied through referral portal." },
+      { company: "Tidewater Retail", title: "Marketing Analytics Associate", location: "Seattle, WA", arrangement: "Hybrid", deadline: addDays(t, -20), status: "interviewing", interest: "medium",
+        appliedDate: addDays(t, -24), resume: "Resume v2 (marketing)", interviewDate: addDays(t, -1), thankYouSent: false, contact: "Recruiter: Sam Ortiz",
+        nextAction: "Prep SQL case for round 2", nextDue: addDays(t, 3), notes: "Round 1 went well. Round 2 is a take-home SQL case + panel." },
+      { company: "Lumen Bank", title: "Risk Analytics Intern", location: "Charlotte, NC", arrangement: "On-site", deadline: addDays(t, -30), status: "interviewing", interest: "high",
+        appliedDate: addDays(t, -33), resume: "Resume v3 (finance)", interviewDate: addDays(t, 2), nextAction: "Practice behavioral answers (STAR) on Big Interview", nextDue: addDays(t, 1) },
+      { company: "Northstar Consulting", title: "Analytics Consultant", location: "San Francisco, CA", arrangement: "Hybrid", deadline: addDays(t, -40), status: "offer", interest: "high",
+        appliedDate: addDays(t, -45), resume: "Resume v1 + cover letter B", nextAction: "Decide on offer / negotiate start date", nextDue: addDays(t, 5), notes: "Offer expires in 10 days. Compare with Lumen timeline." },
+      { company: "Coastline Foods", title: "Supply Chain Data Analyst", location: "Fresno, CA", arrangement: "On-site", deadline: addDays(t, -35), status: "rejected", interest: "low",
+        appliedDate: addDays(t, -38), resume: "Resume v1" },
+      { company: "Atlas Logistics", title: "Operations Research Intern", location: "Remote", arrangement: "Remote", deadline: addDays(t, 14), status: "saved", interest: "low",
+        link: "https://example.com/jobs/atlas-or" },
+      { company: "Brightline Media", title: "Data Analyst, Audience Insights", location: "Los Angeles, CA", arrangement: "Hybrid", deadline: addDays(t, -8), status: "applied", interest: "medium",
+        appliedDate: addDays(t, -6), resume: "Resume v2 (marketing)", nextAction: "Connect with hiring manager on LinkedIn", nextDue: t }
+    ];
+    return rows.map(function (r) { var o = normalize(r); o.example = true; o.createdAt = r.appliedDate || addDays(t, -3); return o; });
+  }
+
+  // ---------- Tasks for "Today" ----------
+  function buildTasks() {
+    var t = today(), tasks = [];
+    state.opps.forEach(function (o) {
+      if (CLOSED[o.status]) return;
+      if (o.nextAction && o.nextDue) tasks.push({ kind: "Next step", text: o.nextAction, due: o.nextDue, o: o, act: "next" });
+      else if (o.nextAction) tasks.push({ kind: "Next step", text: o.nextAction, due: "", o: o, act: "next" });
+      if (o.status === "saved" && o.deadline && diffDays(o.deadline, t) >= 0 && diffDays(o.deadline, t) <= 14)
+        tasks.push({ kind: "Deadline", text: "Submit application (posting closes " + fmt(o.deadline) + ")", due: o.deadline, o: o, act: "apply" });
+      if (o.status === "applied" && o.appliedDate) {
+        var base = o.followUpDate && o.followUpDate > o.appliedDate ? o.followUpDate : o.appliedDate;
+        var due = addDays(base, FOLLOW_UP_DAYS);
+        if (diffDays(due, t) <= 7) tasks.push({ kind: "Follow up", text: "No reply yet. Send a polite check-in to the recruiter", due: due, o: o, act: "followup" });
+      }
+      if (o.interviewDate && !o.thankYouSent && diffDays(o.interviewDate, t) <= 0)
+        tasks.push({ kind: "Thank-you", text: "Send a thank-you note for your " + fmt(o.interviewDate) + " interview", due: addDays(o.interviewDate, 1), o: o, act: "thanks" });
+      if (o.interviewDate && diffDays(o.interviewDate, t) > 0 && diffDays(o.interviewDate, t) <= 7)
+        tasks.push({ kind: "Interview", text: "Interview on " + fmt(o.interviewDate) + ". Review notes and prepare questions", due: o.interviewDate, o: o, act: "prep" });
+    });
+    tasks.sort(function (a, b) {
+      if (!a.due !== !b.due) return a.due ? -1 : 1;
+      if (a.due !== b.due) return a.due < b.due ? -1 : 1;
+      return (INTEREST[b.o.interest] || 0) - (INTEREST[a.o.interest] || 0);
+    });
+    return tasks;
+  }
+
+  // ---------- Rendering ----------
+  var view = getPref(VIEW_KEY, "today");
+  var listState = { q: "", status: "active", arrangement: "", interest: "", sort: "deadline", dir: 1 };
+
+  function render() {
+    $all(".tabs button").forEach(function (b) { b.setAttribute("aria-selected", b.dataset.view === view ? "true" : "false"); });
+    var tasks = buildTasks();
+    var overdue = tasks.filter(function (x) { return x.due && x.due < today(); }).length;
+    var tt = $("#tab-today");
+    tt.innerHTML = "Today" + (overdue ? '<span class="count" title="Overdue tasks">' + overdue + "</span>" : "");
+    renderBanners();
+    var v = $("#view");
+    if (view === "board") v.innerHTML = renderBoard();
+    else if (view === "list") { v.innerHTML = renderListShell(); renderListBody(); }
+    else if (view === "dash") v.innerHTML = renderDash();
+    else v.innerHTML = renderToday(tasks);
+    if (view === "board") wireBoard();
+  }
+
+  function renderBanners() {
+    var h = "";
+    if (!storageOK) h += '<div class="banner warn"><p><strong>Saving is blocked in this browser</strong> (private window or blocked site data). Your changes will be lost when you close the tab. Use Import / Export to keep a copy.</p></div>';
+    if (state.opps.some(function (o) { return o.example; }))
+      h += '<div class="banner"><p><strong>You are looking at example opportunities.</strong> Try dragging cards on the Board or checking off tasks. Clear them when you are ready to add your own.</p><button type="button" data-act="clear-examples">Clear examples</button></div>';
+    $("#banners").innerHTML = h;
+  }
+
+  function oppLabel(o) { return '<button type="button" class="linkish" data-open="' + esc(o.id) + '">' + esc(o.company || "Untitled") + "</button> · " + esc(o.title); }
+
+  function renderToday(tasks) {
+    var t = today();
+    var groups = [
+      { h: "Overdue", cls: "over", items: tasks.filter(function (x) { return x.due && x.due < t; }) },
+      { h: "Due today", items: tasks.filter(function (x) { return x.due === t; }) },
+      { h: "Next 7 days", items: tasks.filter(function (x) { return x.due > t && diffDays(x.due, t) <= 7; }) },
+      { h: "Later", items: tasks.filter(function (x) { return x.due && diffDays(x.due, t) > 7; }) },
+      { h: "No date set", items: tasks.filter(function (x) { return !x.due; }) }
+    ];
+    var noNext = state.opps.filter(function (o) { return !CLOSED[o.status] && o.status !== "offer" && !o.nextAction; });
+    var dateLine = new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+    var h = '<div class="view-head"><div><h2>What should I do today?</h2><p>' + esc(dateLine) + ". Your next steps, deadlines, follow-ups, and thank-you notes, most urgent first. Check a box when it is done.</p></div></div>";
+    h += '<div class="today-grid"><div class="panel">';
+    var any = false;
+    groups.forEach(function (g) {
+      if (!g.items.length) return;
+      any = true;
+      h += '<div class="group"><div class="group-h ' + (g.cls || "") + '">' + esc(g.h) + ' <span class="mono">' + g.items.length + "</span></div>";
+      g.items.forEach(function (x) {
+        var over = x.due && x.due < t;
+        var box = x.act === "prep" ? '<span aria-hidden="true" style="width:22px"></span>' :
+          '<button type="button" class="donebox" title="Mark done" aria-label="Mark done: ' + esc(x.text) + '" data-done="' + esc(x.act) + '" data-id="' + esc(x.o.id) + '"></button>';
+        h += '<div class="task' + (over ? " over" : "") + '">' + box +
+          '<div class="t-main"><div class="t-what"><span class="t-kind">' + esc(x.kind) + "</span>" + esc(x.text) + '</div><div class="t-who">' + oppLabel(x.o) + "</div></div>" +
+          '<div class="t-side">' + pill(x.o.status) + (x.due ? dueChip(x.due) : "") + "</div></div>";
+      });
+      h += "</div>";
+    });
+    if (!any) h += '<div class="empty">Nothing on your plate. Add an opportunity or give one a next step to see it here.</div>';
+    h += "</div><div class=\"group\" style=\"gap:12px\">";
+    var od = tasks.filter(function (x) { return x.due && x.due < t; }).length;
+    var td = tasks.filter(function (x) { return x.due === t; }).length;
+    h += '<div class="panel focus"><div class="group-h">Today\'s focus</div><div class="big">' + (od + td) + '</div><div class="muted">' +
+      (od ? od + " overdue and " : "") + td + " due today" + "</div></div>";
+    h += '<div class="panel focus"><div class="group-h">Missing a next step</div>';
+    if (noNext.length) {
+      h += '<p class="muted" style="margin:0">Every open opportunity should have one. Click to add it.</p><ul class="mini-list">';
+      noNext.slice(0, 6).forEach(function (o) { h += "<li><span>" + oppLabel(o) + "</span>" + pill(o.status) + "</li>"; });
+      h += "</ul>";
+    } else h += '<p class="muted" style="margin:0">Every open opportunity has a next step.</p>';
+    h += "</div>";
+    var closing = state.opps.filter(function (o) { return o.status === "saved" && o.deadline && diffDays(o.deadline, t) >= 0; })
+      .sort(function (a, b) { return a.deadline < b.deadline ? -1 : 1; }).slice(0, 5);
+    h += '<div class="panel focus"><div class="group-h">Postings closing soon</div>';
+    if (closing.length) { h += '<ul class="mini-list">'; closing.forEach(function (o) { h += "<li><span>" + oppLabel(o) + "</span>" + dueChip(o.deadline) + "</li>"; }); h += "</ul>"; }
+    else h += '<p class="muted" style="margin:0">No saved postings with upcoming deadlines.</p>';
+    h += "</div></div></div>";
+    return h;
+  }
+
+  function renderBoard() {
+    var h = '<div class="view-head"><div><h2>Application board</h2><p>Drag a card to a new column to update its stage, or use the menu on each card. Click a card to see details.</p></div></div>';
+    h += '<div class="board-scroll"><div class="board">';
+    STATUSES.forEach(function (s) {
+      var items = state.opps.filter(function (o) { return o.status === s.id; })
+        .sort(function (a, b) { return (INTEREST[b.interest] || 0) - (INTEREST[a.interest] || 0) || (a.nextDue || "9") .localeCompare(b.nextDue || "9"); });
+      h += '<div class="col" data-col="' + s.id + '"><div class="col-h">' + pill(s.id) + '<span class="n">' + items.length + "</span></div>";
+      if (!items.length) h += '<div class="col-hint">Drop a card here</div>';
+      items.forEach(function (o) {
+        var opts = STATUSES.map(function (x) { return '<option value="' + x.id + '"' + (x.id === o.status ? " selected" : "") + ">" + x.label + "</option>"; }).join("");
+        h += '<div class="card" draggable="true" tabindex="0" data-card="' + esc(o.id) + '">' +
+          '<div class="co">' + esc(o.company) + '</div><div class="ti">' + esc(o.title) + "</div>" +
+          '<div class="meta">' + interestDots(o.interest) + (o.arrangement ? '<span class="due">' + esc(o.arrangement) + "</span>" : "") +
+          (o.status === "saved" && o.deadline ? dueChip(o.deadline, "closes") : "") + (o.interviewDate && diffDays(o.interviewDate, today()) >= 0 ? dueChip(o.interviewDate, "interview") : "") + "</div>" +
+          (o.nextAction ? '<div class="nx"><span>' + esc(o.nextAction) + "</span>" + dueChip(o.nextDue) + "</div>" : "") +
+          '<select aria-label="Move ' + esc(o.company) + ' to stage" data-move="' + esc(o.id) + '">' + opts + "</select></div>";
+      });
+      h += "</div>";
+    });
+    return h + "</div></div>";
+  }
+
+  function wireBoard() {
+    var dragId = null;
+    $all(".card").forEach(function (c) {
+      c.addEventListener("dragstart", function (e) { dragId = c.dataset.card; c.classList.add("dragging"); try { e.dataTransfer.setData("text/plain", dragId); e.dataTransfer.effectAllowed = "move"; } catch (x) {} });
+      c.addEventListener("dragend", function () { c.classList.remove("dragging"); });
+    });
+    $all(".col").forEach(function (col) {
+      col.addEventListener("dragover", function (e) { e.preventDefault(); col.classList.add("over"); });
+      col.addEventListener("dragleave", function (e) { if (!col.contains(e.relatedTarget)) col.classList.remove("over"); });
+      col.addEventListener("drop", function (e) {
+        e.preventDefault(); col.classList.remove("over");
+        var id = dragId; try { id = e.dataTransfer.getData("text/plain") || dragId; } catch (x) {}
+        moveTo(id, col.dataset.col);
+      });
+    });
+  }
+  function moveTo(id, s) {
+    var o = byId(id); if (!o || o.status === s) return;
+    var prev = o.status; setStatus(o, s); save(); render();
+    var msg = esc(o.company) + " moved to " + statusLabel(s) + ".";
+    if (s === "interviewing" && !o.interviewDate) toast(msg + " Add the interview date?", "Add date", function () { openEditor(o.id, "f-interviewDate"); });
+    else if (s === "applied") toast(msg + " Set a next step?", "Set next step", function () { openEditor(o.id, "f-nextAction"); });
+    else toast(msg, "Undo", function () { o.status = prev; o.history.pop(); save(); render(); });
+  }
+
+  function renderListShell() {
+    var so = function (v, l, cur) { return '<option value="' + v + '"' + (v === cur ? " selected" : "") + ">" + l + "</option>"; };
+    var h = '<div class="view-head"><div><h2>All opportunities</h2><p>Search, filter, and sort everything you are tracking. Click a row to edit it.</p></div><span class="muted mono" id="listCount"></span></div>';
+    h += '<div class="filters">' +
+      '<label class="search">Search<input id="f-q" type="search" placeholder="Company, title, location, notes, contact…" value="' + esc(listState.q) + '"></label>' +
+      '<label>Status<select id="f-status">' + so("active", "Open (hide rejected/withdrawn)", listState.status) + so("", "All statuses", listState.status) +
+        STATUSES.map(function (s) { return so(s.id, s.label, listState.status); }).join("") + "</select></label>" +
+      '<label>Work arrangement<select id="f-arr">' + so("", "Any", listState.arrangement) + so("On-site", "On-site", listState.arrangement) + so("Hybrid", "Hybrid", listState.arrangement) + so("Remote", "Remote", listState.arrangement) + "</select></label>" +
+      '<label>Interest<select id="f-int">' + so("", "Any", listState.interest) + so("high", "High", listState.interest) + so("medium", "Medium", listState.interest) + so("low", "Low", listState.interest) + "</select></label>" +
+      '<label>Sort by<select id="f-sort">' + so("deadline", "Application deadline", listState.sort) + so("nextDue", "Next step due", listState.sort) + so("company", "Company A–Z", listState.sort) +
+        so("interest", "Interest (high first)", listState.sort) + so("status", "Stage", listState.sort) + so("updatedAt", "Recently updated", listState.sort) + "</select></label></div>";
+    h += '<div class="table-scroll"><table><thead><tr>' +
+      '<th><button type="button" data-sort="company">Company / role</button></th><th><button type="button" data-sort="status">Stage</button></th><th>Location</th>' +
+      '<th><button type="button" data-sort="deadline">Deadline</button></th><th><button type="button" data-sort="nextDue">Next step</button></th><th><button type="button" data-sort="interest">Interest</button></th><th>Resume sent</th><th>Posting</th>' +
+      '</tr></thead><tbody id="listBody"></tbody></table></div>';
+    return h;
+  }
+  function renderListBody() {
+    var q = listState.q.trim().toLowerCase();
+    var rows = state.opps.filter(function (o) {
+      if (listState.status === "active" && CLOSED[o.status]) return false;
+      if (listState.status && listState.status !== "active" && o.status !== listState.status) return false;
+      if (listState.arrangement && o.arrangement !== listState.arrangement) return false;
+      if (listState.interest && o.interest !== listState.interest) return false;
+      if (q) { var hay = [o.company, o.title, o.location, o.notes, o.contact, o.nextAction, o.resume].join(" ").toLowerCase(); if (hay.indexOf(q) < 0) return false; }
+      return true;
+    });
+    var k = listState.sort, d = listState.dir, order = {};
+    STATUSES.forEach(function (s, i) { order[s.id] = i; });
+    rows.sort(function (a, b) {
+      var va, vb;
+      if (k === "interest") { va = -(INTEREST[a.interest] || 0); vb = -(INTEREST[b.interest] || 0); }
+      else if (k === "status") { va = order[a.status]; vb = order[b.status]; }
+      else if (k === "updatedAt") { va = b.updatedAt || ""; vb = a.updatedAt || ""; }
+      else if (k === "company") { va = (a.company || "").toLowerCase(); vb = (b.company || "").toLowerCase(); }
+      else { va = a[k] || "9999"; vb = b[k] || "9999"; }
+      return (va < vb ? -1 : va > vb ? 1 : 0) * d;
+    });
+    $("#listCount").textContent = rows.length + " of " + state.opps.length + " shown";
+    var h = rows.map(function (o) {
+      var u = safeUrl(o.link);
+      return '<tr tabindex="0" data-row="' + esc(o.id) + '"><td><strong>' + esc(o.company) + '</strong><div class="sub">' + esc(o.title) + "</div></td>" +
+        "<td>" + pill(o.status) + "</td><td>" + esc(o.location) + (o.arrangement ? '<div class="sub">' + esc(o.arrangement) + "</div>" : "") + "</td>" +
+        "<td>" + (o.deadline ? '<span class="date">' + esc(fmt(o.deadline)) + "</span>" + (o.status === "saved" ? "<div>" + dueChip(o.deadline) + "</div>" : "") : '<span class="muted">—</span>') + "</td>" +
+        "<td>" + (o.nextAction ? esc(o.nextAction) + "<div>" + dueChip(o.nextDue) + "</div>" : '<span class="muted">None set</span>') + "</td>" +
+        "<td>" + interestDots(o.interest) + "</td><td class=\"sub\">" + (esc(o.resume) || '<span class="muted">—</span>') + "</td>" +
+        "<td>" + (u ? '<a href="' + esc(u) + '" target="_blank" rel="noopener" data-stop="1">Open ↗</a>' : '<span class="muted">—</span>') + "</td></tr>";
+    }).join("");
+    $("#listBody").innerHTML = h || '<tr><td colspan="8"><div class="empty">No opportunities match these filters.</div></td></tr>';
+  }
+
+  function renderDash() {
+    var t = today(), o = state.opps;
+    var appliedEver = o.filter(function (x) { return x.appliedDate || ["applied", "interviewing", "offer"].indexOf(x.status) >= 0; });
+    var reachedInt = o.filter(function (x) { return x.status === "interviewing" || x.status === "offer" || x.interviewDate || x.history.some(function (h) { return h.to === "interviewing"; }); });
+    var offers = o.filter(function (x) { return x.status === "offer"; });
+    var open = o.filter(function (x) { return !CLOSED[x.status]; });
+    var rate = appliedEver.length ? Math.round(100 * reachedInt.filter(function (x) { return appliedEver.indexOf(x) >= 0; }).length / appliedEver.length) : 0;
+    var h = '<div class="view-head"><div><h2>Search dashboard</h2><p>How your search is going: activity, conversion, and what is coming up.</p></div></div>';
+    h += '<div class="kpis">' +
+      kpi("Open opportunities", open.length, o.length + " tracked in total") +
+      kpi("Applications sent", appliedEver.length, appliedEver.filter(function (x) { return x.appliedDate && diffDays(t, x.appliedDate) <= 7; }).length + " in the last 7 days") +
+      kpi("Interview rate", rate + "%", reachedInt.length + " reached an interview") +
+      kpi("Offers", offers.length, offers.length ? "Nice work" : "Keep going") + "</div>";
+    // pipeline bars
+    var max = Math.max(1, Math.max.apply(null, STATUSES.map(function (s) { return o.filter(function (x) { return x.status === s.id; }).length; })));
+    h += '<div class="dash-grid"><div class="panel"><h3>Pipeline by stage</h3><div class="bars">';
+    STATUSES.forEach(function (s) {
+      var n = o.filter(function (x) { return x.status === s.id; }).length;
+      h += '<div class="bar-row" data-s="' + s.id + '"><span>' + s.label + '</span><div class="bar-track"><div class="bar-fill" style="width:' + (100 * n / max) + '%"></div></div><span class="num">' + n + "</span></div>";
+    });
+    h += "</div></div>";
+    h += '<div class="panel chart"><h3>Applications per week</h3><p class="muted" style="margin:2px 0 0;font-size:.85rem">Last 8 weeks, by date applied</p>' + weeklyChart(o) + "</div>";
+    // upcoming
+    var upcoming = [];
+    o.forEach(function (x) {
+      if (CLOSED[x.status]) return;
+      if (x.status === "saved" && x.deadline && x.deadline >= t) upcoming.push({ d: x.deadline, what: "Posting closes", o: x });
+      if (x.interviewDate && x.interviewDate >= t) upcoming.push({ d: x.interviewDate, what: "Interview", o: x });
+      if (x.nextDue && x.nextAction && x.nextDue >= t) upcoming.push({ d: x.nextDue, what: x.nextAction, o: x });
+    });
+    upcoming.sort(function (a, b) { return a.d < b.d ? -1 : 1; });
+    h += '<div class="panel"><h3>Coming up</h3>';
+    if (upcoming.length) { h += '<ul class="mini-list" style="margin-top:12px">'; upcoming.slice(0, 8).forEach(function (u) { h += "<li><span>" + esc(u.what) + ' <span class="muted">·</span> ' + oppLabel(u.o) + "</span>" + dueChip(u.d) + "</li>"; }); h += "</ul>"; }
+    else h += '<p class="muted">Nothing scheduled.</p>';
+    h += "</div>";
+    // arrangement + interest mix
+    h += '<div class="panel"><h3>Open roles by work arrangement</h3><div class="bars">';
+    var arr = ["On-site", "Hybrid", "Remote", ""];
+    var amax = Math.max(1, Math.max.apply(null, arr.map(function (a) { return open.filter(function (x) { return (x.arrangement || "") === a; }).length; })));
+    arr.forEach(function (a) {
+      var n = open.filter(function (x) { return (x.arrangement || "") === a; }).length;
+      if (!a && !n) return;
+      h += '<div class="bar-row" style="--c:var(--accent)"><span>' + (a || "Not set") + '</span><div class="bar-track"><div class="bar-fill" style="width:' + (100 * n / amax) + '%"></div></div><span class="num">' + n + "</span></div>";
+    });
+    h += "</div></div></div>";
+    return h;
+  }
+  function kpi(l, v, s) { return '<div class="panel kpi"><span class="l">' + esc(l) + '</span><span class="v">' + esc(v) + '</span><span class="s">' + esc(s) + "</span></div>"; }
+  function weeklyChart(o) {
+    var t = today(), weeks = [];
+    var d = parseISO(t); var dow = (d.getDay() + 6) % 7; var monday = addDays(t, -dow);
+    for (var i = 7; i >= 0; i--) weeks.push({ start: addDays(monday, -7 * i), n: 0 });
+    o.forEach(function (x) {
+      if (!x.appliedDate) return;
+      for (var i = 0; i < weeks.length; i++) if (x.appliedDate >= weeks[i].start && x.appliedDate < addDays(weeks[i].start, 7)) weeks[i].n++;
+    });
+    var W = 480, H = 180, L = 28, B = 26, T = 14, R = 8;
+    var max = Math.max(2, Math.max.apply(null, weeks.map(function (w) { return w.n; })));
+    var cw = (W - L - R) / weeks.length;
+    var s = '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Applications per week for the last 8 weeks">';
+    var ticks = max <= 4 ? max : 4;
+    for (var k = 0; k <= ticks; k++) {
+      var val = Math.round(max * k / ticks), y = H - B - (H - B - T) * val / max;
+      s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y + '" y2="' + y + '" stroke="var(--line)" stroke-width="1"/>';
+      s += '<text x="' + (L - 6) + '" y="' + (y + 4) + '" text-anchor="end">' + val + "</text>";
+    }
+    weeks.forEach(function (w, i) {
+      var bh = (H - B - T) * w.n / max, x = L + i * cw + cw * 0.18, bw = cw * 0.64, y = H - B - bh;
+      var last = i === weeks.length - 1;
+      if (w.n) s += '<rect x="' + x + '" y="' + y + '" width="' + bw + '" height="' + bh + '" rx="3" fill="var(--accent)" fill-opacity="' + (last ? 1 : 0.55) + '"><title>' + w.n + " applied, week of " + fmt(w.start) + "</title></rect>";
+      if (w.n) s += '<text x="' + (x + bw / 2) + '" y="' + (y - 4) + '" text-anchor="middle" style="fill:var(--ink)">' + w.n + "</text>";
+      s += '<text x="' + (x + bw / 2) + '" y="' + (H - 8) + '" text-anchor="middle">' + (last ? "This wk" : fmt(w.start)) + "</text>";
+    });
+    return s + "</svg>";
+  }
+
+  // ---------- Modal + editor ----------
+  function closeModal() { $("#modalRoot").innerHTML = ""; document.removeEventListener("keydown", escClose); }
+  function escClose(e) { if (e.key === "Escape") closeModal(); }
+  function openModal(html) {
+    $("#modalRoot").innerHTML = '<div class="overlay" data-overlay="1"><div class="modal" role="dialog" aria-modal="true">' + html + "</div></div>";
+    document.addEventListener("keydown", escClose);
+    $("#modalRoot .overlay").addEventListener("mousedown", function (e) { if (e.target.dataset.overlay) closeModal(); });
+  }
+
+  var NEXT_SUGGESTIONS = ["Tailor resume for this role", "Write cover letter", "Submit application", "Contact an alum on LinkedIn", "Ask for a referral",
+    "Follow up with recruiter", "Prepare for interview", "Practice on Big Interview", "Send thank-you note", "Research the company", "Meet with career counselor"];
+
+  function field(id, label, val, type, extra) {
+    return '<label' + (extra && extra.full ? ' class="full"' : "") + ">" + label + '<input id="f-' + id + '" name="' + id + '" type="' + (type || "text") + '" value="' + esc(val) + '"' +
+      (extra && extra.ph ? ' placeholder="' + esc(extra.ph) + '"' : "") + (extra && extra.req ? " required" : "") + (extra && extra.list ? ' list="' + extra.list + '"' : "") + "></label>";
+  }
+  function selectField(id, label, val, opts) {
+    return "<label>" + label + '<select id="f-' + id + '" name="' + id + '">' + opts.map(function (o) { return '<option value="' + esc(o[0]) + '"' + (o[0] === val ? " selected" : "") + ">" + esc(o[1]) + "</option>"; }).join("") + "</select></label>";
+  }
+
+  function openEditor(id, focusId) {
+    var isNew = !id; var o = isNew ? blank() : JSON.parse(JSON.stringify(byId(id)));
+    if (!o) return;
+    var h = '<form id="editForm" novalidate><div class="modal-h"><h2>' + (isNew ? "Add an opportunity" : esc(o.company) + " · " + esc(o.title)) + '</h2><button type="button" class="ghost" data-close="1" aria-label="Close">✕</button></div><div class="modal-b">';
+    h += '<details class="jd"' + (isNew ? " open" : "") + '><summary>Paste a job description to fill fields automatically <span class="tag">Rule-based, not AI</span></summary>' +
+      '<p class="muted" style="margin:0;font-size:.88rem">Paste the posting text. The tracker looks for the title, company, location, work arrangement, deadline, and link using simple text patterns in your browser. Check the results before saving.</p>' +
+      '<textarea id="f-jd" rows="5" placeholder="Paste the full job posting here…"></textarea><div class="row"><button type="button" id="btnExtract">Extract details</button><span id="extractMsg" class="muted" style="font-size:.88rem"></span></div></details>';
+    h += "<fieldset><legend>The role</legend>" +
+      field("company", "Company *", o.company, "text", { req: 1 }) + field("title", "Job title *", o.title, "text", { req: 1 }) +
+      field("link", "Posting link", o.link, "url", { full: 1, ph: "https://…" }) +
+      field("location", "Location", o.location, "text", { ph: "City, State" }) +
+      selectField("arrangement", "Work arrangement", o.arrangement, [["", "Not sure yet"], ["On-site", "On-site"], ["Hybrid", "Hybrid"], ["Remote", "Remote"]]) +
+      field("deadline", "Application deadline", o.deadline, "date") +
+      selectField("interest", "Interest level", o.interest, [["high", "High: dream role"], ["medium", "Medium"], ["low", "Low: backup"]]) + "</fieldset>";
+    h += "<fieldset><legend>Stage and next step</legend>" +
+      selectField("status", "Stage", o.status, STATUSES.map(function (s) { return [s.id, s.label]; })) +
+      field("appliedDate", "Date applied", o.appliedDate, "date") +
+      field("nextAction", "Next action", o.nextAction, "text", { list: "nextList", ph: "e.g. Contact an alum on LinkedIn" }) +
+      field("nextDue", "Next action due", o.nextDue, "date") +
+      '<datalist id="nextList">' + NEXT_SUGGESTIONS.map(function (s) { return '<option value="' + esc(s) + '">'; }).join("") + "</datalist></fieldset>";
+    h += "<fieldset><legend>Materials, people, interviews</legend>" +
+      field("resume", "Resume / cover letter version sent", o.resume, "text", { ph: "e.g. Resume v3 (finance) + cover letter B" }) +
+      field("contact", "Network connection", o.contact, "text", { ph: "Alum, recruiter, career fair contact…" }) +
+      field("interviewDate", "Interview date", o.interviewDate, "date") +
+      '<label class="check" style="align-self:end;padding-bottom:8px"><input type="checkbox" id="f-thankYouSent" name="thankYouSent"' + (o.thankYouSent ? " checked" : "") + "> Thank-you note sent</label>" +
+      '<label class="full">Notes<textarea id="f-notes" name="notes" rows="4" placeholder="Interview questions, salary info, what you learned from your contact…">' + esc(o.notes) + "</textarea></label></fieldset>";
+    if (!isNew && o.history.length) {
+      h += '<div><div class="group-h" style="margin-bottom:6px">Stage history</div><ul class="mini-list">' +
+        o.history.slice().reverse().map(function (x) { return '<li><span>' + pill(x.from) + " → " + pill(x.to) + '</span><span class="date muted">' + esc(fmt(x.date)) + "</span></li>"; }).join("") + "</ul></div>";
+    }
+    h += '<p id="formErr" class="err" hidden></p></div><div class="modal-f"><div class="left">' + (isNew ? "" : '<button type="button" class="danger" id="btnDelete">Delete</button>') + '</div>' +
+      '<button type="button" data-close="1">Cancel</button><button type="submit" class="primary">' + (isNew ? "Add to tracker" : "Save changes") + "</button></div></form>";
+    openModal(h);
+    $all("[data-close]").forEach(function (b) { b.addEventListener("click", closeModal); });
+    var f = $("#editForm");
+    $("#btnExtract").addEventListener("click", function () {
+      var r = extractJD($("#f-jd").value), n = 0;
+      Object.keys(r).forEach(function (k) { var el = $("#f-" + k); if (el && r[k] && !el.value) { el.value = r[k]; n++; } });
+      $("#extractMsg").textContent = n ? "Filled " + n + " field" + (n > 1 ? "s" : "") + ". Please double-check them." : "Couldn't find new details. Fill the fields in by hand.";
+    });
+    if (!isNew) $("#btnDelete").addEventListener("click", function () {
+      var left = $(".modal-f .left");
+      left.innerHTML = '<span class="err">Delete this opportunity?</span><button type="button" class="danger" id="btnDelYes">Yes, delete</button><button type="button" id="btnDelNo">Keep it</button>';
+      $("#btnDelYes").addEventListener("click", function () {
+        var idx = state.opps.findIndex(function (x) { return x.id === o.id; }), removed = state.opps[idx];
+        state.opps.splice(idx, 1); save(); closeModal(); render();
+        toast("Deleted " + esc(removed.company) + ".", "Undo", function () { state.opps.splice(idx, 0, removed); save(); render(); });
+      });
+      $("#btnDelNo").addEventListener("click", function () { left.innerHTML = '<button type="button" class="danger" id="btnDelete">Delete</button>'; openEditorDeleteRebind(o); });
+    });
+    f.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var g = function (k) { var el = $("#f-" + k); return el ? el.value.trim() : ""; };
+      if (!g("company") || !g("title")) { var er = $("#formErr"); er.textContent = "Add a company and a job title so you can find this later."; er.hidden = false; (g("company") ? $("#f-title") : $("#f-company")).focus(); return; }
+      var target = isNew ? o : byId(o.id);
+      ["company", "title", "link", "location", "arrangement", "deadline", "interest", "appliedDate", "nextAction", "nextDue", "resume", "contact", "interviewDate", "notes"].forEach(function (k) { target[k] = g(k); });
+      if (target.link && !/^https?:\/\//i.test(target.link)) target.link = "https://" + target.link;
+      target.thankYouSent = $("#f-thankYouSent").checked;
+      var ns = g("status");
+      if (isNew) { target.status = ns; if (ns === "applied" && !target.appliedDate) target.appliedDate = today(); state.opps.unshift(target); }
+      else setStatus(target, ns);
+      target.updatedAt = today(); delete target.example;
+      save(); closeModal(); render();
+      toast(isNew ? "Added " + esc(target.company) + "." : "Saved.");
+    });
+    setTimeout(function () { var el = focusId ? $("#" + focusId) : (isNew ? $("#f-company") : null); if (el) el.focus(); }, 30);
+  }
+  function openEditorDeleteRebind(o) { $("#btnDelete").addEventListener("click", function () { closeModal(); openEditor(o.id); setTimeout(function () { $("#btnDelete").click(); }, 0); }); }
+
+  // ---------- Job description extraction (rule-based) ----------
+  function extractJD(text) {
+    var r = {}; if (!text || !text.trim()) return r;
+    var lines = text.split(/\r?\n/).map(function (l) { return l.trim(); }).filter(Boolean);
+    var m;
+    m = text.match(/https?:\/\/[^\s)>"']+/i); if (m) r.link = m[0];
+    m = text.match(/(?:job\s*title|position|role)\s*[:\-–]\s*(.+)/i); if (m) r.title = m[1].trim();
+    m = text.match(/(?:company(?:\s*name)?|employer|organization)\s*[:\-–]\s*(.+)/i); if (m) r.company = m[1].trim();
+    if (!r.title || !r.company) {
+      for (var i = 0; i < Math.min(lines.length, 6); i++) {
+        var at = lines[i].match(/^(.{3,80}?)\s+(?:at|@|\||-|–|—)\s+(.{2,60})$/);
+        if (at && !/https?:/.test(lines[i])) { r.title = r.title || at[1].trim(); r.company = r.company || at[2].trim(); break; }
+      }
+    }
+    if (!r.company) { m = text.match(/(?:join|about)\s+(?:us\s+at\s+)?([A-Z][\w&.\-]*(?:\s+[A-Z][\w&.\-]*){0,3})/); if (m && !/^(The|Our|Us|This)$/.test(m[1])) r.company = m[1].trim(); }
+    if (!r.title) {
+      var kw = /(analyst|scientist|intern|engineer|manager|associate|consultant|specialist|coordinator|developer|strategist)/i;
+      for (var j = 0; j < Math.min(lines.length, 8); j++) if (kw.test(lines[j]) && lines[j].length < 90) { r.title = lines[j].replace(/^(job\s*title|position|role)\s*[:\-–]\s*/i, ""); break; }
+    }
+    if (/\bhybrid\b/i.test(text)) r.arrangement = "Hybrid";
+    else if (/\b(fully\s+remote|100%\s+remote|remote)\b/i.test(text)) r.arrangement = "Remote";
+    else if (/\b(on-?site|in[-\s]office|in[-\s]person)\b/i.test(text)) r.arrangement = "On-site";
+    m = text.match(/(?:location|based in|located in)\s*[:\-–]?\s*([A-Z][a-zA-Z.\s]+,\s*[A-Z]{2})\b/); if (m) r.location = m[1].trim();
+    if (!r.location) { m = text.match(/\b([A-Z][a-zA-Z.]+(?:\s[A-Z][a-zA-Z.]+)?,\s*(?:A[KLRZ]|C[AOT]|D[CE]|FL|GA|HI|I[ADLN]|K[SY]|LA|M[ADEINOST]|N[CDEHJMVY]|O[HKR]|PA|RI|S[CD]|T[NX]|UT|V[AT]|W[AIVY]))\b/); if (m) r.location = m[1]; }
+    var dl = text.match(/(?:deadline|apply by|applications? (?:close|due)|closing date|closes)[^\n\d]{0,20}?([A-Za-z]{3,9}\.?\s+\d{1,2}(?:st|nd|rd|th)?,?\s*\d{0,4}|\d{1,2}\/\d{1,2}\/\d{2,4}|\d{4}-\d{2}-\d{2})/i);
+    if (dl) { var d = parseLooseDate(dl[1]); if (d) r.deadline = d; }
+    return r;
+  }
+  function parseLooseDate(s) {
+    s = s.replace(/(\d)(st|nd|rd|th)\b/, "$1").replace(".", "").trim(); var m;
+    if ((m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/))) return s;
+    if ((m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/))) { var y = +m[3]; if (y < 100) y += 2000; return y + "-" + pad(+m[1]) + "-" + pad(+m[2]); }
+    if ((m = s.match(/^([A-Za-z]{3})[a-z]*\s+(\d{1,2}),?\s*(\d{4})?$/))) {
+      var mi = MONTHS.map(function (x) { return x.toLowerCase(); }).indexOf(m[1].toLowerCase()); if (mi < 0) return "";
+      var yy = m[3] ? +m[3] : new Date().getFullYear(); var out = yy + "-" + pad(mi + 1) + "-" + pad(+m[2]);
+      if (!m[3] && out < today()) out = (yy + 1) + out.slice(4);
+      return out;
+    }
+    return "";
+  }
+
+  // ---------- Import / Export ----------
+  var CSV_COLS = ["company", "title", "status", "link", "location", "arrangement", "deadline", "interest", "appliedDate", "nextAction", "nextDue", "resume", "contact", "interviewDate", "thankYouSent", "notes"];
+  // Headers from the Career Services "Job and Internship Search Guide" spreadsheet, so a saved-as-CSV copy imports cleanly.
+  var ALIASES = [
+    [/^company/i, "company"], [/job\s*title|position title|^title|^role/i, "title"], [/^location/i, "location"], [/link|url|posting/i, "link"],
+    [/closes|deadline/i, "deadline"], [/network/i, "contact"], [/resume|cover/i, "resume"], [/^date of interview|^interview/i, "interviewDate"],
+    [/thank/i, "thankYouSent"], [/notes/i, "notes"], [/status|stage/i, "status"], [/arrangement/i, "arrangement"], [/interest|priority/i, "interest"],
+    [/applied/i, "appliedDate"], [/next ?action/i, "nextAction"], [/next ?due|due/i, "nextDue"]
+  ];
+  function toCSV() {
+    var q = function (v) { v = v == null ? "" : String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+    return [CSV_COLS.join(",")].concat(state.opps.map(function (o) { return CSV_COLS.map(function (k) { return q(o[k]); }).join(","); })).join("\n");
+  }
+  function parseCSV(text) {
+    var rows = [], row = [], cur = "", inQ = false;
+    for (var i = 0; i < text.length; i++) {
+      var c = text[i];
+      if (inQ) { if (c === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else inQ = false; } else cur += c; }
+      else if (c === '"') inQ = true;
+      else if (c === ",") { row.push(cur); cur = ""; }
+      else if (c === "\n" || c === "\r") { if (c === "\r" && text[i + 1] === "\n") i++; row.push(cur); rows.push(row); row = []; cur = ""; }
+      else cur += c;
+    }
+    if (cur || row.length) { row.push(cur); rows.push(row); }
+    return rows.filter(function (r) { return r.some(function (x) { return x.trim(); }); });
+  }
+  function anyDate(v) {
+    v = (v || "").trim(); if (!v) return "";
+    if (/^\d{4}-\d{2}-\d{2}/.test(v)) return v.slice(0, 10);
+    return parseLooseDate(v) || "";
+  }
+  function importCSV(text) {
+    var rows = parseCSV(text); if (!rows.length) throw new Error("The file is empty.");
+    var hi = rows.findIndex(function (r) { return r.some(function (c) { return /company/i.test(c); }); });
+    if (hi < 0) throw new Error("Couldn't find a header row with a “Company” column.");
+    var map = rows[hi].map(function (hname, idx) {
+      hname = hname.trim(); if (CSV_COLS.indexOf(hname) >= 0) return hname;
+      for (var i = 0; i < ALIASES.length; i++) if (ALIASES[i][0].test(hname)) {
+        // second "Thank You Note Sent" / second interview columns: keep the first match only
+        return ALIASES[i][1];
+      }
+      return null;
+    });
+    var seen = {}; map = map.map(function (k) { if (!k) return null; if (seen[k]) return k === "notes" ? "notes" : null; seen[k] = 1; return k; });
+    var out = [];
+    rows.slice(hi + 1).forEach(function (r) {
+      var o = {}; r.forEach(function (v, i) { var k = map[i]; if (!k) return; o[k] = k === "notes" && o.notes ? o.notes + " " + v : v.trim(); });
+      if (!o.company) return;
+      ["deadline", "appliedDate", "nextDue", "interviewDate"].forEach(function (k) { if (o[k]) o[k] = anyDate(o[k]); });
+      if (o.status) o.status = o.status.toLowerCase();
+      if (o.interest) o.interest = o.interest.toLowerCase();
+      if (o.location && !o.arrangement) { if (/hybrid/i.test(o.location)) o.arrangement = "Hybrid"; else if (/remote/i.test(o.location)) o.arrangement = "Remote"; else if (/in[-\s]?person|on-?site/i.test(o.location)) o.arrangement = "On-site"; }
+      if (o.resume && /^(yes|y|true|x|✓)$/i.test(o.resume)) { o.resume = "Submitted"; if (!o.status) o.status = "applied"; }
+      if (!o.title) o.title = "(no title)";
+      var n = normalize(o); n.id = uid(); out.push(n);
+    });
+    return out;
+  }
+  function download(name, text, type) {
+    try { var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], { type: type })); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500); } catch (e) {}
+  }
+  function openData() {
+    var h = '<div class="modal-h"><h2>Import, export, and backup</h2><button type="button" class="ghost" data-close="1" aria-label="Close">✕</button></div><div class="modal-b">' +
+      '<div class="data-sec"><h3>Where your data is stored</h3><p>Your tracker is saved in this browser\'s local storage, on this device only. It stays after you close the tab, but not if you clear browser data, use a private window, or switch computers. Export a backup to keep it safe or move it.</p>' +
+      '<p class="mono" style="font-size:.8rem">' + state.opps.length + " opportunities saved" + (storageOK ? "" : " · saving is blocked in this browser") + "</p></div>" +
+      '<div class="data-sec"><h3>Export</h3><p>JSON is a full backup you can import later. CSV opens in Excel or Google Sheets.</p><div class="row">' +
+      '<button type="button" id="exJson" class="primary">Download backup (.json)</button><button type="button" id="exCsv">Download spreadsheet (.csv)</button><button type="button" id="exCopy">Copy backup to clipboard</button></div>' +
+      '<textarea id="exText" rows="3" readonly hidden></textarea><span id="exMsg" class="muted" style="font-size:.88rem"></span></div>' +
+      '<div class="data-sec"><h3>Import</h3><p>Choose a .json backup from this tracker, or a .csv. The Career Services “Job and Internship Search Guide” spreadsheet works too: in Excel use File → Save As → CSV, then import it here.</p>' +
+      '<div class="row"><input type="file" id="imFile" accept=".json,.csv,text/csv,application/json" style="max-width:320px">' +
+      '<label class="check"><input type="checkbox" id="imReplace"> Replace my current data instead of adding to it</label></div>' +
+      '<details><summary class="muted" style="cursor:pointer">Or paste a backup / CSV text</summary><textarea id="imText" rows="4" style="margin-top:8px" placeholder="Paste JSON or CSV here"></textarea><button type="button" id="imPaste" style="margin-top:8px">Import pasted text</button></details>' +
+      '<span id="imMsg" style="font-size:.88rem"></span></div>' +
+      '<div class="data-sec"><h3>Start over</h3><div class="row"><button type="button" id="loadSample">Load example data</button><button type="button" class="danger" id="clearAll">Delete all opportunities</button><span id="clearConfirm"></span></div></div>' +
+      '</div><div class="modal-f"><button type="button" data-close="1">Done</button></div>';
+    openModal(h);
+    $all("[data-close]").forEach(function (b) { b.addEventListener("click", closeModal); });
+    var json = function () { return JSON.stringify({ app: "NextMove", version: 1, exportedAt: new Date().toISOString(), opps: state.opps }, null, 2); };
+    var stamp = today();
+    $("#exJson").addEventListener("click", function () { download("job-tracker-backup-" + stamp + ".json", json(), "application/json"); $("#exMsg").textContent = "Download started. If nothing downloaded, use “Copy backup to clipboard”."; });
+    $("#exCsv").addEventListener("click", function () { download("job-tracker-" + stamp + ".csv", toCSV(), "text/csv"); $("#exMsg").textContent = "Download started."; });
+    $("#exCopy").addEventListener("click", function () {
+      var t = json(), ta = $("#exText");
+      var fallback = function () { ta.hidden = false; ta.value = t; ta.select(); $("#exMsg").textContent = "Select-all and copy the text above."; };
+      try { navigator.clipboard.writeText(t).then(function () { $("#exMsg").textContent = "Backup copied. Paste it somewhere safe."; }, fallback); } catch (e) { fallback(); }
+    });
+    var doImport = function (text, name) {
+      var msg = $("#imMsg");
+      try {
+        var list;
+        var trimmed = text.trim();
+        if (/\.json$/i.test(name || "") || trimmed[0] === "{" || trimmed[0] === "[") {
+          var d = JSON.parse(trimmed); var arr = Array.isArray(d) ? d : d.opps;
+          if (!Array.isArray(arr)) throw new Error("That JSON isn't a tracker backup.");
+          list = arr.map(function (x) { var n = normalize(x); if (x.id) n.id = x.id; delete n.example; return n; });
+        } else list = importCSV(text);
+        if (!list.length) throw new Error("No rows with a company name were found.");
+        if ($("#imReplace").checked) state.opps = list;
+        else { var ids = {}; state.opps.forEach(function (o) { ids[o.id] = 1; }); list.forEach(function (o) { if (ids[o.id]) o.id = uid(); }); state.opps = list.concat(state.opps); }
+        save(); render(); msg.className = ""; msg.textContent = "Imported " + list.length + " opportunit" + (list.length === 1 ? "y" : "ies") + ".";
+      } catch (e) { msg.className = "err"; msg.textContent = "Import failed: " + e.message; }
+    };
+    $("#imFile").addEventListener("change", function (e) { var file = e.target.files[0]; if (!file) return; var r = new FileReader(); r.onload = function () { doImport(String(r.result), file.name); }; r.readAsText(file); });
+    $("#imPaste").addEventListener("click", function () { doImport($("#imText").value, ""); });
+    $("#loadSample").addEventListener("click", function () { state.opps = sampleData().concat(state.opps.filter(function (o) { return !o.example; })); save(); render(); $("#imMsg").textContent = "Example data loaded."; });
+    $("#clearAll").addEventListener("click", function () {
+      $("#clearConfirm").innerHTML = '<span class="err">This removes all ' + state.opps.length + ' entries.</span> <button type="button" class="danger" id="clearYes">Yes, delete all</button>';
+      $("#clearYes").addEventListener("click", function () { state.opps = []; save(); render(); $("#clearConfirm").textContent = "All opportunities deleted."; });
+    });
+  }
+
+  // ---------- Toast ----------
+  var toastTimer;
+  function toast(html, actLabel, act) {
+    clearTimeout(toastTimer);
+    var root = $("#toastRoot");
+    root.innerHTML = '<div class="toast" role="status"><span>' + html + "</span>" + (actLabel ? '<button type="button" id="toastAct">' + esc(actLabel) + "</button>" : "") + "</div>";
+    if (actLabel) $("#toastAct").addEventListener("click", function () { root.innerHTML = ""; act(); });
+    toastTimer = setTimeout(function () { root.innerHTML = ""; }, actLabel ? 7000 : 2600);
+  }
+
+  // ---------- Events ----------
+  function completeTask(act, id) {
+    var o = byId(id); if (!o) return;
+    var snapshot = JSON.parse(JSON.stringify(o));
+    var undo = function () { var i = state.opps.indexOf(o); if (i >= 0) state.opps[i] = snapshot; save(); render(); };
+    if (act === "next") {
+      var done = o.nextAction; o.nextAction = ""; o.nextDue = "";
+      o.notes = (o.notes ? o.notes + "\n" : "") + "✓ " + fmt(today()) + ": " + done;
+      o.updatedAt = today(); save(); render();
+      toast("Done! What's the next step for " + esc(o.company) + "?", "Set next step", function () { openEditor(o.id, "f-nextAction"); });
+      return;
+    }
+    if (act === "apply") { setStatus(o, "applied"); save(); render(); toast("Marked " + esc(o.company) + " as applied. Follow-up reminder set for 2 weeks.", "Undo", undo); return; }
+    if (act === "followup") { o.followUpDate = today(); o.notes = (o.notes ? o.notes + "\n" : "") + "✓ " + fmt(today()) + ": Followed up"; o.updatedAt = today(); save(); render(); toast("Follow-up logged. Next reminder in 2 weeks.", "Undo", undo); return; }
+    if (act === "thanks") { o.thankYouSent = true; o.updatedAt = today(); save(); render(); toast("Thank-you note marked as sent.", "Undo", undo); }
+  }
+
+  document.addEventListener("click", function (e) {
+    var t = e.target;
+    var tab = t.closest(".tabs button"); if (tab) { view = tab.dataset.view; setPref(VIEW_KEY, view); render(); return; }
+    if (t.closest("#btnAdd")) { openEditor(null); return; }
+    if (t.closest("#btnData") || t.closest("#btnFooterData")) { openData(); return; }
+    var ce = t.closest("[data-act='clear-examples']");
+    if (ce) { var removed = state.opps.filter(function (o) { return o.example; }); state.opps = state.opps.filter(function (o) { return !o.example; }); save(); render(); toast("Examples cleared. Click “+ Add opportunity” to add your first one.", "Undo", function () { state.opps = removed.concat(state.opps); save(); render(); }); return; }
+    var dn = t.closest("[data-done]"); if (dn) { completeTask(dn.dataset.done, dn.dataset.id); return; }
+    var op = t.closest("[data-open]"); if (op) { openEditor(op.dataset.open); return; }
+    if (t.closest("[data-stop]")) return;
+    if (t.closest("select")) return;
+    var card = t.closest("[data-card]"); if (card) { openEditor(card.dataset.card); return; }
+    var row = t.closest("[data-row]"); if (row) { openEditor(row.dataset.row); return; }
+    var sb = t.closest("[data-sort]"); if (sb) { var k = sb.dataset.sort; if (listState.sort === k) listState.dir *= -1; else { listState.sort = k; listState.dir = 1; } $("#f-sort").value = k; renderListBody(); }
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Enter") return;
+    var c = e.target.closest && (e.target.closest("[data-card]") || e.target.closest("[data-row]"));
+    if (c && (e.target === c)) openEditor(c.dataset.card || c.dataset.row);
+  });
+  document.addEventListener("change", function (e) {
+    var t = e.target;
+    if (t.dataset.move) { moveTo(t.dataset.move, t.value); return; }
+    if (t.id === "f-status") { listState.status = t.value; renderListBody(); }
+    if (t.id === "f-arr") { listState.arrangement = t.value; renderListBody(); }
+    if (t.id === "f-int") { listState.interest = t.value; renderListBody(); }
+    if (t.id === "f-sort") { listState.sort = t.value; listState.dir = 1; renderListBody(); }
+  });
+  document.addEventListener("input", function (e) { if (e.target.id === "f-q") { listState.q = e.target.value; renderListBody(); } });
+
+  load();
+  if (["today", "board", "list", "dash"].indexOf(view) < 0) view = "today";
+  render();
+})();
+</script>
+</body>
+</html>
