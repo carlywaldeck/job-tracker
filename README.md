@@ -1,51 +1,38 @@
-# NextMove: a job & internship tracker
+# NextMove: a job tracker built around you and your resume
 
-A job tracker for MSBA students managing lots of applications at once. It starts from the Career Services *Job and Internship Search Guide* spreadsheet and turns it into a tool that tells you **what to work on today** and **how well your resume fits each job**.
+A simple job and internship tracker for MSBA students. Upload your resume, save the jobs you're interested in, and NextMove tells you what to do next and how well you match each job.
 
-**Live app:** https://carlywaldeck.github.io/job-tracker/. Anyone can use it with no sign-up. Each person's data stays private in their own browser.
+**Live app:** https://carlywaldeck.github.io/job-tracker/. Anyone can use it with no sign-up. Each person's data, including their resume, stays private in their own browser.
 
-## How it works (no explanation needed)
+## How it works
 
-The app has one home screen:
+1. **Start with your resume.** Upload a PDF, Word, or .txt file. NextMove reads it in the browser, greets you by name, and shows the skills it found. You confirm them or edit them.
+2. **Add a job.** Paste the job posting. NextMove fills in the company, title, location, work arrangement, deadline, and link, and shows your resume match and any missing skills.
+3. **Do your next steps.** The home screen lists what to do, most urgent first. Tap the circle when a step is done.
 
-1. **Get started in 3 steps.** New users see: upload your resume, add a job, come back to your to-do list. The guide goes away once both are done.
-2. **To do.** Overdue and upcoming tasks, most urgent first. Check the circle when a task is done.
-3. **My jobs.** Every job you are tracking. Change a job's status right in the list, filter by status, search, and sort.
-
-Two more tabs: **Board** (drag jobs between stages) and **Insights** (your numbers, plus tips on why you might not be hearing back).
-
-## Assignment checklist
+## Assignment essentials
 
 | Requirement | Where |
 |---|---|
-| Add and edit jobs (company, title, link, location, work arrangement, deadline, notes) | **+ Add a job**, or **Open** on any row |
-| Track status: Saved, Applied, Interviewing, Offer, Rejected, Withdrawn | Status dropdown on each row, or drag on the Board |
-| Next action + due date | "Status and next step" in the form. Rows without a next step show "+ Add next step". |
-| Search, sort, filter | My jobs: search box, status filter buttons, sort by deadline, next step, company, recent, or best fit |
-| Keep your data | Saved automatically in the browser. The footer says so, with a link to back up or move your data. |
+| Add and edit opportunities (company, title, link, location/work arrangement, deadline, notes) | **+ Add a job**, or click any job |
+| Track progress: Saved, Applied, Interviewing, Offer, Rejected, Withdrawn | Status dropdown on each job |
+| Next action + due date | "Your next step" and "Do it by" in the job form |
+| Search, sort, filter | Search box, status filter, and sort (best match, deadline, company, recently updated) above Your jobs |
+| Keep your work | Saved automatically in the browser's local storage. The footer says where the data lives. |
 
-## Improvements
+## Our two improvements
 
-1. **Resume upload and match.** Upload a PDF, Word, or .txt resume under **About me & resume**. It's read in the browser (pdf.js and mammoth) and fills in your name, skills, roles, and location. When you paste a job description, the app shows a **resume match %** and the skills the job asks for that are missing from your resume. *Keyword matching, not AI*, and labeled that way.
-2. **To-do list ("What should I do today?").** Your next steps plus automatic reminders: postings closing within 2 weeks, a follow-up 14 days after applying (the Career Services guide's rule), thank-you notes after interviews, and interview prep in the week before.
-3. **Personalized.** Your profile (roles, places, work style, internship vs. full-time, weekly goal) drives a greeting, **Strong fit** tags, a "Best fit for me" sort, and a weekly application goal.
-4. **"Why you might not be hearing back."** Rule-based tips from patterns in your own tracker: resume missing skills that jobs ask for, low interview rate, the same resume sent everywhere, no networking contact, applying near deadlines, interviews without offers, missing thank-yous or follow-ups, and applying to roles that don't fit your goals.
-5. **Board.** Drag and drop between stages.
-6. **Import / export.** JSON backup, CSV for Excel or Sheets, and CSV import that understands the original Career Services spreadsheet.
-7. **Fill in from a job description.** Pulls out the title, company, location, work arrangement, deadline, and link (rule-based).
+1. **"Your next steps," a personal to-do list.** It answers "What should I work on today?" It combines your own next steps with automatic reminders: apply before a posting closes, follow up 14 days after applying (the Career Services guide's rule), and tailor your resume when a job asks for skills it doesn't list.
+2. **Resume match.** Each job shows *Great match*, *Good match*, or *Stretch* with a percentage, based on how many of the skills in the posting appear on your resume. The job form lists the missing skills. You can sort jobs by best match. *This is keyword matching, not AI*, and the app labels it that way.
 
-## Where the data is stored
+## Demo script (2 minutes)
 
-Everything, including your resume text, is saved in the browser's `localStorage` on your device. No account, no server. Clearing browser data or switching computers loses it, so use **Back up or move your data** in the footer.
+1. **Who it's for** (15s): MSBA students juggling many applications. The Career Services spreadsheet records what happened but doesn't tell you what to do next.
+2. **Personal setup** (25s): Upload a resume. The app greets you by name and shows your skills.
+3. **Add and track** (35s): Click + Add a job, paste a posting, and click "Fill in the details". Show the match and the missing skills, then save. Change its status in the list.
+4. **What to do next** (25s): Go through Your next steps and check one off.
+5. **What's next** (20s): Everything shown works now. Next we'd add calendar reminders, cloud sync, and AI-written follow-up emails.
 
-## Two-minute demo script
+## Tech
 
-1. **Who it's for** (15s): MSBA students with 20+ applications. The spreadsheet records what happened, not what to do next.
-2. **Set up** (25s): Upload a resume. Name, skills, and roles fill in automatically.
-3. **Add and track** (30s): Click + Add a job, paste a job description, and click "Fill in the form from this". Show the resume match and the missing skills, then save. Change its status in the list.
-4. **Deciding what to do next** (30s): Use the To do list to check off a follow-up, then show the Insights tips.
-5. **What works and what's next** (20s): Everything shown works today. Next we'd add cloud sync, calendar export, and AI-written follow-up drafts.
-
-## Running it
-
-It's one file with no build step. Open `index.html` in a browser, or host it with GitHub Pages (Settings → Pages → Deploy from branch `main`, folder `/`).
+A single `index.html` with no build step. PDF and Word resumes are read with pdf.js and mammoth, loaded from cdnjs only when you upload one. Data is stored in `localStorage`.
