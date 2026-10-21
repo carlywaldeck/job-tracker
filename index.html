@@ -85,11 +85,46 @@ main > * { min-width: 0; }
 .welcome p { margin: 0; }
 .welcome .row { margin-top: 6px; }
 .fit { font-size: .76rem; font-weight: 600; color: var(--good); white-space: nowrap; }
+.fit.low { color: var(--warn); }
 .goal { display: grid; gap: 8px; max-width: 760px; }
 .goal-top { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: .92rem; }
 .goal-bar { height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
 .goal-bar div { height: 100%; background: var(--good); border-radius: 3px; }
 .profile-intro { margin: 0; color: var(--muted); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.start { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 22px; display: grid; gap: 14px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.step { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: start; }
+.step p { margin: 4px 0 10px; color: var(--muted); font-size: .9rem; }
+.step-n { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-weight: 600; background: var(--accent-soft); color: var(--accent); font-size: .9rem; }
+.step.done .step-n { background: color-mix(in srgb, var(--good) 15%, transparent); color: var(--good); }
+.step.done strong { color: var(--muted); text-decoration: line-through; }
+.sec { display: grid; gap: 12px; }
+.sec > * { min-width: 0; }
+.sec-h { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+.sec-h h3 { font-size: 1.15rem; }
+.sec-h .muted { font-size: .85rem; }
+.tasks { display: grid; }
+.toolbar { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.toolbar input { flex: 1 1 260px; }
+label.inline { display: flex; align-items: center; gap: 8px; }
+label.inline select { width: auto; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border-radius: 99px; padding: 4px 12px; font-size: .85rem; color: var(--muted); background: transparent; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.status-select { width: auto; padding: 4px 8px; font-size: .85rem; border-color: color-mix(in srgb, var(--c) 45%, var(--line)); color: var(--c); font-weight: 500; }
+.add-next { color: var(--accent); font-size: .88rem; }
+.job strong { font-weight: 600; }
+.upload { display: grid; gap: 8px; }
+.upload-box { display: grid; gap: 4px; border: 1.5px dashed var(--line); border-radius: 12px; padding: 18px; color: var(--ink); cursor: pointer; background: var(--surface-2); }
+.upload-box:hover { border-color: var(--accent); }
+.upload-box input { border: 0; padding: 6px 0 0; background: transparent; }
+.match { display: grid; gap: 4px; background: var(--surface-2); border-radius: 10px; padding: 12px 14px; font-size: .9rem; }
+.match p { margin: 0; }
+p.match { display: block; }
+@media (max-width: 760px) { .steps { grid-template-columns: minmax(0, 1fr); } }
+.table-scroll { position: relative; }
+@media (max-width: 560px) { #btnProfile { padding: 6px 4px; font-size: .85rem; } .table-scroll table { min-width: 0; } .table-scroll th:nth-child(3), .table-scroll td:nth-child(3), .table-scroll th:nth-child(5), .table-scroll td:nth-child(5) { display: none; } th, td { padding: 12px 6px; } }
 .insights { display: grid; gap: 4px; }
 .insight { padding: 14px 0; border-top: 1px solid var(--line); display: grid; gap: 2px; max-width: 72ch; }
 .insight p { margin: 0; }
@@ -120,6 +155,7 @@ main > * { min-width: 0; }
 .donebox:hover { border-color: var(--good); background: color-mix(in srgb, var(--good) 18%, transparent); }
 .donebox-spacer { width: 20px; }
 .empty { color: var(--muted); padding: 28px 0; }
+.empty button { color: var(--accent); font-weight: 500; }
 .mini-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .mini-list li { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
 .mini-list li span:first-child { min-width: 0; overflow-wrap: anywhere; }
@@ -228,15 +264,13 @@ footer button { padding: 0; border: 0; background: none; color: var(--accent); f
   <div class="wrap top-in">
     <div class="brand">Next<span>Move</span></div>
     <nav class="tabs" role="tablist" aria-label="Views">
-      <button role="tab" data-view="today" id="tab-today">Today</button>
+      <button role="tab" data-view="home" id="tab-home">Home</button>
       <button role="tab" data-view="board" id="tab-board">Board</button>
-      <button role="tab" data-view="list" id="tab-list">All</button>
-      <button role="tab" data-view="dash" id="tab-dash">Progress</button>
+      <button role="tab" data-view="dash" id="tab-dash">Insights</button>
     </nav>
     <div class="head-actions">
-      <button id="btnProfile" class="ghost" type="button">My profile</button>
-      <button id="btnData" class="ghost" type="button">Import / Export</button>
-      <button id="btnAdd" class="primary" type="button">+ Add</button>
+      <button id="btnProfile" class="ghost" type="button">About me &amp; resume</button>
+      <button id="btnAdd" class="primary" type="button">+ Add a job</button>
     </div>
   </div>
 </header>
@@ -312,8 +346,8 @@ footer button { padding: 0; border: 0; background: none; color: var(--accent); f
     try {
       var raw = localStorage.getItem(KEY);
       if (raw) { var d = JSON.parse(raw); state.opps = Array.isArray(d.opps) ? d.opps : []; state.seeded = !!d.seeded; return; }
-      state.opps = sampleData(); state.seeded = true; save();
-    } catch (e) { storageOK = false; state.opps = sampleData(); state.seeded = true; }
+      state.opps = [];
+    } catch (e) { storageOK = false; state.opps = []; }
   }
   function save() {
     try { localStorage.setItem(KEY, JSON.stringify({ version: 1, savedAt: new Date().toISOString(), seeded: state.seeded, opps: state.opps })); storageOK = true; }
@@ -344,8 +378,10 @@ footer button { padding: 0; border: 0; background: none; color: var(--accent); f
     return { score: reasons.length, checks: checks, strong: strong, reasons: reasons };
   }
   function fitTag(o) {
-    var f = fit(o); if (!f || !f.strong) return "";
-    return '<span class="fit" title="Matches: ' + esc(f.reasons.join(", ")) + '">Strong fit</span>';
+    var f = fit(o), m = match(o), h = "";
+    if (m) h += '<span class="fit' + (m.pct < 50 ? " low" : "") + '" title="' + esc(m.missing.length ? "Missing: " + m.missing.join(", ") : "Your resume covers this job's skills") + '">' + m.pct + "% resume match</span> ";
+    if (f && f.strong) h += '<span class="fit" title="Matches: ' + esc(f.reasons.join(", ")) + '">Strong fit</span>';
+    return h;
   }
   function greeting() {
     var hr = new Date().getHours();
@@ -357,7 +393,7 @@ footer button { padding: 0; border: 0; background: none; color: var(--accent); f
   function blank() {
     return { id: uid(), company: "", title: "", link: "", location: "", arrangement: "", deadline: "", status: "saved", interest: "medium",
       nextAction: "", nextDue: "", appliedDate: "", resume: "", contact: "", interviewDate: "", thankYouSent: false, followUpDate: "",
-      notes: "", createdAt: today(), updatedAt: today(), history: [] };
+      notes: "", description: "", createdAt: today(), updatedAt: today(), history: [] };
   }
   function normalize(o) {
     var b = blank();
@@ -383,9 +419,11 @@ footer button { padding: 0; border: 0; background: none; color: var(--accent); f
     var t = today();
     var rows = [
       { company: "Harborview Health", title: "Business Analytics Intern", location: "San Luis Obispo, CA", arrangement: "Hybrid", deadline: addDays(t, 4), status: "saved", interest: "high",
-        nextAction: "Tailor resume to emphasize SQL + Tableau", nextDue: addDays(t, 1), contact: "Priya N. (MSBA '24) via LinkedIn", link: "https://example.com/jobs/harborview-ba-intern", notes: "Posting mentions patient-flow forecasting. Bring up the capstone time-series project." },
+        nextAction: "Tailor resume to emphasize SQL + Tableau", nextDue: addDays(t, 1), contact: "Priya N. (MSBA '24) via LinkedIn", link: "https://example.com/jobs/harborview-ba-intern",
+        description: "Business Analytics Intern, Harborview Health. Hybrid, San Luis Obispo, CA. You will build Tableau dashboards, write SQL against our patient data warehouse, and support forecasting of patient flow. Requirements: SQL, Excel, Tableau, statistics. Nice to have: Python, time series.", notes: "Posting mentions patient-flow forecasting. Bring up the capstone time-series project." },
       { company: "Sierra Analytics Group", title: "Junior Data Scientist", location: "Remote (US)", arrangement: "Remote", deadline: addDays(t, 9), status: "saved", interest: "medium",
-        nextAction: "Message alum about team culture", nextDue: addDays(t, -1), contact: "Jordan L. (Career Connections)", link: "https://example.com/jobs/sierra-jds" },
+        nextAction: "Message alum about team culture", nextDue: addDays(t, -1), contact: "Jordan L. (Career Connections)", link: "https://example.com/jobs/sierra-jds",
+        description: "Junior Data Scientist (Remote). Build machine learning models in Python (pandas, scikit-learn), run A/B testing, and present results to stakeholders. Experience with SQL, AWS, and Spark preferred." },
       { company: "Pacific Grid Energy", title: "Pricing Analyst", location: "Oakland, CA", arrangement: "On-site", deadline: addDays(t, -12), status: "applied", interest: "high",
         appliedDate: addDays(t, -17), resume: "Resume v3 (energy) + cover letter A", nextAction: "", nextDue: "", notes: "Applied through referral portal." },
       { company: "Tidewater Retail", title: "Marketing Analytics Associate", location: "Seattle, WA", arrangement: "Hybrid", deadline: addDays(t, -20), status: "interviewing", interest: "medium",
@@ -400,7 +438,8 @@ footer button { padding: 0; border: 0; background: none; color: var(--accent); f
       { company: "Atlas Logistics", title: "Operations Research Intern", location: "Remote", arrangement: "Remote", deadline: addDays(t, 14), status: "saved", interest: "low",
         link: "https://example.com/jobs/atlas-or" },
       { company: "Brightline Media", title: "Data Analyst, Audience Insights", location: "Los Angeles, CA", arrangement: "Hybrid", deadline: addDays(t, -8), status: "applied", interest: "medium",
-        appliedDate: addDays(t, -6), resume: "Resume v2 (marketing)", nextAction: "Connect with hiring manager on LinkedIn", nextDue: t }
+        appliedDate: addDays(t, -6), resume: "Resume v2 (marketing)", nextAction: "Connect with hiring manager on LinkedIn", nextDue: t,
+        description: "Data Analyst, Audience Insights. Analyze viewership with SQL and Python, build Looker dashboards, and use Google Analytics to measure campaigns. Strong storytelling and PowerPoint skills." }
     ];
     return rows.map(function (r) { var o = normalize(r); o.example = true; o.createdAt = r.appliedDate || addDays(t, -3); return o; });
   }
@@ -433,87 +472,132 @@ footer button { padding: 0; border: 0; background: none; color: var(--accent); f
   }
 
   // ---------- Rendering ----------
-  var view = getPref(VIEW_KEY, "today");
-  var listState = { q: "", status: "active", arrangement: "", interest: "", sort: "deadline", dir: 1 };
+  var view = getPref(VIEW_KEY, "home");
+  var listState = { q: "", status: "open", sort: "deadline" };
+  var FILTERS = [["open", "Open"], ["saved", "Saved"], ["applied", "Applied"], ["interviewing", "Interviewing"], ["offer", "Offer"], ["closed", "Closed"], ["all", "All"]];
 
   function render() {
     $all(".tabs button").forEach(function (b) { b.setAttribute("aria-selected", b.dataset.view === view ? "true" : "false"); });
     var tasks = buildTasks();
     var overdue = tasks.filter(function (x) { return x.due && x.due < today(); }).length;
-    var tt = $("#tab-today");
-    tt.innerHTML = "Today" + (overdue ? '<span class="count" title="Overdue tasks">' + overdue + "</span>" : "");
+    $("#tab-home").innerHTML = "Home" + (overdue ? '<span class="count" title="Overdue to-dos">' + overdue + "</span>" : "");
     renderBanners();
     var v = $("#view");
-    if (view === "board") v.innerHTML = renderBoard();
-    else if (view === "list") { v.innerHTML = renderListShell(); renderListBody(); }
+    if (view === "board") { v.innerHTML = renderBoard(); wireBoard(); }
     else if (view === "dash") v.innerHTML = renderDash();
-    else v.innerHTML = renderToday(tasks);
-    if (view === "board") wireBoard();
+    else { v.innerHTML = renderHome(tasks); renderJobRows(); }
   }
 
   function renderBanners() {
     var h = "";
     if (!storageOK) h += '<p class="note warn">Saving is blocked in this browser (private window or blocked site data), so changes will be lost when you close the tab.</p>';
-    if (state.opps.some(function (o) { return o.example; }))
-      h += '<div class="welcome"><p><strong>Welcome to NextMove.</strong> Add the jobs you are interested in, give each one a next step, and check <em>Today</em> each day to see what to do. ' +
-        'Everything you enter stays private in your own browser. No sign-up needed.</p>' +
-        (profile ? "" : '<div class="row"><button type="button" class="primary" data-act="profile">Set up my tracker (1 minute)</button></div>') +
-        '<p class="note"><span>The entries below are examples so you can try things out.</span><button type="button" data-act="clear-examples">Clear examples and start my own list</button></p></div>';
     $("#banners").innerHTML = h;
     $("#banners").hidden = !h;
   }
 
   function oppLabel(o) { return '<button type="button" class="linkish" data-open="' + esc(o.id) + '">' + esc(o.company || "Untitled") + "</button> · " + esc(o.title); }
 
-  var showLater = false;
-  function renderToday(tasks) {
+  function gettingStarted() {
+    var own = state.opps.filter(function (o) { return !o.example; });
+    var hasResume = !!(profile && profile.resumeText);
+    var hasJob = own.length > 0;
+    var hasExamples = state.opps.some(function (o) { return o.example; });
+    if (hasResume && hasJob && !hasExamples) return "";
+    var step = function (n, done, title, body, btn) {
+      return '<li class="step' + (done ? " done" : "") + '"><span class="step-n" aria-hidden="true">' + (done ? "✓" : n) + '</span><div><strong>' + title + "</strong><p>" + body + "</p>" + (done ? "" : btn) + "</div></li>";
+    };
+    var h = '<section class="start"><h3>Get started in 3 steps</h3><ol class="steps">' +
+      step(1, hasResume, "Upload your resume", "NextMove reads it in your browser to learn your skills and the roles you want.", '<button type="button" data-act="profile">Upload resume</button>') +
+      step(2, hasJob, "Add a job you are interested in", "Paste the job description and NextMove fills in the details and checks how well your resume matches.", '<button type="button" class="primary" data-act="add">+ Add a job</button>') +
+      step(3, false, "Come back to your to-do list", "Each day the To do list below tells you what to work on: deadlines, follow-ups, thank-you notes.", "") +
+      "</ol>";
+    h += hasExamples ? '<p class="note"><span>You are looking at sample jobs.</span><button type="button" data-act="clear-examples">Remove sample jobs</button></p>'
+      : (!hasJob ? '<p class="note"><span>Just exploring?</span><button type="button" data-act="load-samples">Show me sample jobs</button></p>' : "");
+    return h + "</section>";
+  }
+
+  var showAllTasks = false;
+  function renderHome(tasks) {
     var t = today();
-    var over = tasks.filter(function (x) { return x.due && x.due < t; });
-    var now = tasks.filter(function (x) { return x.due === t; });
-    var week = tasks.filter(function (x) { return x.due > t && diffDays(x.due, t) <= 7; });
-    var later = tasks.filter(function (x) { return !x.due || diffDays(x.due, t) > 7; });
-    var n = over.length + now.length;
-    var summary = n ? n + (n === 1 ? " thing needs" : " things need") + " your attention" + (over.length ? " (" + over.length + " overdue)" : "") + "." : "You're caught up for today.";
-    var h = '<div class="view-head"><div><h2>What should I do today?</h2><p>' + esc((greeting() ? greeting() + " " : "") + summary) + "</p></div></div>";
+    var soon = tasks.filter(function (x) { return x.due && diffDays(x.due, t) <= 7; });
+    var rest = tasks.filter(function (x) { return !x.due || diffDays(x.due, t) > 7; });
+    var shown = showAllTasks ? soon.concat(rest) : soon.slice(0, 6);
+    var hidden = tasks.length - shown.length;
+    var hello = greeting() || "Your job search";
+    var over = soon.filter(function (x) { return x.due < t; }).length;
+    var h = '<div class="view-head"><div><h2>' + esc(hello) + "</h2><p>" +
+      (tasks.length ? (over ? over + " overdue, " : "") + soon.length + " to-do" + (soon.length === 1 ? "" : "s") + " this week." : "Add jobs and NextMove will tell you what to do next.") + "</p></div></div>";
+    h += gettingStarted();
+
+    // To do
+    h += '<section class="sec"><div class="sec-h"><h3>To do</h3><span class="muted">Check the circle when it is done</span></div>';
     if (profile && +profile.weeklyGoal > 0) {
       var ws = weekStart(), goal = +profile.weeklyGoal;
       var sent = state.opps.filter(function (o) { return o.appliedDate && o.appliedDate >= ws; }).length;
-      var fits = state.opps.filter(function (o) { return o.status === "saved" && fit(o) && fit(o).strong; });
       h += '<div class="goal"><div class="goal-top"><span><strong>' + sent + " of " + goal + "</strong> applications sent this week</span>" +
-        '<span class="muted">' + (sent >= goal ? "Goal met. Nice work." : (goal - sent) + " to go") + "</span></div>" +
-        '<div class="goal-bar"><div style="width:' + Math.min(100, 100 * sent / goal) + '%"></div></div>' +
-        (sent < goal && fits.length ? '<p class="note"><span>Strong fits you haven\'t applied to yet:</span>' + fits.slice(0, 3).map(function (o) { return '<button type="button" data-open="' + esc(o.id) + '">' + esc(o.company) + "</button>"; }).join("") + "</p>" : "") +
-        "</div>";
+        '<span class="muted">' + (sent >= goal ? "Goal met" : (goal - sent) + " to go") + '</span></div><div class="goal-bar"><div style="width:' + Math.min(100, 100 * sent / goal) + '%"></div></div></div>';
     }
-    h += '<div class="today">';
-    var group = function (title, items, cls) {
-      if (!items.length) return "";
-      var g = '<div class="group"><div class="group-h ' + (cls || "") + '">' + esc(title) + "</div>";
-      items.forEach(function (x) {
+    if (!shown.length) h += '<p class="empty">' + (tasks.length ? "Nothing due this week." : "Nothing to do yet. To-dos appear when a job has a next step, a deadline, or an interview.") + "</p>";
+    else {
+      h += '<div class="tasks">';
+      shown.forEach(function (x) {
         var box = x.act === "prep" ? '<span class="donebox-spacer" aria-hidden="true"></span>' :
           '<button type="button" class="donebox" title="Mark done" aria-label="Mark done: ' + esc(x.text) + '" data-done="' + esc(x.act) + '" data-id="' + esc(x.o.id) + '"></button>';
-        g += '<div class="task">' + box + '<div class="t-main"><div class="t-what">' + esc(x.text) + '</div><div class="t-who">' + oppLabel(x.o) + " " + fitTag(x.o) + "</div></div>" +
-          (x.due ? dueChip(x.due) : "") + "</div>";
+        h += '<div class="task">' + box + '<div class="t-main"><div class="t-what">' + esc(x.text) + '</div><div class="t-who">' + oppLabel(x.o) + "</div></div>" + (x.due ? dueChip(x.due) : "") + "</div>";
       });
-      return g + "</div>";
-    };
-    h += group("Overdue", over, "over") + group("Today", now) + group("This week", week);
-    if (later.length) {
-      if (showLater) h += group("Later", later);
-      h += '<button type="button" class="ghost more" data-act="toggle-later">' + (showLater ? "Hide later tasks" : "Show " + later.length + " later task" + (later.length > 1 ? "s" : "")) + "</button>";
+      h += "</div>";
     }
-    if (!tasks.length) h += '<p class="empty">Nothing on your list. Add an opportunity or give one a next step and it will show up here.</p>';
+    if (hidden > 0 || showAllTasks && rest.length) h += '<button type="button" class="ghost more" data-act="toggle-tasks">' + (showAllTasks ? "Show fewer" : "Show " + hidden + " more") + "</button>";
     var tips = insights().filter(function (i) { return i.title !== "Not enough data yet"; });
-    if (tips.length) h += '<p class="note"><span>Tip: ' + esc(tips[0].title) + '.</span><button type="button" data-view-go="dash">See ' + (tips.length > 1 ? "all " + tips.length + " tips" : "why") + "</button></p>";
-    var noNext = state.opps.filter(function (o) { return !CLOSED[o.status] && o.status !== "offer" && !o.nextAction; });
-    if (noNext.length) {
-      h += '<p class="note"><span>No next step yet:</span>' + noNext.slice(0, 4).map(function (o) { return '<button type="button" data-open="' + esc(o.id) + '" data-focus="f-nextAction">' + esc(o.company) + "</button>"; }).join("") + "</p>";
-    }
-    return h + "</div>";
+    if (tips.length) h += '<p class="note"><span>Tip: ' + esc(tips[0].title) + '.</span><button type="button" data-view-go="dash">See why and what to do</button></p>';
+    h += "</section>";
+
+    // My jobs
+    var so = function (v, l) { return '<option value="' + v + '"' + (v === listState.sort ? " selected" : "") + ">" + l + "</option>"; };
+    h += '<section class="sec"><div class="sec-h"><h3>My jobs</h3><span class="muted" id="listCount"></span></div>' +
+      '<div class="toolbar"><input id="f-q" type="search" aria-label="Search jobs" placeholder="Search company, title, location, notes…" value="' + esc(listState.q) + '">' +
+      '<label class="inline">Sort<select id="f-sort">' + so("deadline", "Deadline") + so("nextDue", "Next step due") + so("company", "Company A–Z") + so("updatedAt", "Recently updated") +
+      (profile ? so("fit", "Best fit for me") : "") + "</select></label></div>" +
+      '<div class="chips" role="group" aria-label="Filter by status">' + FILTERS.map(function (f) {
+        return '<button type="button" class="chip" data-filter="' + f[0] + '" aria-pressed="' + (listState.status === f[0]) + '">' + f[1] + "</button>"; }).join("") + "</div>" +
+      '<div class="table-scroll"><table><thead><tr><th>Job</th><th>Status</th><th>Deadline</th><th>Next step</th><th><span class="sr">Open</span></th></tr></thead><tbody id="listBody"></tbody></table></div></section>';
+    return h;
+  }
+
+  function renderJobRows() {
+    var q = listState.q.trim().toLowerCase(), f = listState.status;
+    var rows = state.opps.filter(function (o) {
+      if (f === "open" && CLOSED[o.status]) return false;
+      if (f === "closed" && !CLOSED[o.status]) return false;
+      if (["saved", "applied", "interviewing", "offer"].indexOf(f) >= 0 && o.status !== f) return false;
+      if (q) { var hay = [o.company, o.title, o.location, o.notes, o.contact, o.nextAction, o.resume].join(" ").toLowerCase(); if (hay.indexOf(q) < 0) return false; }
+      return true;
+    });
+    var k = listState.sort;
+    rows.sort(function (a, b) {
+      var va, vb;
+      if (k === "updatedAt") { va = b.updatedAt || ""; vb = a.updatedAt || ""; }
+      else if (k === "fit") { va = -fitRank(a); vb = -fitRank(b); if (va === vb) { va = a.deadline || "9999"; vb = b.deadline || "9999"; } }
+      else if (k === "company") { va = (a.company || "").toLowerCase(); vb = (b.company || "").toLowerCase(); }
+      else { va = a[k] || "9999"; vb = b[k] || "9999"; }
+      return va < vb ? -1 : va > vb ? 1 : 0;
+    });
+    var lc = $("#listCount"); if (lc) lc.textContent = rows.length + " of " + state.opps.length;
+    var h = rows.map(function (o) {
+      var opts = STATUSES.map(function (x) { return '<option value="' + x.id + '"' + (x.id === o.status ? " selected" : "") + ">" + x.label + "</option>"; }).join("");
+      return '<tr data-row="' + esc(o.id) + '"><td><button type="button" class="linkish job" data-open="' + esc(o.id) + '"><strong>' + esc(o.company) + "</strong></button> " + fitTag(o) +
+        '<div class="sub">' + esc(o.title) + (o.location ? " · " + esc(o.location) : "") + "</div></td>" +
+        '<td><select class="status-select" data-s="' + esc(o.status) + '" aria-label="Status for ' + esc(o.company) + '" data-move="' + esc(o.id) + '">' + opts + "</select></td>" +
+        "<td>" + (o.deadline ? '<span class="date">' + esc(fmt(o.deadline)) + "</span>" : '<span class="muted">—</span>') + "</td>" +
+        "<td>" + (o.nextAction ? esc(o.nextAction) + '<div class="sub">' + dueChip(o.nextDue) + "</div>" : '<button type="button" class="linkish add-next" data-open="' + esc(o.id) + '" data-focus="f-nextAction">+ Add next step</button>') + "</td>" +
+        '<td><button type="button" class="ghost" data-open="' + esc(o.id) + '">Open</button></td></tr>';
+    }).join("");
+    var body = $("#listBody"); if (!body) return;
+    body.innerHTML = h || '<tr><td colspan="5"><p class="empty">' + (state.opps.length ? "No jobs match this filter." : 'No jobs yet. <button type="button" class="linkish add-next" data-act="add">Add your first job</button>') + "</p></td></tr>";
   }
 
   function renderBoard() {
-    var h = '<div class="view-head"><div><h2>Board</h2><p>Drag a card to change its stage. Click a card to open it.</p></div></div>';
+    var h = '<div class="view-head"><div><h2>Board</h2><p>Drag a card to another column to change its status. Click a card to open it.</p></div></div>';
     h += '<div class="board-scroll"><div class="board">';
     STATUSES.forEach(function (s) {
       var items = state.opps.filter(function (o) { return o.status === s.id; })
@@ -558,57 +642,13 @@ footer button { padding: 0; border: 0; background: none; color: var(--accent); f
     else toast(msg, "Undo", function () { o.status = prev; o.history.pop(); save(); render(); });
   }
 
-  function renderListShell() {
-    var so = function (v, l, cur) { return '<option value="' + v + '"' + (v === cur ? " selected" : "") + ">" + l + "</option>"; };
-    var h = '<div class="view-head"><div><h2>All opportunities</h2><p id="listCount"></p></div></div>';
-    h += '<div class="filters">' +
-      '<label class="search">Search<input id="f-q" type="search" placeholder="Company, title, location, notes…" value="' + esc(listState.q) + '"></label>' +
-      '<label>Stage<select id="f-status">' + so("active", "Open", listState.status) + so("", "All", listState.status) +
-        STATUSES.map(function (s) { return so(s.id, s.label, listState.status); }).join("") + "</select></label>" +
-      '<label>Sort by<select id="f-sort">' + so("deadline", "Deadline", listState.sort) + so("nextDue", "Next step due", listState.sort) + so("company", "Company A–Z", listState.sort) +
-        so("interest", "Interest", listState.sort) + so("status", "Stage", listState.sort) + so("updatedAt", "Recently updated", listState.sort) + (profile ? so("fit", "Best fit for me", listState.sort) : "") + "</select></label></div>";
-    h += '<div class="table-scroll"><table><thead><tr><th>Company / role</th><th>Stage</th><th>Deadline</th><th>Next step</th></tr></thead><tbody id="listBody"></tbody></table></div>';
-    return h;
-  }
-  function renderListBody() {
-    var q = listState.q.trim().toLowerCase();
-    var rows = state.opps.filter(function (o) {
-      if (listState.status === "active" && CLOSED[o.status]) return false;
-      if (listState.status && listState.status !== "active" && o.status !== listState.status) return false;
-      if (listState.arrangement && o.arrangement !== listState.arrangement) return false;
-      if (listState.interest && o.interest !== listState.interest) return false;
-      if (q) { var hay = [o.company, o.title, o.location, o.notes, o.contact, o.nextAction, o.resume].join(" ").toLowerCase(); if (hay.indexOf(q) < 0) return false; }
-      return true;
-    });
-    var k = listState.sort, d = listState.dir, order = {};
-    STATUSES.forEach(function (s, i) { order[s.id] = i; });
-    rows.sort(function (a, b) {
-      var va, vb;
-      if (k === "interest") { va = -(INTEREST[a.interest] || 0); vb = -(INTEREST[b.interest] || 0); }
-      else if (k === "status") { va = order[a.status]; vb = order[b.status]; }
-      else if (k === "updatedAt") { va = b.updatedAt || ""; vb = a.updatedAt || ""; }
-      else if (k === "fit") { va = -((fit(a) || {}).score || 0); vb = -((fit(b) || {}).score || 0); if (va === vb) { va = a.deadline || "9999"; vb = b.deadline || "9999"; } }
-      else if (k === "company") { va = (a.company || "").toLowerCase(); vb = (b.company || "").toLowerCase(); }
-      else { va = a[k] || "9999"; vb = b[k] || "9999"; }
-      return (va < vb ? -1 : va > vb ? 1 : 0) * d;
-    });
-    $("#listCount").textContent = "Showing " + rows.length + " of " + state.opps.length + ". Click a row to edit it.";
-    var h = rows.map(function (o) {
-      return '<tr tabindex="0" data-row="' + esc(o.id) + '"><td><strong>' + esc(o.company) + "</strong> " + fitTag(o) + '<div class="sub">' + esc(o.title) + (o.location ? " · " + esc(o.location) : "") + "</div></td>" +
-        "<td>" + pill(o.status) + "</td>" +
-        "<td>" + (o.deadline ? '<span class="date">' + esc(fmt(o.deadline)) + "</span>" : '<span class="muted">—</span>') + "</td>" +
-        "<td>" + (o.nextAction ? esc(o.nextAction) + '<div class="sub">' + dueChip(o.nextDue) + "</div>" : '<span class="muted">—</span>') + "</td></tr>";
-    }).join("");
-    $("#listBody").innerHTML = h || '<tr><td colspan="4"><p class="empty">No opportunities match.</p></td></tr>';
-  }
-
   function renderDash() {
     var t = today(), o = state.opps;
     var appliedEver = o.filter(function (x) { return x.appliedDate || ["applied", "interviewing", "offer"].indexOf(x.status) >= 0; });
     var reachedInt = appliedEver.filter(function (x) { return x.status === "interviewing" || x.status === "offer" || x.interviewDate || x.history.some(function (h) { return h.to === "interviewing"; }); });
     var offers = o.filter(function (x) { return x.status === "offer"; });
     var rate = appliedEver.length ? Math.round(100 * reachedInt.length / appliedEver.length) : 0;
-    var h = '<div class="view-head"><div><h2>Progress</h2><p>How your search is going so far.</p></div></div>';
+    var h = '<div class="view-head"><div><h2>Insights</h2><p>How your search is going, and what might help.</p></div></div>';
     h += '<div class="panel kpis">' + kpi("Applications sent", appliedEver.length) + kpi("Got an interview", rate + "%") + kpi("Offers", offers.length) + "</div>";
     var max = Math.max(1, Math.max.apply(null, STATUSES.map(function (s) { return o.filter(function (x) { return x.status === s.id; }).length; })));
     h += '<div class="dash-grid"><div class="panel"><h3>By stage</h3><div class="bars">';
@@ -675,6 +715,18 @@ footer button { padding: 0; border: 0; background: none; color: var(--accent); f
         why: noReply.length + " applications have been waiting 3+ weeks with no follow-up logged.",
         fix: "Two weeks after applying, send a polite check-in to the recruiter or your contact. Check it off on the Today list to log it." });
     }
+    var matched = o.filter(function (x) { return !CLOSED[x.status] && match(x); });
+    if (matched.length >= 2) {
+      var avg = Math.round(matched.reduce(function (a, x) { return a + match(x).pct; }, 0) / matched.length);
+      if (avg < 65) {
+        var miss = {};
+        matched.forEach(function (x) { match(x).missing.forEach(function (k) { miss[k] = (miss[k] || 0) + 1; }); });
+        var top = Object.keys(miss).sort(function (a, b) { return miss[b] - miss[a]; }).slice(0, 4);
+        out.unshift({ title: "Your resume is missing skills these jobs ask for",
+          why: "On average your resume matches " + avg + "% of the skills in your saved job descriptions. Most often missing: " + top.join(", ") + ".",
+          fix: "If you have these skills, add them to your resume in the same words the posting uses. If not, pick one to learn (many have free courses) or target roles closer to your current skills." });
+      }
+    }
     if (profile) {
       var withFit = applied.filter(function (x) { var f = fit(x); return f && f.checks; });
       var strong = withFit.filter(function (x) { return fit(x).strong; });
@@ -728,6 +780,92 @@ footer button { padding: 0; border: 0; background: none; color: var(--accent); f
     return s + "</svg>";
   }
 
+  // ---------- Resume reading + matching (keyword based, runs in the browser) ----------
+  var SKILLS = ["SQL", "Python", "R", "Tableau", "Power BI", "Excel", "VBA", "SAS", "SPSS", "Stata", "Snowflake", "AWS", "Azure", "GCP", "BigQuery", "Spark",
+    "Looker", "Alteryx", "dbt", "Git", "JavaScript", "Java", "machine learning", "deep learning", "NLP", "statistics", "regression", "forecasting", "A/B testing",
+    "data visualization", "ETL", "data modeling", "dashboards", "pandas", "scikit-learn", "TensorFlow", "Salesforce", "Google Analytics", "SAP", "project management",
+    "Agile", "financial modeling", "market research", "supply chain", "optimization", "Jira", "PowerPoint", "stakeholder management", "storytelling", "time series", "Databricks", "Qualtrics"];
+  function findSkills(text) {
+    if (!text) return [];
+    return SKILLS.filter(function (s) {
+      if (s === "R") return /(^|[\s,(/;])R(?=[\s,)/;.]|$)/.test(text);
+      var re = new RegExp("(^|[^a-z0-9])" + s.toLowerCase().replace(/[.*+?^${}()|[\]\\\/]/g, "\\$&") + "(?=[^a-z0-9]|$)");
+      return re.test(text.toLowerCase());
+    });
+  }
+  function mySkills() {
+    if (!profile) return [];
+    var listed = String(profile.skills || "").split(",").map(function (x) { return x.trim(); }).filter(Boolean);
+    var found = findSkills(profile.resumeText || "");
+    var all = {}; listed.concat(found).forEach(function (s) { all[s.toLowerCase()] = s; });
+    return Object.keys(all).map(function (k) { return all[k]; });
+  }
+  // Resume match = share of skills the job description asks for that also appear on your resume.
+  function match(o) {
+    if (!profile || !o.description) return null;
+    var mine = mySkills().map(function (s) { return s.toLowerCase(); });
+    if (!mine.length) return null;
+    var wanted = findSkills(o.description);
+    if (!wanted.length) return null;
+    var have = wanted.filter(function (s) { return mine.indexOf(s.toLowerCase()) >= 0; });
+    var missing = wanted.filter(function (s) { return mine.indexOf(s.toLowerCase()) < 0; });
+    return { pct: Math.round(100 * have.length / wanted.length), have: have, missing: missing, wanted: wanted };
+  }
+  function fitRank(o) { var m = match(o), f = fit(o); return (m ? m.pct / 25 : 0) + (f ? f.score : 0); }
+
+  function loadScript(src) {
+    return new Promise(function (resolve, reject) {
+      if (document.querySelector('script[src="' + src + '"]')) return resolve();
+      var s = document.createElement("script"); s.src = src; s.onload = resolve; s.onerror = function () { reject(new Error("Couldn't load the file reader. Check your internet connection.")); };
+      document.head.appendChild(s);
+    });
+  }
+  function readResumeFile(file) {
+    var name = file.name.toLowerCase();
+    var asBuffer = function () { return new Promise(function (res, rej) { var r = new FileReader(); r.onload = function () { res(r.result); }; r.onerror = rej; r.readAsArrayBuffer(file); }); };
+    if (/\.pdf$/.test(name) || file.type === "application/pdf") {
+      var base = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/";
+      return loadScript(base + "pdf.worker.min.js").then(function () { return loadScript(base + "pdf.min.js"); }).then(asBuffer).then(function (buf) {
+        var lib = window.pdfjsLib; lib.GlobalWorkerOptions.workerSrc = base + "pdf.worker.min.js";
+        return lib.getDocument({ data: new Uint8Array(buf) }).promise.then(function (pdf) {
+          var pages = []; for (var i = 1; i <= Math.min(pdf.numPages, 6); i++) pages.push(pdf.getPage(i).then(function (p) { return p.getTextContent(); }));
+          return Promise.all(pages).then(function (cs) { return cs.map(function (c) { return c.items.map(function (it) { return it.str + (it.hasEOL ? "\n" : " "); }).join(""); }).join("\n"); });
+        });
+      });
+    }
+    if (/\.docx$/.test(name)) {
+      return loadScript("https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js").then(asBuffer).then(function (buf) {
+        return window.mammoth.extractRawText({ arrayBuffer: buf }).then(function (r) { return r.value; });
+      });
+    }
+    if (/\.(txt|md)$/.test(name) || /^text\//.test(file.type)) return new Promise(function (res, rej) { var r = new FileReader(); r.onload = function () { res(String(r.result)); }; r.onerror = rej; r.readAsText(file); });
+    return Promise.reject(new Error("Please upload a PDF, Word (.docx), or .txt file."));
+  }
+  function parseResume(text) {
+    var lines = text.split(/\n/).map(function (l) { return l.replace(/\s+/g, " ").trim(); }).filter(Boolean);
+    var out = { skills: findSkills(text) };
+    for (var i = 0; i < Math.min(4, lines.length); i++) {
+      var w = lines[i].split(" ");
+      if (w.length >= 2 && w.length <= 4 && /^[A-Za-z][A-Za-z.'\- ]+$/.test(lines[i])) { out.name = w[0].charAt(0).toUpperCase() + w[0].slice(1).toLowerCase(); break; }
+    }
+    var roles = {}, re = /\b(data|business|marketing|financial|finance|operations|product|risk|pricing|supply chain|analytics)\s+(analyst|scientist|intern|associate|consultant|manager|engineer)\b/gi, m;
+    while ((m = re.exec(text))) roles[(m[1] + " " + m[2]).toLowerCase()] = 1;
+    out.roles = Object.keys(roles).slice(0, 4).join(", ");
+    var loc = text.match(/\b([A-Z][a-zA-Z]+(?:\s[A-Z][a-zA-Z]+){0,2},\s*(?:CA|NY|WA|TX|OR|IL|MA|CO|NC|GA|FL|AZ|NV|UT|VA|DC|NJ|PA))\b/);
+    if (loc) out.location = loc[1];
+    return out;
+  }
+  function matchHTML(o) {
+    var m = match(o);
+    if (!m) {
+      if (!o.description) return "";
+      return '<p class="match muted">' + (profile && profile.resumeText ? "No common skills found in this description to compare." : 'Upload your resume under “About me & resume” to see how well you match this job.') + "</p>";
+    }
+    return '<div class="match"><div><strong>Resume match: ' + m.pct + "%</strong> <span class=\"muted\">(" + m.have.length + " of " + m.wanted.length + " skills this job asks for)</span></div>" +
+      (m.missing.length ? '<p>Not on your resume: <strong>' + esc(m.missing.join(", ")) + '</strong>. If you have these skills, add them before applying.</p>' : "<p>Your resume covers every skill we found in this posting.</p>") +
+      '<p class="muted" style="font-size:.8rem">Keyword matching, not AI.</p></div>';
+  }
+
   // ---------- Modal + editor ----------
   function closeModal() { $("#modalRoot").innerHTML = ""; document.removeEventListener("keydown", escClose); }
   function escClose(e) { if (e.key === "Escape") closeModal(); }
@@ -751,19 +889,20 @@ footer button { padding: 0; border: 0; background: none; color: var(--accent); f
   function openEditor(id, focusId) {
     var isNew = !id; var o = isNew ? blank() : JSON.parse(JSON.stringify(byId(id)));
     if (!o) return;
-    var h = '<form id="editForm" novalidate><div class="modal-h"><h2>' + (isNew ? "Add an opportunity" : esc(o.company) + " · " + esc(o.title)) + '</h2><button type="button" class="ghost" data-close="1" aria-label="Close">✕</button></div><div class="modal-b">';
-    h += '<details class="jd"><summary>Paste a job description to fill this in <span class="tag">(rule-based, not AI)</span></summary>' +
-      '<p class="muted" style="margin:0;font-size:.88rem">Finds the title, company, location, work arrangement, deadline, and link using simple text patterns. Check the results before saving.</p>' +
-      '<textarea id="f-jd" rows="5" placeholder="Paste the full job posting here…"></textarea><div class="row"><button type="button" id="btnExtract">Extract details</button><span id="extractMsg" class="muted" style="font-size:.88rem"></span></div></details>';
-    h += "<fieldset><legend>The role</legend>" +
+    var h = '<form id="editForm" novalidate><div class="modal-h"><h2>' + (isNew ? "Add a job" : esc(o.company) + " · " + esc(o.title)) + '</h2><button type="button" class="ghost" data-close="1" aria-label="Close">✕</button></div><div class="modal-b">';
+    h += '<div class="jd"><label>Job description <span class="tag">optional: paste the posting to fill in the form and check your resume match</span>' +
+      '<textarea id="f-description" rows="' + (o.description ? 4 : 3) + '" placeholder="Paste the full job posting here…">' + esc(o.description) + '</textarea></label>' +
+      '<div class="row"><button type="button" id="btnExtract">Fill in the form from this</button><span id="extractMsg" class="muted" style="font-size:.88rem"></span></div>' +
+      '<div id="matchBox">' + matchHTML(o) + "</div></div>";
+    h += "<fieldset><legend>The job</legend>" +
       field("company", "Company *", o.company, "text", { req: 1 }) + field("title", "Job title *", o.title, "text", { req: 1 }) +
       field("link", "Posting link", o.link, "url", { full: 1, ph: "https://…" }) +
       field("location", "Location", o.location, "text", { ph: "City, State" }) +
       selectField("arrangement", "Work arrangement", o.arrangement, [["", "Not sure yet"], ["On-site", "On-site"], ["Hybrid", "Hybrid"], ["Remote", "Remote"]]) +
       field("deadline", "Application deadline", o.deadline, "date") +
       selectField("interest", "Interest", o.interest, [["high", "High: dream role"], ["medium", "Medium"], ["low", "Low: backup"]]) + "</fieldset>";
-    h += "<fieldset><legend>Stage and next step</legend>" +
-      selectField("status", "Stage", o.status, STATUSES.map(function (s) { return [s.id, s.label]; })) +
+    h += "<fieldset><legend>Status and next step</legend>" +
+      selectField("status", "Status", o.status, STATUSES.map(function (s) { return [s.id, s.label]; })) +
       field("appliedDate", "Date applied", o.appliedDate, "date") +
       field("nextAction", "Next action", o.nextAction, "text", { list: "nextList", ph: "e.g. Contact an alum on LinkedIn" }) +
       field("nextDue", "Next action due", o.nextDue, "date") +
@@ -784,10 +923,11 @@ footer button { padding: 0; border: 0; background: none; color: var(--accent); f
     $all("[data-close]").forEach(function (b) { b.addEventListener("click", closeModal); });
     var f = $("#editForm");
     $("#btnExtract").addEventListener("click", function () {
-      var r = extractJD($("#f-jd").value), n = 0;
+      var r = extractJD($("#f-description").value), n = 0;
       Object.keys(r).forEach(function (k) { var el = $("#f-" + k); if (el && r[k] && !el.value) { el.value = r[k]; n++; } });
       $("#extractMsg").textContent = n ? "Filled " + n + " field" + (n > 1 ? "s" : "") + ". Please double-check them." : "Couldn't find new details. Fill the fields in by hand.";
     });
+    $("#f-description").addEventListener("input", function (e) { $("#matchBox").innerHTML = matchHTML({ description: e.target.value }); });
     if (!isNew) $("#btnDelete").addEventListener("click", function () {
       var left = $(".modal-f .left");
       left.innerHTML = '<span class="err">Delete this opportunity?</span><button type="button" class="danger" id="btnDelYes">Yes, delete</button><button type="button" id="btnDelNo">Keep it</button>';
@@ -803,7 +943,7 @@ footer button { padding: 0; border: 0; background: none; color: var(--accent); f
       var g = function (k) { var el = $("#f-" + k); return el ? el.value.trim() : ""; };
       if (!g("company") || !g("title")) { var er = $("#formErr"); er.textContent = "Add a company and a job title so you can find this later."; er.hidden = false; (g("company") ? $("#f-title") : $("#f-company")).focus(); return; }
       var target = isNew ? o : byId(o.id);
-      ["company", "title", "link", "location", "arrangement", "deadline", "interest", "appliedDate", "nextAction", "nextDue", "resume", "contact", "interviewDate", "notes"].forEach(function (k) { target[k] = g(k); });
+      ["company", "title", "link", "location", "arrangement", "deadline", "interest", "appliedDate", "nextAction", "nextDue", "resume", "contact", "interviewDate", "notes", "description"].forEach(function (k) { target[k] = g(k); });
       if (target.link && !/^https?:\/\//i.test(target.link)) target.link = "https://" + target.link;
       target.thankYouSent = $("#f-thankYouSent").checked;
       var ns = g("status");
@@ -969,32 +1109,50 @@ footer button { padding: 0; border: 0; background: none; color: var(--accent); f
     });
   }
 
-  // ---------- Profile modal ----------
+  // ---------- About me + resume ----------
   function openProfile() {
-    var p = profile || { name: "", lookingFor: "", roles: "", locations: "", arrangement: "", weeklyGoal: 5 };
+    var p = profile ? JSON.parse(JSON.stringify(profile)) : { name: "", lookingFor: "", roles: "", locations: "", arrangement: "", weeklyGoal: 5, skills: "", resumeText: "", resumeName: "" };
     var opt = function (v, l, cur) { return '<option value="' + v + '"' + (v === cur ? " selected" : "") + ">" + l + "</option>"; };
-    var h = '<form id="profileForm" novalidate><div class="modal-h"><h2>Make it yours</h2><button type="button" class="ghost" data-close="1" aria-label="Close">✕</button></div><div class="modal-b">' +
-      '<p class="profile-intro">Tell NextMove what you are looking for. It uses this to greet you, flag jobs that are a strong fit, and set a weekly goal. It stays in this browser.</p>' +
-      '<fieldset>' +
-      '<label>Your first name<input id="p-name" value="' + esc(p.name) + '" placeholder="e.g. Carly"></label>' +
+    var h = '<form id="profileForm" novalidate><div class="modal-h"><h2>About me &amp; resume</h2><button type="button" class="ghost" data-close="1" aria-label="Close">✕</button></div><div class="modal-b">' +
+      '<div class="upload"><label class="upload-box" for="p-file"><strong>Upload your resume</strong><span class="muted">PDF, Word (.docx), or .txt. It is read and kept in this browser only, never sent anywhere.</span>' +
+      '<input id="p-file" type="file" accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"></label>' +
+      '<p id="p-status" class="muted" style="margin:0">' + (p.resumeName ? "Current resume: " + esc(p.resumeName) : "") + "</p></div>" +
+      '<fieldset><legend>What you are looking for</legend>' +
+      '<label>First name<input id="p-name" value="' + esc(p.name) + '"></label>' +
       '<label>Looking for<select id="p-lookingFor">' + opt("", "Internships and full-time", p.lookingFor) + opt("internship", "Internships", p.lookingFor) + opt("fulltime", "Full-time roles", p.lookingFor) + "</select></label>" +
-      '<label class="full">Roles you want<input id="p-roles" value="' + esc(p.roles) + '" placeholder="e.g. data analyst, business analyst, data scientist"></label>' +
-      '<label class="full">Places you want to work<input id="p-locations" value="' + esc(p.locations) + '" placeholder="e.g. San Francisco, Los Angeles, Remote"></label>' +
-      '<label>Work style you prefer<select id="p-arrangement">' + opt("", "No preference", p.arrangement) + opt("Remote", "Remote", p.arrangement) + opt("Hybrid", "Hybrid", p.arrangement) + opt("On-site", "On-site", p.arrangement) + "</select></label>" +
-      '<label>Applications per week (goal)<input id="p-weeklyGoal" type="number" min="0" max="50" value="' + esc(p.weeklyGoal) + '"></label>' +
-      '</fieldset><p class="muted" style="margin:0;font-size:.85rem">Separate several roles or places with commas.</p></div>' +
-      '<div class="modal-f"><div class="left">' + (profile ? '<button type="button" class="danger" id="p-reset">Remove my profile</button>' : "") + '</div><button type="button" data-close="1">' + (profile ? "Cancel" : "Skip for now") + '</button><button type="submit" class="primary">Save</button></div></form>';
+      '<label class="full">Roles you want<input id="p-roles" value="' + esc(p.roles) + '" placeholder="e.g. data analyst, business analyst"></label>' +
+      '<label class="full">Places you want to work<input id="p-locations" value="' + esc(p.locations) + '" placeholder="e.g. San Francisco, Remote"></label>' +
+      '<label>Work style<select id="p-arrangement">' + opt("", "No preference", p.arrangement) + opt("Remote", "Remote", p.arrangement) + opt("Hybrid", "Hybrid", p.arrangement) + opt("On-site", "On-site", p.arrangement) + "</select></label>" +
+      '<label>Weekly goal (applications)<input id="p-weeklyGoal" type="number" min="0" max="50" value="' + esc(p.weeklyGoal) + '"></label>' +
+      '<label class="full">Your skills<textarea id="p-skills" rows="2" placeholder="Filled in from your resume. Separate with commas.">' + esc(p.skills) + "</textarea></label>" +
+      "</fieldset></div>" +
+      '<div class="modal-f"><div class="left">' + (profile ? '<button type="button" class="danger" id="p-reset">Remove my profile and resume</button>' : "") + '</div><button type="button" data-close="1">Cancel</button><button type="submit" class="primary">Save</button></div></form>';
     openModal(h);
     $all("[data-close]").forEach(function (b) { b.addEventListener("click", closeModal); });
-    if (profile) $("#p-reset").addEventListener("click", function () { profile = null; try { localStorage.removeItem(PROFILE_KEY); } catch (e) {} closeModal(); render(); toast("Profile removed."); });
+    if (profile) $("#p-reset").addEventListener("click", function () { profile = null; try { localStorage.removeItem(PROFILE_KEY); } catch (e) {} closeModal(); render(); toast("Profile and resume removed."); });
+    $("#p-file").addEventListener("change", function (e) {
+      var file = e.target.files[0]; if (!file) return;
+      var st = $("#p-status"); st.className = "muted"; st.textContent = "Reading " + file.name + "…";
+      readResumeFile(file).then(function (text) {
+        if (!text || text.trim().length < 40) throw new Error("Couldn't find text in that file. If it's a scanned PDF, try the Word version or a .txt copy.");
+        var r = parseResume(text);
+        p.resumeText = text.slice(0, 40000); p.resumeName = file.name;
+        var fillIf = function (id, v) { var el = $("#" + id); if (el && v && !el.value.trim()) el.value = v; };
+        fillIf("p-name", r.name); fillIf("p-roles", r.roles); fillIf("p-locations", r.location);
+        var cur = $("#p-skills").value.split(",").map(function (x) { return x.trim(); }).filter(Boolean);
+        r.skills.forEach(function (s) { if (cur.map(function (c) { return c.toLowerCase(); }).indexOf(s.toLowerCase()) < 0) cur.push(s); });
+        $("#p-skills").value = cur.join(", ");
+        st.className = ""; st.textContent = "Read " + file.name + ". Found " + r.skills.length + " skills" + (r.roles ? " and the roles you have held" : "") + ". Check the fields below, then Save.";
+      }).catch(function (err) { st.className = "err"; st.textContent = err.message || "Couldn't read that file."; });
+    });
     $("#profileForm").addEventListener("submit", function (e) {
       e.preventDefault();
       profile = { name: $("#p-name").value.trim(), lookingFor: $("#p-lookingFor").value, roles: $("#p-roles").value.trim(), locations: $("#p-locations").value.trim(),
-        arrangement: $("#p-arrangement").value, weeklyGoal: Math.max(0, Math.min(50, parseInt($("#p-weeklyGoal").value, 10) || 0)) };
+        arrangement: $("#p-arrangement").value, weeklyGoal: Math.max(0, Math.min(50, parseInt($("#p-weeklyGoal").value, 10) || 0)),
+        skills: $("#p-skills").value.trim(), resumeText: p.resumeText || "", resumeName: p.resumeName || "" };
       saveProfile(); closeModal(); render();
       toast(profile.name ? "Saved. Welcome, " + esc(profile.name) + "!" : "Saved.");
     });
-    setTimeout(function () { $("#p-name").focus(); }, 30);
   }
 
   // ---------- Toast ----------
@@ -1027,38 +1185,33 @@ footer button { padding: 0; border: 0; background: none; color: var(--accent); f
   document.addEventListener("click", function (e) {
     var t = e.target;
     var tab = t.closest(".tabs button"); if (tab) { view = tab.dataset.view; setPref(VIEW_KEY, view); render(); return; }
-    if (t.closest("#btnAdd")) { openEditor(null); return; }
+    if (t.closest("#btnAdd") || t.closest("[data-act='add']")) { openEditor(null); return; }
     var vg = t.closest("[data-view-go]"); if (vg) { view = vg.dataset.viewGo; setPref(VIEW_KEY, view); render(); window.scrollTo(0, 0); return; }
     if (t.closest("#btnProfile") || t.closest("[data-act='profile']")) { openProfile(); return; }
-    if (t.closest("#btnData") || t.closest("#btnFooterData")) { openData(); return; }
-    var ce = t.closest("[data-act='clear-examples']");
-    if (t.closest("[data-act='toggle-later']")) { showLater = !showLater; render(); return; }
-    if (ce) { var removed = state.opps.filter(function (o) { return o.example; }); state.opps = state.opps.filter(function (o) { return !o.example; }); save(); render(); if (!profile) { openProfile(); return; } toast("Examples cleared. Click “+ Add” to add your first job.", "Undo", function () { state.opps = removed.concat(state.opps); save(); render(); }); return; }
+    if (t.closest("#btnFooterData")) { openData(); return; }
+    if (t.closest("[data-act='toggle-tasks']")) { showAllTasks = !showAllTasks; render(); return; }
+    if (t.closest("[data-act='load-samples']")) { state.opps = sampleData().concat(state.opps); save(); render(); toast("Sample jobs added. Remove them any time."); return; }
+    if (t.closest("[data-act='clear-examples']")) { var removed = state.opps.filter(function (o) { return o.example; }); state.opps = state.opps.filter(function (o) { return !o.example; }); save(); render(); toast("Sample jobs removed.", "Undo", function () { state.opps = removed.concat(state.opps); save(); render(); }); return; }
+    var chip = t.closest("[data-filter]"); if (chip) { listState.status = chip.dataset.filter; $all("[data-filter]").forEach(function (c) { c.setAttribute("aria-pressed", c === chip ? "true" : "false"); }); renderJobRows(); return; }
     var dn = t.closest("[data-done]"); if (dn) { completeTask(dn.dataset.done, dn.dataset.id); return; }
     var op = t.closest("[data-open]"); if (op) { openEditor(op.dataset.open, op.dataset.focus); return; }
-    if (t.closest("[data-stop]")) return;
-    if (t.closest("select")) return;
+    if (t.closest("select") || t.closest("a")) return;
     var card = t.closest("[data-card]"); if (card) { openEditor(card.dataset.card); return; }
-    var row = t.closest("[data-row]"); if (row) { openEditor(row.dataset.row); return; }
-    var sb = t.closest("[data-sort]"); if (sb) { var k = sb.dataset.sort; if (listState.sort === k) listState.dir *= -1; else { listState.sort = k; listState.dir = 1; } $("#f-sort").value = k; renderListBody(); }
   });
   document.addEventListener("keydown", function (e) {
     if (e.key !== "Enter") return;
-    var c = e.target.closest && (e.target.closest("[data-card]") || e.target.closest("[data-row]"));
-    if (c && (e.target === c)) openEditor(c.dataset.card || c.dataset.row);
+    var c = e.target.closest && e.target.closest("[data-card]");
+    if (c && e.target === c) openEditor(c.dataset.card);
   });
   document.addEventListener("change", function (e) {
     var t = e.target;
     if (t.dataset.move) { moveTo(t.dataset.move, t.value); return; }
-    if (t.id === "f-status") { listState.status = t.value; renderListBody(); }
-    if (t.id === "f-arr") { listState.arrangement = t.value; renderListBody(); }
-    if (t.id === "f-int") { listState.interest = t.value; renderListBody(); }
-    if (t.id === "f-sort") { listState.sort = t.value; listState.dir = 1; renderListBody(); }
+    if (t.id === "f-sort") { listState.sort = t.value; renderJobRows(); }
   });
-  document.addEventListener("input", function (e) { if (e.target.id === "f-q") { listState.q = e.target.value; renderListBody(); } });
+  document.addEventListener("input", function (e) { if (e.target.id === "f-q") { listState.q = e.target.value; renderJobRows(); } });
 
   load();
-  if (["today", "board", "list", "dash"].indexOf(view) < 0) view = "today";
+  if (["home", "board", "dash"].indexOf(view) < 0) view = "home";
   render();
 })();
 </script>
