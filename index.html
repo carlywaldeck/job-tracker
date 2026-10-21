@@ -83,6 +83,16 @@ main > * { min-width: 0; }
 .note.warn { color: var(--warn); }
 .welcome { display: grid; gap: 6px; max-width: 70ch; }
 .welcome p { margin: 0; }
+.welcome .row { margin-top: 6px; }
+.fit { font-size: .76rem; font-weight: 600; color: var(--good); white-space: nowrap; }
+.goal { display: grid; gap: 8px; max-width: 760px; }
+.goal-top { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: .92rem; }
+.goal-bar { height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+.goal-bar div { height: 100%; background: var(--good); border-radius: 3px; }
+.profile-intro { margin: 0; color: var(--muted); }
+.insights { display: grid; gap: 4px; }
+.insight { padding: 14px 0; border-top: 1px solid var(--line); display: grid; gap: 2px; max-width: 72ch; }
+.insight p { margin: 0; }
 .note button { padding: 0; border: 0; background: none; color: var(--accent); font-weight: 500; }
 .note button:hover { text-decoration: underline; }
 
@@ -224,6 +234,7 @@ footer button { padding: 0; border: 0; background: none; color: var(--accent); f
       <button role="tab" data-view="dash" id="tab-dash">Progress</button>
     </nav>
     <div class="head-actions">
+      <button id="btnProfile" class="ghost" type="button">My profile</button>
       <button id="btnData" class="ghost" type="button">Import / Export</button>
       <button id="btnAdd" class="primary" type="button">+ Add</button>
     </div>
@@ -311,6 +322,38 @@ footer button { padding: 0; border: 0; background: none; color: var(--accent); f
   function getPref(k, d) { try { return localStorage.getItem(k) || d; } catch (e) { return d; } }
   function setPref(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 
+  // ---------- Profile (personalization) ----------
+  var PROFILE_KEY = "nextmove.profile.v1";
+  var profile = null;
+  try { profile = JSON.parse(localStorage.getItem(PROFILE_KEY) || "null"); } catch (e) { profile = null; }
+  function saveProfile() { try { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); } catch (e) {} }
+  function splitList(s) { return String(s || "").split(/[,;\n]/).map(function (x) { return x.trim().toLowerCase(); }).filter(Boolean); }
+  // Fit = how many of the user's stated goals this opportunity matches (role, place, work style).
+  function fit(o) {
+    if (!profile) return null;
+    var reasons = [], checks = 0;
+    var roles = splitList(profile.roles), locs = splitList(profile.locations), title = (o.title || "").toLowerCase(), loc = (o.location || "").toLowerCase();
+    if (roles.length) { checks++; if (roles.some(function (r) { return title.indexOf(r) >= 0 || r.split(/\s+/).every(function (w) { return title.indexOf(w) >= 0; }); })) reasons.push("role you want"); }
+    if (locs.length) { checks++; if (locs.some(function (l) { return loc.indexOf(l) >= 0 || (l === "remote" && o.arrangement === "Remote"); })) reasons.push("location you want"); }
+    if (profile.arrangement) { checks++; if (o.arrangement === profile.arrangement) reasons.push(profile.arrangement.toLowerCase() + " like you prefer"); }
+    if (profile.lookingFor === "internship" || profile.lookingFor === "fulltime") {
+      checks++; var isIntern = /intern/.test(title);
+      if ((profile.lookingFor === "internship") === isIntern) reasons.push(isIntern ? "an internship" : "a full-time role");
+    }
+    var strong = checks > 0 && reasons.length >= Math.max(2, checks - 1);
+    return { score: reasons.length, checks: checks, strong: strong, reasons: reasons };
+  }
+  function fitTag(o) {
+    var f = fit(o); if (!f || !f.strong) return "";
+    return '<span class="fit" title="Matches: ' + esc(f.reasons.join(", ")) + '">Strong fit</span>';
+  }
+  function greeting() {
+    var hr = new Date().getHours();
+    var part = hr < 12 ? "Good morning" : hr < 18 ? "Good afternoon" : "Good evening";
+    return profile && profile.name ? part + ", " + profile.name + "." : "";
+  }
+  function weekStart() { var t = today(); return addDays(t, -((parseISO(t).getDay() + 6) % 7)); }
+
   function blank() {
     return { id: uid(), company: "", title: "", link: "", location: "", arrangement: "", deadline: "", status: "saved", interest: "medium",
       nextAction: "", nextDue: "", appliedDate: "", resume: "", contact: "", interviewDate: "", thankYouSent: false, followUpDate: "",
@@ -384,7 +427,7 @@ footer button { padding: 0; border: 0; background: none; color: var(--accent); f
     tasks.sort(function (a, b) {
       if (!a.due !== !b.due) return a.due ? -1 : 1;
       if (a.due !== b.due) return a.due < b.due ? -1 : 1;
-      return (INTEREST[b.o.interest] || 0) - (INTEREST[a.o.interest] || 0);
+      return (INTEREST[b.o.interest] || 0) - (INTEREST[a.o.interest] || 0) || ((fit(b.o) || {}).score || 0) - ((fit(a.o) || {}).score || 0);
     });
     return tasks;
   }
@@ -414,6 +457,7 @@ footer button { padding: 0; border: 0; background: none; color: var(--accent); f
     if (state.opps.some(function (o) { return o.example; }))
       h += '<div class="welcome"><p><strong>Welcome to NextMove.</strong> Add the jobs you are interested in, give each one a next step, and check <em>Today</em> each day to see what to do. ' +
         'Everything you enter stays private in your own browser. No sign-up needed.</p>' +
+        (profile ? "" : '<div class="row"><button type="button" class="primary" data-act="profile">Set up my tracker (1 minute)</button></div>') +
         '<p class="note"><span>The entries below are examples so you can try things out.</span><button type="button" data-act="clear-examples">Clear examples and start my own list</button></p></div>';
     $("#banners").innerHTML = h;
     $("#banners").hidden = !h;
@@ -430,7 +474,17 @@ footer button { padding: 0; border: 0; background: none; color: var(--accent); f
     var later = tasks.filter(function (x) { return !x.due || diffDays(x.due, t) > 7; });
     var n = over.length + now.length;
     var summary = n ? n + (n === 1 ? " thing needs" : " things need") + " your attention" + (over.length ? " (" + over.length + " overdue)" : "") + "." : "You're caught up for today.";
-    var h = '<div class="view-head"><div><h2>What should I do today?</h2><p>' + esc(summary) + "</p></div></div>";
+    var h = '<div class="view-head"><div><h2>What should I do today?</h2><p>' + esc((greeting() ? greeting() + " " : "") + summary) + "</p></div></div>";
+    if (profile && +profile.weeklyGoal > 0) {
+      var ws = weekStart(), goal = +profile.weeklyGoal;
+      var sent = state.opps.filter(function (o) { return o.appliedDate && o.appliedDate >= ws; }).length;
+      var fits = state.opps.filter(function (o) { return o.status === "saved" && fit(o) && fit(o).strong; });
+      h += '<div class="goal"><div class="goal-top"><span><strong>' + sent + " of " + goal + "</strong> applications sent this week</span>" +
+        '<span class="muted">' + (sent >= goal ? "Goal met. Nice work." : (goal - sent) + " to go") + "</span></div>" +
+        '<div class="goal-bar"><div style="width:' + Math.min(100, 100 * sent / goal) + '%"></div></div>' +
+        (sent < goal && fits.length ? '<p class="note"><span>Strong fits you haven\'t applied to yet:</span>' + fits.slice(0, 3).map(function (o) { return '<button type="button" data-open="' + esc(o.id) + '">' + esc(o.company) + "</button>"; }).join("") + "</p>" : "") +
+        "</div>";
+    }
     h += '<div class="today">';
     var group = function (title, items, cls) {
       if (!items.length) return "";
@@ -438,7 +492,7 @@ footer button { padding: 0; border: 0; background: none; color: var(--accent); f
       items.forEach(function (x) {
         var box = x.act === "prep" ? '<span class="donebox-spacer" aria-hidden="true"></span>' :
           '<button type="button" class="donebox" title="Mark done" aria-label="Mark done: ' + esc(x.text) + '" data-done="' + esc(x.act) + '" data-id="' + esc(x.o.id) + '"></button>';
-        g += '<div class="task">' + box + '<div class="t-main"><div class="t-what">' + esc(x.text) + '</div><div class="t-who">' + oppLabel(x.o) + "</div></div>" +
+        g += '<div class="task">' + box + '<div class="t-main"><div class="t-what">' + esc(x.text) + '</div><div class="t-who">' + oppLabel(x.o) + " " + fitTag(x.o) + "</div></div>" +
           (x.due ? dueChip(x.due) : "") + "</div>";
       });
       return g + "</div>";
@@ -449,6 +503,8 @@ footer button { padding: 0; border: 0; background: none; color: var(--accent); f
       h += '<button type="button" class="ghost more" data-act="toggle-later">' + (showLater ? "Hide later tasks" : "Show " + later.length + " later task" + (later.length > 1 ? "s" : "")) + "</button>";
     }
     if (!tasks.length) h += '<p class="empty">Nothing on your list. Add an opportunity or give one a next step and it will show up here.</p>';
+    var tips = insights().filter(function (i) { return i.title !== "Not enough data yet"; });
+    if (tips.length) h += '<p class="note"><span>Tip: ' + esc(tips[0].title) + '.</span><button type="button" data-view-go="dash">See ' + (tips.length > 1 ? "all " + tips.length + " tips" : "why") + "</button></p>";
     var noNext = state.opps.filter(function (o) { return !CLOSED[o.status] && o.status !== "offer" && !o.nextAction; });
     if (noNext.length) {
       h += '<p class="note"><span>No next step yet:</span>' + noNext.slice(0, 4).map(function (o) { return '<button type="button" data-open="' + esc(o.id) + '" data-focus="f-nextAction">' + esc(o.company) + "</button>"; }).join("") + "</p>";
@@ -468,7 +524,7 @@ footer button { padding: 0; border: 0; background: none; color: var(--accent); f
         var sub = o.nextAction ? esc(o.nextAction) + (o.nextDue ? dueChip(o.nextDue) : "") :
           (o.status === "saved" && o.deadline ? "Closes " + dueChip(o.deadline) : "");
         h += '<div class="card" draggable="true" tabindex="0" data-card="' + esc(o.id) + '">' +
-          '<div class="co">' + esc(o.company) + '</div><div class="ti">' + esc(o.title) + "</div>" +
+          '<div class="co">' + esc(o.company) + '</div><div class="ti">' + esc(o.title) + "</div>" + fitTag(o) +
           (sub ? '<div class="nx">' + sub + "</div>" : "") +
           '<select aria-label="Move ' + esc(o.company) + ' to stage" data-move="' + esc(o.id) + '">' + opts + "</select></div>";
       });
@@ -510,7 +566,7 @@ footer button { padding: 0; border: 0; background: none; color: var(--accent); f
       '<label>Stage<select id="f-status">' + so("active", "Open", listState.status) + so("", "All", listState.status) +
         STATUSES.map(function (s) { return so(s.id, s.label, listState.status); }).join("") + "</select></label>" +
       '<label>Sort by<select id="f-sort">' + so("deadline", "Deadline", listState.sort) + so("nextDue", "Next step due", listState.sort) + so("company", "Company A–Z", listState.sort) +
-        so("interest", "Interest", listState.sort) + so("status", "Stage", listState.sort) + so("updatedAt", "Recently updated", listState.sort) + "</select></label></div>";
+        so("interest", "Interest", listState.sort) + so("status", "Stage", listState.sort) + so("updatedAt", "Recently updated", listState.sort) + (profile ? so("fit", "Best fit for me", listState.sort) : "") + "</select></label></div>";
     h += '<div class="table-scroll"><table><thead><tr><th>Company / role</th><th>Stage</th><th>Deadline</th><th>Next step</th></tr></thead><tbody id="listBody"></tbody></table></div>';
     return h;
   }
@@ -531,13 +587,14 @@ footer button { padding: 0; border: 0; background: none; color: var(--accent); f
       if (k === "interest") { va = -(INTEREST[a.interest] || 0); vb = -(INTEREST[b.interest] || 0); }
       else if (k === "status") { va = order[a.status]; vb = order[b.status]; }
       else if (k === "updatedAt") { va = b.updatedAt || ""; vb = a.updatedAt || ""; }
+      else if (k === "fit") { va = -((fit(a) || {}).score || 0); vb = -((fit(b) || {}).score || 0); if (va === vb) { va = a.deadline || "9999"; vb = b.deadline || "9999"; } }
       else if (k === "company") { va = (a.company || "").toLowerCase(); vb = (b.company || "").toLowerCase(); }
       else { va = a[k] || "9999"; vb = b[k] || "9999"; }
       return (va < vb ? -1 : va > vb ? 1 : 0) * d;
     });
     $("#listCount").textContent = "Showing " + rows.length + " of " + state.opps.length + ". Click a row to edit it.";
     var h = rows.map(function (o) {
-      return '<tr tabindex="0" data-row="' + esc(o.id) + '"><td><strong>' + esc(o.company) + '</strong><div class="sub">' + esc(o.title) + (o.location ? " · " + esc(o.location) : "") + "</div></td>" +
+      return '<tr tabindex="0" data-row="' + esc(o.id) + '"><td><strong>' + esc(o.company) + "</strong> " + fitTag(o) + '<div class="sub">' + esc(o.title) + (o.location ? " · " + esc(o.location) : "") + "</div></td>" +
         "<td>" + pill(o.status) + "</td>" +
         "<td>" + (o.deadline ? '<span class="date">' + esc(fmt(o.deadline)) + "</span>" : '<span class="muted">—</span>') + "</td>" +
         "<td>" + (o.nextAction ? esc(o.nextAction) + '<div class="sub">' + dueChip(o.nextDue) + "</div>" : '<span class="muted">—</span>') + "</td></tr>";
@@ -561,7 +618,86 @@ footer button { padding: 0; border: 0; background: none; color: var(--accent); f
     });
     h += "</div></div>";
     h += '<div class="panel chart"><h3>Applications per week</h3>' + weeklyChart(o) + "</div></div>";
+    h += renderInsights();
     return h;
+  }
+  // Rule-based coaching: looks for patterns in the user's own tracker that often explain silence or rejections.
+  function insights() {
+    var t = today(), o = state.opps, out = [];
+    var applied = o.filter(function (x) { return x.appliedDate || ["applied", "interviewing", "offer"].indexOf(x.status) >= 0; });
+    var interviewed = applied.filter(function (x) { return x.status === "interviewing" || x.status === "offer" || x.interviewDate || x.history.some(function (h) { return h.to === "interviewing"; }); });
+    var offers = o.filter(function (x) { return x.status === "offer"; });
+    var pct = function (a, b) { return Math.round(100 * a / b); };
+    if (applied.length < 3) {
+      return [{ title: "Not enough data yet", why: "You have " + applied.length + " application" + (applied.length === 1 ? "" : "s") + " tracked.", fix: "Tips will appear here once you have tracked a few applications and their outcomes." }];
+    }
+    var noReply = applied.filter(function (x) { return x.status === "applied" && x.appliedDate && diffDays(t, x.appliedDate) >= 21; });
+    var rejNoInt = o.filter(function (x) { return x.status === "rejected" && !x.interviewDate && !x.history.some(function (h) { return h.to === "interviewing"; }); });
+    if (applied.length >= 4 && interviewed.length / applied.length < 0.25 || rejNoInt.length + noReply.length >= 3) {
+      out.push({ title: "Your resume may not be getting past the first screen",
+        why: interviewed.length + " of " + applied.length + " applications (" + pct(interviewed.length, applied.length) + "%) led to an interview" + (noReply.length ? ", and " + noReply.length + " have had no reply for 3+ weeks" : "") + ".",
+        fix: "Tailor your resume to each posting and mirror its keywords (tools, skills, job title). Ask Career Services for a resume review." });
+    }
+    var versions = {};
+    applied.forEach(function (x) { var v = (x.resume || "").trim().toLowerCase(); if (v) versions[v] = (versions[v] || 0) + 1; });
+    var topV = Object.keys(versions).sort(function (a, b) { return versions[b] - versions[a]; })[0];
+    if (topV && versions[topV] >= 3) {
+      out.push({ title: "You are sending the same resume to different roles",
+        why: "The same version went to " + versions[topV] + " applications.",
+        fix: "Keep a base resume, then adjust the summary and top bullets for each role type (for example marketing analytics vs. finance)." });
+    }
+    var noContact = applied.filter(function (x) { return !x.contact; });
+    if (noContact.length / applied.length >= 0.5) {
+      out.push({ title: "Most applications have no connection behind them",
+        why: noContact.length + " of " + applied.length + " applications have no network contact recorded.",
+        fix: "Before applying, find one alum or employee through the LinkedIn Alumni Tool or Cal Poly Career Connections and ask for a 15-minute chat. Referrals get read first." });
+    }
+    var late = applied.filter(function (x) { return x.appliedDate && x.deadline && diffDays(x.deadline, x.appliedDate) <= 3; });
+    if (late.length >= 2 && late.length / applied.length >= 0.3) {
+      out.push({ title: "You often apply close to the deadline",
+        why: late.length + " applications went in within 3 days of the posting closing.",
+        fix: "Many employers review on a rolling basis and fill interview slots early. Aim to apply in the first week a posting is open." });
+    }
+    var intRejected = o.filter(function (x) { return x.status === "rejected" && (x.interviewDate || x.history.some(function (h) { return h.to === "interviewing"; })); });
+    if (intRejected.length >= 1 && offers.length === 0 || interviewed.length >= 3 && offers.length === 0) {
+      out.push({ title: "Interviews are not turning into offers yet",
+        why: interviewed.length + " interview" + (interviewed.length === 1 ? "" : "s") + " so far and no offers" + (intRejected.length ? ", with " + intRejected.length + " rejection after interviewing" : "") + ".",
+        fix: "Practice STAR stories and a technical case (SQL, Excel, a business case) on Big Interview, and book a mock interview with a career advisor." });
+    }
+    var noThanks = o.filter(function (x) { return x.interviewDate && x.interviewDate < t && !x.thankYouSent; });
+    if (noThanks.length) {
+      out.push({ title: "Thank-you notes are missing",
+        why: noThanks.length + " past interview" + (noThanks.length === 1 ? " has" : "s have") + " no thank-you note marked as sent.",
+        fix: "Send a short thank-you within 24 hours that mentions one specific thing you discussed." });
+    }
+    if (noReply.length >= 2 && noReply.filter(function (x) { return !x.followUpDate; }).length >= 2) {
+      out.push({ title: "You are not following up",
+        why: noReply.length + " applications have been waiting 3+ weeks with no follow-up logged.",
+        fix: "Two weeks after applying, send a polite check-in to the recruiter or your contact. Check it off on the Today list to log it." });
+    }
+    if (profile) {
+      var withFit = applied.filter(function (x) { var f = fit(x); return f && f.checks; });
+      var strong = withFit.filter(function (x) { return fit(x).strong; });
+      if (withFit.length >= 3 && strong.length / withFit.length < 0.4) {
+        out.push({ title: "Many applications don't match what you said you want",
+          why: "Only " + strong.length + " of " + withFit.length + " applications are a strong fit for your profile.",
+          fix: "Spend more time on fewer, better-matched roles. Strong fits are easier to tailor for and to talk about in interviews." });
+      }
+      if (+profile.weeklyGoal > 0) {
+        var lastWk = addDays(weekStart(), -7);
+        var n = applied.filter(function (x) { return x.appliedDate >= lastWk && x.appliedDate < weekStart(); }).length;
+        if (n < +profile.weeklyGoal) out.push({ title: "Volume is below your goal", why: "You sent " + n + " application" + (n === 1 ? "" : "s") + " last week against a goal of " + profile.weeklyGoal + ".",
+          fix: "Block two short sessions on your calendar each week just for applications, and keep a few saved roles ready to go." });
+      }
+    }
+    return out;
+  }
+  function renderInsights() {
+    var list = insights();
+    var h = '<div class="panel insights"><h3>Why you might not be hearing back</h3><p class="muted" style="margin:0 0 6px;font-size:.85rem">Based on patterns in your own tracker. These are rule-based tips, not AI.</p>';
+    if (!list.length) h += '<p class="muted" style="margin:0">No warning signs right now. Keep doing what you are doing.</p>';
+    list.forEach(function (i) { h += '<div class="insight"><strong>' + esc(i.title) + '</strong><p class="muted">' + esc(i.why) + "</p><p>" + esc(i.fix) + "</p></div>"; });
+    return h + "</div>";
   }
   function kpi(l, v) { return '<div class="kpi"><span class="v">' + esc(v) + '</span><span class="l">' + esc(l) + "</span></div>"; }
   function weeklyChart(o) {
@@ -833,6 +969,34 @@ footer button { padding: 0; border: 0; background: none; color: var(--accent); f
     });
   }
 
+  // ---------- Profile modal ----------
+  function openProfile() {
+    var p = profile || { name: "", lookingFor: "", roles: "", locations: "", arrangement: "", weeklyGoal: 5 };
+    var opt = function (v, l, cur) { return '<option value="' + v + '"' + (v === cur ? " selected" : "") + ">" + l + "</option>"; };
+    var h = '<form id="profileForm" novalidate><div class="modal-h"><h2>Make it yours</h2><button type="button" class="ghost" data-close="1" aria-label="Close">✕</button></div><div class="modal-b">' +
+      '<p class="profile-intro">Tell NextMove what you are looking for. It uses this to greet you, flag jobs that are a strong fit, and set a weekly goal. It stays in this browser.</p>' +
+      '<fieldset>' +
+      '<label>Your first name<input id="p-name" value="' + esc(p.name) + '" placeholder="e.g. Carly"></label>' +
+      '<label>Looking for<select id="p-lookingFor">' + opt("", "Internships and full-time", p.lookingFor) + opt("internship", "Internships", p.lookingFor) + opt("fulltime", "Full-time roles", p.lookingFor) + "</select></label>" +
+      '<label class="full">Roles you want<input id="p-roles" value="' + esc(p.roles) + '" placeholder="e.g. data analyst, business analyst, data scientist"></label>' +
+      '<label class="full">Places you want to work<input id="p-locations" value="' + esc(p.locations) + '" placeholder="e.g. San Francisco, Los Angeles, Remote"></label>' +
+      '<label>Work style you prefer<select id="p-arrangement">' + opt("", "No preference", p.arrangement) + opt("Remote", "Remote", p.arrangement) + opt("Hybrid", "Hybrid", p.arrangement) + opt("On-site", "On-site", p.arrangement) + "</select></label>" +
+      '<label>Applications per week (goal)<input id="p-weeklyGoal" type="number" min="0" max="50" value="' + esc(p.weeklyGoal) + '"></label>' +
+      '</fieldset><p class="muted" style="margin:0;font-size:.85rem">Separate several roles or places with commas.</p></div>' +
+      '<div class="modal-f"><div class="left">' + (profile ? '<button type="button" class="danger" id="p-reset">Remove my profile</button>' : "") + '</div><button type="button" data-close="1">' + (profile ? "Cancel" : "Skip for now") + '</button><button type="submit" class="primary">Save</button></div></form>';
+    openModal(h);
+    $all("[data-close]").forEach(function (b) { b.addEventListener("click", closeModal); });
+    if (profile) $("#p-reset").addEventListener("click", function () { profile = null; try { localStorage.removeItem(PROFILE_KEY); } catch (e) {} closeModal(); render(); toast("Profile removed."); });
+    $("#profileForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      profile = { name: $("#p-name").value.trim(), lookingFor: $("#p-lookingFor").value, roles: $("#p-roles").value.trim(), locations: $("#p-locations").value.trim(),
+        arrangement: $("#p-arrangement").value, weeklyGoal: Math.max(0, Math.min(50, parseInt($("#p-weeklyGoal").value, 10) || 0)) };
+      saveProfile(); closeModal(); render();
+      toast(profile.name ? "Saved. Welcome, " + esc(profile.name) + "!" : "Saved.");
+    });
+    setTimeout(function () { $("#p-name").focus(); }, 30);
+  }
+
   // ---------- Toast ----------
   var toastTimer;
   function toast(html, actLabel, act) {
@@ -864,10 +1028,12 @@ footer button { padding: 0; border: 0; background: none; color: var(--accent); f
     var t = e.target;
     var tab = t.closest(".tabs button"); if (tab) { view = tab.dataset.view; setPref(VIEW_KEY, view); render(); return; }
     if (t.closest("#btnAdd")) { openEditor(null); return; }
+    var vg = t.closest("[data-view-go]"); if (vg) { view = vg.dataset.viewGo; setPref(VIEW_KEY, view); render(); window.scrollTo(0, 0); return; }
+    if (t.closest("#btnProfile") || t.closest("[data-act='profile']")) { openProfile(); return; }
     if (t.closest("#btnData") || t.closest("#btnFooterData")) { openData(); return; }
     var ce = t.closest("[data-act='clear-examples']");
     if (t.closest("[data-act='toggle-later']")) { showLater = !showLater; render(); return; }
-    if (ce) { var removed = state.opps.filter(function (o) { return o.example; }); state.opps = state.opps.filter(function (o) { return !o.example; }); save(); render(); toast("Examples cleared. Click “+ Add opportunity” to add your first one.", "Undo", function () { state.opps = removed.concat(state.opps); save(); render(); }); return; }
+    if (ce) { var removed = state.opps.filter(function (o) { return o.example; }); state.opps = state.opps.filter(function (o) { return !o.example; }); save(); render(); if (!profile) { openProfile(); return; } toast("Examples cleared. Click “+ Add” to add your first job.", "Undo", function () { state.opps = removed.concat(state.opps); save(); render(); }); return; }
     var dn = t.closest("[data-done]"); if (dn) { completeTask(dn.dataset.done, dn.dataset.id); return; }
     var op = t.closest("[data-open]"); if (op) { openEditor(op.dataset.open, op.dataset.focus); return; }
     if (t.closest("[data-stop]")) return;

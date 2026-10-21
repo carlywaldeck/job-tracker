@@ -25,7 +25,9 @@ A graduate student tracking 10 to 50 opportunities across saved postings, applic
 3. **Progress dashboard.** Applications sent, interview rate, offers, opportunities by stage, and applications per week.
 4. **Import / export.** JSON backup, CSV export for Excel/Sheets, and CSV import that understands the original Career Services spreadsheet's columns (save it as CSV, then import).
 5. **Paste a job description.** Fills in title, company, location, work arrangement, deadline, and link. *This is rule-based text matching that runs in the browser, not AI*, and it's labeled that way in the app.
-6. Also: interest level (high/medium/low) used to rank tasks, resume/cover-letter version sent, network contact, stage history, undo on moves and deletes.
+6. **Personalized to each user.** A one-minute "Make it yours" setup (name, roles you want, places, work style, internship vs. full-time, weekly application goal). The app then greets you by name, tags jobs that are a **Strong fit** for your goals, adds a "Best fit for me" sort, tracks your weekly goal on Today, and points out strong-fit roles you haven't applied to yet. Saved in your browser like everything else.
+7. **"Why you might not be hearing back."** The Progress tab looks for patterns in your own tracker and gives concrete tips: low interview rate (resume not passing screens), the same resume sent everywhere, no network contact behind applications, applying near deadlines, interviews without offers, missing thank-you notes, no follow-ups, applying to roles that don't fit your goals, and volume below your goal. *Rule-based, not AI*, and labeled that way.
+8. Also: interest level (high/medium/low) used to rank tasks, resume/cover-letter version sent, network contact, stage history, undo on moves and deletes.
 
 ## Using it yourself
 
