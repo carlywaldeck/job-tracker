@@ -1,62 +1,51 @@
 # NextMove: a job & internship tracker
 
-A tracker built for MSBA students juggling a lot of applications at once. It starts from the Career Services *Job and Internship Search Guide* spreadsheet and turns it into a tool that tells you **what to work on today**.
+A job tracker for MSBA students managing lots of applications at once. It starts from the Career Services *Job and Internship Search Guide* spreadsheet and turns it into a tool that tells you **what to work on today** and **how well your resume fits each job**.
 
-**Live app:** https://carlywaldeck.github.io/job-tracker/ (after GitHub Pages is turned on, see below)
+**Live app:** https://carlywaldeck.github.io/job-tracker/. Anyone can use it with no sign-up. Each person's data stays private in their own browser.
 
-## Who it's for
+## How it works (no explanation needed)
 
-A graduate student tracking 10 to 50 opportunities across saved postings, applications, interviews, and offers, who keeps losing track of deadlines, follow-ups, and thank-you notes.
+The app has one home screen:
 
-## What it does
+1. **Get started in 3 steps.** New users see: upload your resume, add a job, come back to your to-do list. The guide goes away once both are done.
+2. **To do.** Overdue and upcoming tasks, most urgent first. Check the circle when a task is done.
+3. **My jobs.** Every job you are tracking. Change a job's status right in the list, filter by status, search, and sort.
 
-### Essentials
+Two more tabs: **Board** (drag jobs between stages) and **Insights** (your numbers, plus tips on why you might not be hearing back).
+
+## Assignment checklist
+
 | Requirement | Where |
 |---|---|
-| Add and edit opportunities (company, title, link, location, work arrangement, deadline, notes) | **+ Add opportunity**, or click any card/row |
-| Track stage: Saved, Applied, Interviewing, Offer, Rejected, Withdrawn | Stage field, Board columns |
-| Next action + due date | "Stage and next step" section of the form |
-| Search, sort, filter | **All** tab (search, filter by stage; sort by deadline, next step, company, interest, stage, recently updated) |
-| Keep your data | Saved automatically in your browser's local storage. The footer and **Import / Export** say exactly where it lives. |
+| Add and edit jobs (company, title, link, location, work arrangement, deadline, notes) | **+ Add a job**, or **Open** on any row |
+| Track status: Saved, Applied, Interviewing, Offer, Rejected, Withdrawn | Status dropdown on each row, or drag on the Board |
+| Next action + due date | "Status and next step" in the form. Rows without a next step show "+ Add next step". |
+| Search, sort, filter | My jobs: search box, status filter buttons, sort by deadline, next step, company, recent, or best fit |
+| Keep your data | Saved automatically in the browser. The footer says so, with a link to back up or move your data. |
 
-### Improvements
-1. **"What should I do today?" view.** Pulls together your next steps plus automatic reminders: postings closing in the next 2 weeks, a follow-up 14 days after you apply with no reply (the rule from the Career Services guide), thank-you notes after an interview, and interview prep in the week before. Grouped into Overdue, Due today, Next 7 days. Check a box to complete it; the tool then asks for the next step.
-2. **Kanban board.** Drag cards between stages (or use the dropdown on mobile). Moving to Applied stamps the date and starts the follow-up clock; moving to Interviewing asks for the interview date.
-3. **Progress dashboard.** Applications sent, interview rate, offers, opportunities by stage, and applications per week.
-4. **Import / export.** JSON backup, CSV export for Excel/Sheets, and CSV import that understands the original Career Services spreadsheet's columns (save it as CSV, then import).
-5. **Paste a job description.** Fills in title, company, location, work arrangement, deadline, and link. *This is rule-based text matching that runs in the browser, not AI*, and it's labeled that way in the app.
-6. **Personalized to each user.** A one-minute "Make it yours" setup (name, roles you want, places, work style, internship vs. full-time, weekly application goal). The app then greets you by name, tags jobs that are a **Strong fit** for your goals, adds a "Best fit for me" sort, tracks your weekly goal on Today, and points out strong-fit roles you haven't applied to yet. Saved in your browser like everything else.
-7. **"Why you might not be hearing back."** The Progress tab looks for patterns in your own tracker and gives concrete tips: low interview rate (resume not passing screens), the same resume sent everywhere, no network contact behind applications, applying near deadlines, interviews without offers, missing thank-you notes, no follow-ups, applying to roles that don't fit your goals, and volume below your goal. *Rule-based, not AI*, and labeled that way.
-8. Also: interest level (high/medium/low) used to rank tasks, resume/cover-letter version sent, network contact, stage history, undo on moves and deletes.
+## Improvements
 
-## Using it yourself
-
-Anyone can use the live link. There is no sign-up: open https://carlywaldeck.github.io/job-tracker/, click **Clear examples and start my own list**, and start adding jobs. Each person's list is private to their own browser, so many people can use the same link without seeing each other's data.
+1. **Resume upload and match.** Upload a PDF, Word, or .txt resume under **About me & resume**. It's read in the browser (pdf.js and mammoth) and fills in your name, skills, roles, and location. When you paste a job description, the app shows a **resume match %** and the skills the job asks for that are missing from your resume. *Keyword matching, not AI*, and labeled that way.
+2. **To-do list ("What should I do today?").** Your next steps plus automatic reminders: postings closing within 2 weeks, a follow-up 14 days after applying (the Career Services guide's rule), thank-you notes after interviews, and interview prep in the week before.
+3. **Personalized.** Your profile (roles, places, work style, internship vs. full-time, weekly goal) drives a greeting, **Strong fit** tags, a "Best fit for me" sort, and a weekly application goal.
+4. **"Why you might not be hearing back."** Rule-based tips from patterns in your own tracker: resume missing skills that jobs ask for, low interview rate, the same resume sent everywhere, no networking contact, applying near deadlines, interviews without offers, missing thank-yous or follow-ups, and applying to roles that don't fit your goals.
+5. **Board.** Drag and drop between stages.
+6. **Import / export.** JSON backup, CSV for Excel or Sheets, and CSV import that understands the original Career Services spreadsheet.
+7. **Fill in from a job description.** Pulls out the title, company, location, work arrangement, deadline, and link (rule-based).
 
 ## Where the data is stored
 
-Everything is saved in the browser's `localStorage` on the device you use. No account, no server. Clearing browser data or switching computers loses it, so use **Import / Export → Download backup** to keep a copy or move it.
-
-The app opens with example opportunities (dates are relative to today, so the demo always looks current). Click **Clear examples** to start fresh.
-
-## Running it
-
-It's one file, no build step. Open `index.html` in a browser, or use GitHub Pages:
-
-1. Repo **Settings → Pages**
-2. Source: **Deploy from a branch**, branch **main**, folder **/ (root)**, Save
-3. After a minute it's live at `https://carlywaldeck.github.io/job-tracker/`
+Everything, including your resume text, is saved in the browser's `localStorage` on your device. No account, no server. Clearing browser data or switching computers loses it, so use **Back up or move your data** in the footer.
 
 ## Two-minute demo script
 
-1. **Who it's for** (15s): MSBA students with 20+ applications; the spreadsheet tells you what happened, not what to do next.
-2. **Add and track** (30s): + Add opportunity → paste a job description → Extract details → set a next action → Add. Show it on the Board, drag it to Applied.
-3. **Strongest improvements** (45s): the Today view (overdue follow-up, thank-you reminder, deadline closing soon; check one off and set the next step) and the Board and Progress tab.
-4. **Deciding what's next** (15s): Today's focus count, "Missing a next step" list, postings closing soon.
-5. **What works / what's next** (15s): all of the above works now; next we'd add cloud sync, calendar export, and AI-written follow-up drafts.
+1. **Who it's for** (15s): MSBA students with 20+ applications. The spreadsheet records what happened, not what to do next.
+2. **Set up** (25s): Upload a resume. Name, skills, and roles fill in automatically.
+3. **Add and track** (30s): Click + Add a job, paste a job description, and click "Fill in the form from this". Show the resume match and the missing skills, then save. Change its status in the list.
+4. **Deciding what to do next** (30s): Use the To do list to check off a follow-up, then show the Insights tips.
+5. **What works and what's next** (20s): Everything shown works today. Next we'd add cloud sync, calendar export, and AI-written follow-up drafts.
 
-## Ideas for next steps
-- Calendar (.ics) export for deadlines and interviews
-- Networking section with multiple contacts and conversation logs per opportunity
-- Interview question bank organized by role
-- Optional AI follow-up email drafts (would need an API key)
+## Running it
+
+It's one file with no build step. Open `index.html` in a browser, or host it with GitHub Pages (Settings → Pages → Deploy from branch `main`, folder `/`).
