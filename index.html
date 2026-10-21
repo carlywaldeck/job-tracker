@@ -81,6 +81,8 @@ main > * { min-width: 0; }
 
 .note { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; color: var(--muted); font-size: .88rem; }
 .note.warn { color: var(--warn); }
+.welcome { display: grid; gap: 6px; max-width: 70ch; }
+.welcome p { margin: 0; }
 .note button { padding: 0; border: 0; background: none; color: var(--accent); font-weight: 500; }
 .note button:hover { text-decoration: underline; }
 
@@ -410,7 +412,9 @@ footer button { padding: 0; border: 0; background: none; color: var(--accent); f
     var h = "";
     if (!storageOK) h += '<p class="note warn">Saving is blocked in this browser (private window or blocked site data), so changes will be lost when you close the tab.</p>';
     if (state.opps.some(function (o) { return o.example; }))
-      h += '<p class="note"><span>You are looking at example data.</span><button type="button" data-act="clear-examples">Clear examples and start fresh</button></p>';
+      h += '<div class="welcome"><p><strong>Welcome to NextMove.</strong> Add the jobs you are interested in, give each one a next step, and check <em>Today</em> each day to see what to do. ' +
+        'Everything you enter stays private in your own browser. No sign-up needed.</p>' +
+        '<p class="note"><span>The entries below are examples so you can try things out.</span><button type="button" data-act="clear-examples">Clear examples and start my own list</button></p></div>';
     $("#banners").innerHTML = h;
     $("#banners").hidden = !h;
   }

@@ -27,6 +27,10 @@ A graduate student tracking 10 to 50 opportunities across saved postings, applic
 5. **Paste a job description.** Fills in title, company, location, work arrangement, deadline, and link. *This is rule-based text matching that runs in the browser, not AI*, and it's labeled that way in the app.
 6. Also: interest level (high/medium/low) used to rank tasks, resume/cover-letter version sent, network contact, stage history, undo on moves and deletes.
 
+## Using it yourself
+
+Anyone can use the live link. There is no sign-up: open https://carlywaldeck.github.io/job-tracker/, click **Clear examples and start my own list**, and start adding jobs. Each person's list is private to their own browser, so many people can use the same link without seeing each other's data.
+
 ## Where the data is stored
 
 Everything is saved in the browser's `localStorage` on the device you use. No account, no server. Clearing browser data or switching computers loses it, so use **Import / Export → Download backup** to keep a copy or move it.
