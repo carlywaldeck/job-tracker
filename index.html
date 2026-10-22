@@ -639,6 +639,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
         var left = [];
         if (r && r.score < 90 && !o.tailored) left.push("tailor your resume");
         if (!o.contact) left.push("find a contact");
+        if (!o.deadline) add("apply", left.length ? "Apply. First: " + left.join(", ") : "Apply when you're ready", "", left[0] === "tailor your resume" ? "#job/" + o.id + "/tailor" : "");
         if (open) add("apply", left.length ? "Apply. First: " + left.join(", ") : "Apply before the posting closes", o.deadline, left[0] === "tailor your resume" ? "#job/" + o.id + "/tailor" : "");
       }
       if (o.status === "applied" && o.appliedDate) add("followup", "No reply yet? Send a short follow-up", followUpDue(o));
@@ -791,7 +792,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
       stages.map(function (s) {
         var pct = s[2] ? Math.round(100 * s[1] / s[2]) : null;
         return '<button type="button" data-filter="' + s[3] + '" aria-label="' + s[0] + ": " + s[1] + '"><span>' + s[0] + '</span><span class="bar"><i style="width:' + (s[1] ? Math.max(4, 100 * s[1] / Math.max(1, jobs.length)) : 0) + '%"></i></span><span class="n">' + s[1] + "</span>" +
-          '<span class="conv">' + (pct == null ? "" : s[2] ? pct + "%" : "") + "</span></button>";
+          '<span class="conv">' + (pct == null || !s[1] ? "" : pct + "%") + "</span></button>";
       }).join("") + "</div>" +
       '<p class="note">Percent = share of the stage above that moved on.</p>' +
       '<dl class="kv small"><dt>Waiting to apply</dt><dd>' + cnt("saved") + "</dd><dt>Waiting to hear back</dt><dd>" + cnt("applied") + "</dd><dt>Closed</dt><dd>" +
