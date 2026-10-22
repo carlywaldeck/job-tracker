@@ -9,7 +9,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap">
 <style>
-/* Layout: one calm column. Resume-first welcome, then a personal home: next steps, then your jobs. */
+/* Layout: header with three tabs (Dashboard, Jobs, My resume). Dashboard = numbers, to-dos, pipeline, best matches.
+   Each job has its own page: match score breakdown, resume tailoring (AI or rule-based), details. */
 :root {
   --bg: #fbfaf6; --card: #ffffff; --soft-bg: #f3f1ea; --ink: #1f2a24; --muted: #66736b; --line: #e7e4dc;
   --accent: #3f7d5c; --accent-ink: #2d5d44; --on-accent: #ffffff; --tint: #e3efe7;
@@ -32,49 +33,73 @@
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body { background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 16px; line-height: 1.55; }
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
-.wrap { max-width: 760px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 1040px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 h1, h2, h3 { margin: 0; line-height: 1.2; text-wrap: balance; }
 h2 { font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; }
 h3 { font-size: 1.1rem; font-weight: 700; }
 p { margin: 0; }
+ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
 .muted { color: var(--muted); }
 a { color: var(--accent-ink); }
 button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 8px 16px; font-weight: 500; }
 button:hover { border-color: var(--muted); }
+button:disabled { opacity: .6; cursor: progress; }
 button.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 700; }
 button.primary:hover { filter: brightness(1.07); }
-button.link { border: 0; background: none; padding: 0; color: var(--accent-ink); font-weight: 500; border-radius: 0; }
+button.link { border: 0; background: none; padding: 0; color: var(--accent-ink); font-weight: 500; border-radius: 0; text-align: left; }
 button.link:hover { text-decoration: underline; }
 button.danger { color: var(--late); }
-button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, .job:focus-visible, .drop:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.small { padding: 4px 12px; font-size: .85rem; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.drop:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
 input, select, textarea { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; width: 100%; min-width: 0; }
 textarea { resize: vertical; }
 label { display: grid; gap: 6px; font-size: .9rem; font-weight: 500; }
 label .hint { font-weight: 400; color: var(--muted); font-size: .85rem; }
 
 /* Header */
-.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); }
-.top-in { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block: 16px; }
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); }
+.top-in { display: flex; align-items: center; gap: 24px; padding-block: 12px; }
 .logo { font-weight: 700; font-size: 1.2rem; letter-spacing: -0.01em; }
 .logo span { color: var(--accent); }
-.top-actions { display: flex; gap: 10px; align-items: center; }
-.me { min-width: 38px; height: 38px; padding: 0 12px; border-radius: 999px; background: var(--tint); color: var(--accent-ink); border: 0; font-weight: 700; }
+.tabs { display: flex; gap: 4px; }
+.tabs a { text-decoration: none; color: var(--muted); font-weight: 500; padding: 7px 14px; border-radius: 999px; white-space: nowrap; }
+.tabs a:hover { color: var(--ink); background: var(--soft-bg); }
+.tabs a[aria-current="page"] { color: var(--accent-ink); background: var(--tint); font-weight: 700; }
+#btnAdd { margin-left: auto; white-space: nowrap; }
 
-main { padding-block: 16px 48px; display: grid; gap: 28px; }
+main { padding-block: 28px 48px; display: grid; gap: 24px; }
+main > * { min-width: 0; }
 .hello { display: grid; gap: 6px; }
 .hello p { color: var(--muted); font-size: 1.05rem; }
 
-.card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 22px; display: grid; gap: 14px; min-width: 0; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 22px; display: grid; gap: 14px; min-width: 0; align-content: start; }
 .card-h { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.grid2 { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 24px; align-items: start; }
+.grid2 > * { min-width: 0; }
+.narrow { max-width: 760px; }
+
+/* Stat tiles */
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.stat { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; display: grid; gap: 2px; }
+.stat b { font-size: 2rem; line-height: 1.1; letter-spacing: -0.02em; }
+.stat span { color: var(--muted); font-size: .92rem; }
+.stat small { color: var(--muted); font-size: .8rem; }
+.stat.hero { background: var(--tint); border-color: transparent; }
+.stat.hero b { color: var(--accent-ink); }
 
 /* Welcome */
-.welcome { display: grid; gap: 20px; padding-block: 24px; }
+.welcome { display: grid; gap: 20px; padding-block: 12px; max-width: 760px; }
 .welcome h2 { font-size: 2.2rem; }
-.welcome .lead { color: var(--muted); font-size: 1.1rem; max-width: 52ch; }
-.drop { position: relative; display: grid; gap: 6px; justify-items: center; text-align: center; border: 2px dashed var(--line); border-radius: 16px; padding: 36px 20px; background: var(--card); cursor: pointer; font-weight: 400; font-size: 1rem; }
+.welcome .lead { color: var(--muted); font-size: 1.1rem; max-width: 56ch; }
+.how { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.how div { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; font-size: .92rem; }
+.how b { display: block; margin-bottom: 2px; }
+.drop { position: relative; display: grid; gap: 6px; justify-items: center; text-align: center; border: 2px dashed var(--line); border-radius: 16px; padding: 32px 20px; background: var(--card); cursor: pointer; font-weight: 400; font-size: 1rem; }
 .drop:hover, .drop.over { border-color: var(--accent); background: var(--tint); }
 .drop strong { font-size: 1.1rem; }
 .drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
@@ -84,11 +109,14 @@ main { padding-block: 16px 48px; display: grid; gap: 28px; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { background: var(--tint); color: var(--accent-ink); border-radius: 999px; padding: 3px 10px; font-size: .85rem; font-weight: 500; }
 .chip.miss { background: var(--warn-tint); color: var(--warn); }
+.chip.plain { background: var(--soft-bg); color: var(--muted); }
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .form-grid .full { grid-column: 1 / -1; }
 .actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+details summary { cursor: pointer; color: var(--accent-ink); font-weight: 500; font-size: .92rem; }
+details[open] summary { margin-bottom: 10px; }
 
-/* Next steps */
+/* To-dos */
 .tasks { display: grid; }
 .task { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); }
 .task:first-child { border-top: 0; padding-top: 2px; }
@@ -101,25 +129,73 @@ main { padding-block: 16px 48px; display: grid; gap: 28px; }
 .when.soon { color: var(--warn); font-weight: 500; }
 .empty { color: var(--muted); }
 
-/* Jobs */
+/* Pipeline */
+.pipe { display: grid; gap: 10px; }
+.pipe button { display: grid; grid-template-columns: 96px minmax(0, 1fr) 28px; gap: 10px; align-items: center; border: 0; padding: 2px 0; border-radius: 6px; background: none; text-align: left; font-weight: 400; }
+.pipe button:hover .bar i { filter: brightness(1.1); }
+.pipe .bar { height: 10px; border-radius: 999px; background: var(--soft-bg); overflow: hidden; }
+.pipe .bar i { display: block; height: 100%; border-radius: 999px; background: var(--accent); }
+.pipe .closed .bar i { background: var(--muted); opacity: .45; }
+.pipe .n { font-weight: 700; text-align: right; }
+
+/* Job rows */
 .controls { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
 .jobs { display: grid; gap: 10px; }
-.job { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 16px; padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); cursor: pointer; }
+.job { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px 16px; align-items: center; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); cursor: pointer; }
 .job:hover { box-shadow: var(--shadow); }
 .job .co { font-weight: 700; font-size: 1.05rem; overflow-wrap: anywhere; }
 .job .ti { color: var(--muted); font-size: .92rem; overflow-wrap: anywhere; }
-.job .nx { font-size: .9rem; overflow-wrap: anywhere; margin-top: 4px; }
+.job .nx { font-size: .9rem; overflow-wrap: anywhere; margin-top: 2px; }
 .job .nx .lbl { color: var(--muted); }
-.job .side { display: grid; gap: 8px; justify-items: end; align-content: start; }
 .job select { width: auto; padding: 6px 10px; font-size: .88rem; border-radius: 999px; }
-.badge { border-radius: 999px; padding: 3px 10px; font-size: .82rem; font-weight: 700; white-space: nowrap; background: var(--tint); color: var(--accent-ink); }
-.badge.mid { background: var(--warn-tint); color: var(--warn); }
-.badge.low { background: var(--soft-bg); color: var(--muted); }
+.mini { display: grid; gap: 8px; }
+.mini .job { padding: 12px 14px; }
+.score { display: inline-grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; font-weight: 700; font-size: 1.05rem; background: var(--tint); color: var(--accent-ink); flex: none; }
+.score.mid { background: var(--warn-tint); color: var(--warn); }
+.score.low { background: var(--soft-bg); color: var(--muted); }
+.score.none { background: transparent; border: 1px dashed var(--line); color: var(--muted); font-weight: 500; }
 .count { color: var(--muted); font-size: .9rem; }
+
+/* Job page */
+.back { font-size: .95rem; }
+.job-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+.job-head .sub { color: var(--muted); margin-top: 4px; }
+.job-head .right { display: flex; gap: 10px; align-items: center; }
+.job-head select { width: auto; border-radius: 999px; padding: 8px 12px; }
+.seg { display: inline-flex; gap: 4px; background: var(--soft-bg); border-radius: 999px; padding: 4px; flex-wrap: wrap; }
+.seg a { text-decoration: none; color: var(--muted); padding: 7px 16px; border-radius: 999px; font-weight: 500; white-space: nowrap; }
+.seg a[aria-current="page"] { background: var(--card); color: var(--ink); font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.ring-wrap { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 24px; align-items: center; }
+.ring { position: relative; width: 132px; height: 132px; }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring .num { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; line-height: 1; }
+.ring .num b { font-size: 2.4rem; letter-spacing: -0.03em; display: block; }
+.ring .num small { color: var(--muted); font-size: .8rem; }
+.verdict { font-size: 1.3rem; font-weight: 700; }
+.rows { display: grid; gap: 16px; }
+.row { display: grid; gap: 6px; }
+.row-h { display: flex; justify-content: space-between; gap: 12px; font-weight: 500; }
+.row-h span { color: var(--muted); font-weight: 500; white-space: nowrap; }
+.row .bar { height: 8px; border-radius: 999px; background: var(--soft-bg); overflow: hidden; }
+.row .bar i { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
+.row p { color: var(--muted); font-size: .9rem; }
+.kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 18px; font-size: .95rem; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.ai-tag { display: inline-block; background: var(--tint); color: var(--accent-ink); font-size: .75rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 2px 8px; border-radius: 6px; }
+.ai-tag.rule { background: var(--soft-bg); color: var(--muted); }
+.out { background: var(--soft-bg); border-radius: 12px; padding: 14px 16px; display: grid; gap: 8px; }
+.out .txt { white-space: pre-wrap; }
+.out .before { color: var(--muted); font-size: .88rem; }
+.out-h { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.section-label { font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 700; }
+.spinner { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--accent); display: inline-block; vertical-align: -3px; }
+@media (prefers-reduced-motion: no-preference) { .spinner { animation: spin .8s linear infinite; } }
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* Modal */
 .overlay { position: fixed; inset: 0; z-index: 50; background: color-mix(in srgb, var(--ink) 40%, transparent); display: flex; align-items: flex-start; justify-content: center; overflow-y: auto; padding: max(24px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) 24px max(12px, env(safe-area-inset-left, 0px)); }
-.modal { background: var(--card); border-radius: 18px; width: 100%; max-width: 620px; box-shadow: var(--shadow); }
+.modal { background: var(--card); border-radius: 18px; width: 100%; max-width: 640px; box-shadow: var(--shadow); }
 .modal-h { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 22px 24px 6px; }
 .modal-h h2 { font-size: 1.4rem; }
 .modal-b { padding: 12px 24px 8px; display: grid; gap: 20px; }
@@ -127,11 +203,8 @@ main { padding-block: 16px 48px; display: grid; gap: 28px; }
 .modal-f .left { margin-right: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .x { border: 0; background: none; font-size: 1.2rem; color: var(--muted); padding: 4px 8px; }
 .paste { display: grid; gap: 10px; background: var(--soft-bg); border-radius: 14px; padding: 16px; }
-.match-box { display: grid; gap: 8px; }
-.match-box p { font-size: .92rem; }
-.section-label { font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 700; }
 .err { color: var(--late); font-size: .9rem; }
-.note { font-size: .82rem; color: var(--muted); }
+.note { font-size: .85rem; color: var(--muted); }
 
 .toast { position: fixed; z-index: 60; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 12px; display: flex; gap: 12px; align-items: center; box-shadow: var(--shadow); max-width: calc(100% - 32px); }
 .toast button { background: transparent; color: var(--bg); border-color: color-mix(in srgb, var(--bg) 40%, transparent); padding: 4px 12px; }
@@ -139,15 +212,25 @@ main { padding-block: 16px 48px; display: grid; gap: 28px; }
 footer { padding-block: 0 40px; color: var(--muted); font-size: .88rem; }
 footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
 
+@media (max-width: 860px) {
+  .grid2 { grid-template-columns: minmax(0, 1fr); }
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 @media (max-width: 600px) {
   h2 { font-size: 1.7rem; }
   .welcome h2 { font-size: 1.9rem; }
-  .form-grid, .controls { grid-template-columns: minmax(0, 1fr); }
-  .job { grid-template-columns: minmax(0, 1fr); }
-  .job .side { justify-items: start; grid-auto-flow: column; justify-content: start; align-items: center; }
+  .top-in { flex-wrap: wrap; gap: 8px 12px; }
+  .tabs { order: 3; width: 100%; overflow-x: auto; }
+  .tabs a { padding: 6px 12px; }
+  .how, .form-grid, .controls { grid-template-columns: minmax(0, 1fr); }
+  .job { grid-template-columns: auto minmax(0, 1fr); }
+  .job > select { grid-column: 2; justify-self: start; }
+  .mini .job > .count { display: none; }
   .task { grid-template-columns: auto minmax(0, 1fr); }
   .task .when { grid-column: 2; }
-  #btnAdd { padding: 8px 12px; }
+  .ring-wrap { grid-template-columns: minmax(0, 1fr); justify-items: start; }
+  .card { padding: 18px; }
+  .stat b { font-size: 1.7rem; }
 }
 @media (prefers-reduced-motion: no-preference) { .job, button { transition: box-shadow .15s, border-color .15s, background-color .15s; } }
 </style>
@@ -157,17 +240,19 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
 <header class="top">
   <div class="wrap top-in">
     <div class="logo">Next<span>Move</span></div>
-    <div class="top-actions">
-      <button id="btnAdd" class="primary" type="button" hidden>+ Add a job</button>
-      <button id="btnMe" class="me" type="button" title="Me and my resume" aria-label="Me and my resume" hidden>Me</button>
-    </div>
+    <nav class="tabs" id="tabs" aria-label="Main" hidden>
+      <a href="#dashboard" data-tab="dashboard">Dashboard</a>
+      <a href="#jobs" data-tab="jobs">Jobs</a>
+      <a href="#resume" data-tab="resume">My resume</a>
+    </nav>
+    <button id="btnAdd" class="primary" type="button" hidden>+ Add a job</button>
   </div>
 </header>
 
 <main class="wrap" id="view"></main>
 
 <footer><div class="wrap">
-  <span>Saved privately in this browser on this device. Nothing is uploaded, not even your resume.</span>
+  <span>Saved privately in this browser on this device. Your resume is never uploaded, except to Anthropic when you choose AI tailoring.</span>
   <button type="button" class="link" id="btnSamples" hidden></button>
 </div></footer>
 
@@ -177,10 +262,11 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
 <script>
 (function () {
   "use strict";
-  var KEY = "nextmove.v2.jobs", PROFILE_KEY = "nextmove.v2.me";
+  var KEY = "nextmove.v3.jobs", PROFILE_KEY = "nextmove.v3.me", AI_KEY = "nextmove.v3.aikey";
   var STATUSES = [["saved", "Saved"], ["applied", "Applied"], ["interviewing", "Interviewing"], ["offer", "Offer"], ["rejected", "Rejected"], ["withdrawn", "Withdrawn"]];
   var CLOSED = { rejected: 1, withdrawn: 1 };
   var FOLLOW_UP_DAYS = 14; // Career Services guide: reach out two weeks after applying
+  var MODEL = "claude-opus-5-5";
 
   // ---------- Dates ----------
   function pad(n) { return (n < 10 ? "0" : "") + n; }
@@ -190,6 +276,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   function addDays(s, n) { var d = parseISO(s); d.setDate(d.getDate() + n); return iso(d); }
   function diffDays(a, b) { return Math.round((parseISO(a) - parseISO(b)) / 86400000); }
   var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  function monthIdx(s) { return s ? MONTHS.map(function (x) { return x.toLowerCase(); }).indexOf(s.slice(0, 3).toLowerCase()) : -1; }
   function fmt(s) { if (!s) return ""; var d = parseISO(s); return MONTHS[d.getMonth()] + " " + d.getDate(); }
   function when(s) {
     if (!s) return "";
@@ -208,25 +295,35 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   function $(s, r) { return (r || document).querySelector(s); }
   function $all(s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
   function statusLabel(id) { for (var i = 0; i < STATUSES.length; i++) if (STATUSES[i][0] === id) return STATUSES[i][1]; return id; }
-  function splitList(s) { return String(s || "").split(/[,;\n]/).map(function (x) { return x.trim(); }).filter(Boolean); }
+  function splitList(s) { return (Array.isArray(s) ? s : String(s || "").split(/[,;\n]/)).map(function (x) { return String(x).trim(); }).filter(Boolean); }
+  function clamp(x, a, b) { return Math.max(a, Math.min(b, x)); }
+  function plural(n, w) { return n + " " + w + (n === 1 ? "" : "s"); }
 
   // ---------- Storage ----------
-  var jobs = [], me = null, storageOK = true;
+  var jobs = [], me = null, storageOK = true, version = 0;
   function load() {
-    try { jobs = JSON.parse(localStorage.getItem(KEY) || "[]"); me = JSON.parse(localStorage.getItem(PROFILE_KEY) || "null"); }
-    catch (e) { storageOK = false; jobs = []; me = null; }
+    try {
+      jobs = JSON.parse(localStorage.getItem(KEY) || "null");
+      me = JSON.parse(localStorage.getItem(PROFILE_KEY) || "null");
+      if (jobs === null) { // carry over data from the previous version, if any
+        jobs = JSON.parse(localStorage.getItem("nextmove.v2.jobs") || "[]");
+        me = me || JSON.parse(localStorage.getItem("nextmove.v2.me") || "null");
+      }
+    } catch (e) { storageOK = false; jobs = []; me = null; }
     if (!Array.isArray(jobs)) jobs = [];
   }
-  function save() { try { localStorage.setItem(KEY, JSON.stringify(jobs)); storageOK = true; } catch (e) { storageOK = false; } }
-  function saveMe() { try { if (me) localStorage.setItem(PROFILE_KEY, JSON.stringify(me)); else localStorage.removeItem(PROFILE_KEY); } catch (e) { storageOK = false; } }
+  function save() { version++; try { localStorage.setItem(KEY, JSON.stringify(jobs)); storageOK = true; } catch (e) { storageOK = false; } }
+  function saveMe() { version++; try { if (me) localStorage.setItem(PROFILE_KEY, JSON.stringify(me)); else localStorage.removeItem(PROFILE_KEY); } catch (e) { storageOK = false; } }
+  function getKey() { try { return localStorage.getItem(AI_KEY) || ""; } catch (e) { return ""; } }
+  function setKey(k) { try { if (k) localStorage.setItem(AI_KEY, k); else localStorage.removeItem(AI_KEY); } catch (e) {} }
   function blank() {
     return { id: uid(), company: "", title: "", link: "", location: "", arrangement: "", deadline: "", status: "saved", nextAction: "", nextDue: "",
-      appliedDate: "", followUpDate: "", tailored: false, notes: "", description: "", updatedAt: today() };
+      appliedDate: "", followUpDate: "", tailored: false, notes: "", description: "", tailoring: null, updatedAt: today() };
   }
   function byId(id) { for (var i = 0; i < jobs.length; i++) if (jobs[i].id === id) return jobs[i]; return null; }
   function setStatus(o, s) { if (o.status === s) return; o.status = s; if (s === "applied" && !o.appliedDate) o.appliedDate = today(); o.updatedAt = today(); }
 
-  // ---------- Resume: reading, skills, matching (keyword based, in the browser) ----------
+  // ---------- Skills dictionary ----------
   var SKILLS = ["SQL", "Python", "R", "Tableau", "Power BI", "Excel", "VBA", "SAS", "SPSS", "Stata", "Snowflake", "AWS", "Azure", "GCP", "BigQuery", "Spark",
     "Looker", "Alteryx", "dbt", "Git", "JavaScript", "Java", "machine learning", "deep learning", "NLP", "statistics", "regression", "forecasting", "A/B testing",
     "data visualization", "ETL", "data modeling", "dashboards", "pandas", "scikit-learn", "TensorFlow", "Salesforce", "Google Analytics", "SAP", "project management",
@@ -239,22 +336,14 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
       return new RegExp("(^|[^a-z0-9])" + s.toLowerCase().replace(/[.*+?^${}()|[\]\\\/]/g, "\\$&") + "(?=[^a-z0-9]|$)").test(low);
     });
   }
-  function mySkills() { return me ? splitList(me.skills) : []; }
-  // Match = share of the skills a job description asks for that are on your resume.
-  function match(o) {
-    var mine = mySkills().map(function (s) { return s.toLowerCase(); });
-    if (!mine.length || !o.description) return null;
-    var wanted = findSkills(o.description);
-    if (!wanted.length) return null;
-    var have = wanted.filter(function (s) { return mine.indexOf(s.toLowerCase()) >= 0; });
-    var missing = wanted.filter(function (s) { return mine.indexOf(s.toLowerCase()) < 0; });
-    return { pct: Math.round(100 * have.length / wanted.length), have: have, missing: missing, wanted: wanted };
+  function mySkillSet() {
+    var set = {};
+    if (!me) return set;
+    splitList(me.skills).concat(findSkills(me.resumeText || "")).forEach(function (s) { set[s.toLowerCase()] = 1; });
+    return set;
   }
-  function matchWord(p) { return p >= 75 ? "Great match" : p >= 50 ? "Good match" : "Stretch"; }
-  function badge(o) {
-    var m = match(o); if (!m) return "";
-    return '<span class="badge ' + (m.pct >= 75 ? "" : m.pct >= 50 ? "mid" : "low") + '" title="' + esc(m.pct + "% of the skills in this posting are on your resume") + '">' + matchWord(m.pct) + " · " + m.pct + "%</span>";
-  }
+
+  // ---------- Reading files ----------
   function loadScript(src) {
     return new Promise(function (resolve, reject) {
       if (document.querySelector('script[src="' + src + '"]')) return resolve();
@@ -285,9 +374,44 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     if (/\.(txt|md)$/.test(name) || /^text\//.test(file.type)) return readFile(file, true).then(String);
     return Promise.reject(new Error("Please choose a PDF, Word (.docx), or .txt file."));
   }
+
+  // ---------- Resume parsing (rule-based) ----------
+  var EDU_LINE = /universit|college|school of|bachelor|master|degree|b\.s\.|b\.a\.|m\.s\.|msba|mba|gpa|expected|graduat/i;
+  function degreeLevel(text, minimum) {
+    var low = (text || "").toLowerCase(), found = [];
+    if (/ph\.?\s?d|doctorate|doctoral/.test(low)) found.push(3);
+    if (/master|m\.s\.|\bms\b|msba|\bmba\b|m\.a\.|graduate degree|advanced degree/.test(low)) found.push(2);
+    if (/bachelor|b\.s\.|b\.a\.|\bbs\b|\bba\b|b\.sc|undergraduate|4-year degree|four-year degree/.test(low)) found.push(1);
+    if (!found.length) return 0;
+    return minimum ? Math.min.apply(null, found) : Math.max.apply(null, found);
+  }
+  var DEGREES = [[0, "Not listed"], [1, "Bachelor's"], [2, "Master's (incl. in progress)"], [3, "PhD"]];
+  function degreeName(n) { return ["none", "a bachelor's", "a master's", "a PhD"][n] || "none"; }
+  function estimateYears(text) {
+    var m = text.match(/(\d{1,2})\+?\s*years?\s+of\s+(?:\w+\s+){0,2}experience/i);
+    if (m) return +m[1];
+    var now = new Date(), cur = now.getFullYear() * 12 + now.getMonth(), spans = [];
+    var re = /(?:([A-Za-z]{3,9})\.?\s+)?(?:(\d{1,2})\/)?((?:19|20)\d{2})\s*(?:-|–|—|to)\s*(?:(?:([A-Za-z]{3,9})\.?\s+)?(?:(\d{1,2})\/)?((?:19|20)\d{2})|(present|current|now))/gi;
+    text.split(/\n/).forEach(function (line) {
+      if (EDU_LINE.test(line)) return;
+      var r; re.lastIndex = 0;
+      while ((r = re.exec(line))) {
+        var sm = monthIdx(r[1]); if (sm < 0) sm = r[2] ? +r[2] - 1 : 0;
+        var start = +r[3] * 12 + sm, end;
+        if (r[7]) end = cur; else { var em = monthIdx(r[4]); if (em < 0) em = r[5] ? +r[5] - 1 : 11; end = +r[6] * 12 + em; }
+        if (end >= start && end - start < 480) spans.push([start, end + 1]);
+      }
+    });
+    if (!spans.length) return null;
+    spans.sort(function (a, b) { return a[0] - b[0]; });
+    var months = 0, s = spans[0][0], e = spans[0][1];
+    for (var i = 1; i < spans.length; i++) { if (spans[i][0] <= e) e = Math.max(e, spans[i][1]); else { months += e - s; s = spans[i][0]; e = spans[i][1]; } }
+    months += e - s;
+    return Math.round(months / 6) / 2;
+  }
   function parseResume(text) {
     var lines = text.split(/\n/).map(function (l) { return l.replace(/\s+/g, " ").trim(); }).filter(Boolean);
-    var out = { skills: findSkills(text), name: "", roles: "", location: "" };
+    var out = { skills: findSkills(text), name: "", roles: "", locations: "", years: estimateYears(text), degree: degreeLevel(text), resumeText: text.trim() };
     for (var i = 0; i < Math.min(4, lines.length); i++) {
       var w = lines[i].split(" ");
       if (w.length >= 2 && w.length <= 4 && /^[A-Za-z][A-Za-z.'\- ]+$/.test(lines[i])) { out.name = w[0].charAt(0).toUpperCase() + w[0].slice(1).toLowerCase(); break; }
@@ -296,17 +420,17 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     while ((m = re.exec(text))) roles[(m[1] + " " + m[2]).toLowerCase().replace(/ intern$/, " analyst")] = 1;
     out.roles = Object.keys(roles).slice(0, 3).join(", ");
     var loc = text.match(/\b([A-Z][a-zA-Z]+(?: [A-Z][a-zA-Z]+){0,2}, *(?:CA|NY|WA|TX|OR|IL|MA|CO|NC|GA|FL|AZ|NV|UT|VA|DC|NJ|PA))\b/);
-    if (loc) out.location = loc[1];
+    if (loc) out.locations = loc[1];
     return out;
   }
 
-  // ---------- Job description extraction (rule-based) ----------
+  // ---------- Job posting parsing (rule-based) ----------
   function parseLooseDate(s) {
     s = s.replace(/(\d)(st|nd|rd|th)\b/, "$1").replace(".", "").trim(); var m;
     if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
     if ((m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/))) { var y = +m[3]; if (y < 100) y += 2000; return y + "-" + pad(+m[1]) + "-" + pad(+m[2]); }
     if ((m = s.match(/^([A-Za-z]{3})[a-z]*\s+(\d{1,2}),?\s*(\d{4})?$/))) {
-      var mi = MONTHS.map(function (x) { return x.toLowerCase(); }).indexOf(m[1].toLowerCase()); if (mi < 0) return "";
+      var mi = monthIdx(m[1]); if (mi < 0) return "";
       var yy = m[3] ? +m[3] : new Date().getFullYear(), out = yy + "-" + pad(mi + 1) + "-" + pad(+m[2]);
       if (!m[3] && out < today()) out = (yy + 1) + out.slice(4);
       return out;
@@ -333,38 +457,148 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     if (dl) { var d = parseLooseDate(dl[1]); if (d) r.deadline = d; }
     return r;
   }
+  // Splits the posting's skills into required and preferred, by section headings and by sentences that say "preferred" / "nice to have".
+  function jdSkills(text) {
+    var mode = "req", req = {}, pref = {}, PREF = /\b(preferred|nice[- ]to[- ]have|bonus|a plus|desired|ideally)\b/i;
+    text.split(/\n|[.!?;]\s+/).forEach(function (seg) {
+      var s = seg.trim(); if (!s) return;
+      var sk = findSkills(s), head = s.length < 60 && !sk.length;
+      if (head && PREF.test(s)) { mode = "pref"; return; }
+      if (head && /\b(require|qualification|must|responsibilit|what you|about you|you have)/i.test(s)) { mode = "req"; return; }
+      var target = PREF.test(s) ? pref : /\b(required|requirements|must)\b/i.test(s) ? req : mode === "pref" ? pref : req;
+      sk.forEach(function (k) { target[k] = 1; });
+    });
+    return { req: Object.keys(req), pref: Object.keys(pref).filter(function (k) { return !req[k]; }) };
+  }
+  function jdYears(text) {
+    var m = text.match(/(\d{1,2})\s*\+?\s*(?:(?:-|–|to)\s*\d{1,2}\s*)?\+?\s*years?\b[^.\n]{0,40}?experience/i) || text.match(/experience[^.\n]{0,30}?(\d{1,2})\s*\+?\s*years?/i);
+    return m ? +m[1] : null;
+  }
 
-  // ---------- Sample jobs (dates relative to today) ----------
+  // ---------- Qualification score (TF-IDF text similarity + skills + experience + education) ----------
+  var STOP = {};
+  ("a about above across after again all also am an and any are as at be been being below between both but by can could did do does doing down during each few for from further had has have having he her here hers him his how i if in into is it its itself just me more most my no nor not now of off on once only or other our out over own same she should so some such than that the their them then there these they this those through to too under until up very was we were what when where which while who whom why will with would you your yours " +
+   "able ability across company candidate candidates work working team teams role roles opportunity opportunities looking join including include includes etc strong excellent good great new use using used help helping support well within year years experience experienced skill skills knowledge requirement requirements required preferred plus nice qualification qualifications responsibility responsibilities position job equal employer apply applicant applicants per may must ideal ideally day days time based related relevant field degree bachelor master currently pursuing minimum against")
+    .split(" ").forEach(function (w) { STOP[w] = 1; });
+  function stem(w) { if (w.length > 5) w = w.replace(/(ies)$/, "y").replace(/(ing|ed|es)$/, ""); if (w.length > 4) w = w.replace(/s$/, ""); return w; }
+  var display = {};
+  function tokens(text) {
+    var out = [];
+    (String(text || "").toLowerCase().match(/[a-z][a-z+#]*/g) || []).forEach(function (w) {
+      if (w.length < 3 || STOP[w]) return;
+      var s = stem(w); if (STOP[s]) return;
+      if (!display[s] || w.length < display[s].length) display[s] = w;
+      out.push(s);
+    });
+    return out;
+  }
+  function tf(toks) { var c = {}; toks.forEach(function (t) { c[t] = (c[t] || 0) + 1; }); return c; }
+  var model = { v: -1 };
+  function corpus() {
+    if (model.v === version) return model;
+    var docs = jobs.filter(function (o) { return o.description; }).map(function (o) { return tf(tokens(o.description)); });
+    var resumeTF = tf(tokens(resumeDoc()));
+    docs.push(resumeTF);
+    var df = {}, N = docs.length;
+    docs.forEach(function (d) { Object.keys(d).forEach(function (t) { df[t] = (df[t] || 0) + 1; }); });
+    var idf = function (t) { return Math.log((1 + N) / (1 + (df[t] || 0))) + 1; };
+    model = { v: version, idf: idf, resume: weigh(resumeTF, idf), resumeTF: resumeTF, cache: {} };
+    return model;
+  }
+  function weigh(counts, idf) { var v = {}; Object.keys(counts).forEach(function (t) { v[t] = (1 + Math.log(counts[t])) * idf(t); }); return v; }
+  function cosine(a, b) {
+    var dot = 0, na = 0, nb = 0;
+    Object.keys(a).forEach(function (t) { na += a[t] * a[t]; if (b[t]) dot += a[t] * b[t]; });
+    Object.keys(b).forEach(function (t) { nb += b[t] * b[t]; });
+    return na && nb ? dot / Math.sqrt(na * nb) : 0;
+  }
+  function resumeDoc() { return me ? (me.resumeText || "") + " " + splitList(me.skills).join(" ") : ""; }
+
+  function scoreJob(o) {
+    if (!me || !o || !o.description || !resumeDoc().trim()) return null;
+    var c = corpus(), key = o.id + "|" + o.description.length + "|" + o.description.slice(0, 40);
+    if (c.cache[key]) return c.cache[key];
+    var mine = mySkillSet(), sk = jdSkills(o.description);
+    var has = function (s) { return !!mine[s.toLowerCase()]; };
+    var r = { haveReq: sk.req.filter(has), missReq: sk.req.filter(function (s) { return !has(s); }), havePref: sk.pref.filter(has), missPref: sk.pref.filter(function (s) { return !has(s); }) };
+
+    var jv = weigh(tf(tokens(o.description)), c.idf), cos = cosine(c.resume, jv);
+    var simPart = clamp((cos - 0.04) / 0.26, 0, 1);
+    var coTok = tf(tokens(o.company || ""));
+    r.keywords = Object.keys(jv).filter(function (t) { return !c.resumeTF[t] && !coTok[t] && t.length > 3; })
+      .sort(function (a, b) { return jv[b] - jv[a]; }).slice(0, 8).map(function (t) { return display[t] || t; });
+
+    var skillW = sk.req.length + 0.5 * sk.pref.length;
+    var skillPart = skillW ? (r.haveReq.length + 0.5 * r.havePref.length) / skillW : null;
+
+    var need = jdYears(o.description), have = me.years === "" || me.years == null ? null : +me.years;
+    var expPart = need == null ? 1 : have == null ? 0.5 : clamp(have / need, 0, 1);
+    var needDeg = degreeLevel(o.description, true), haveDeg = +me.degree || 0;
+    var eduPart = !needDeg ? 1 : haveDeg >= needDeg ? 1 : haveDeg === needDeg - 1 ? 0.5 : 0;
+
+    var parts = [];
+    if (skillPart != null) parts.push({ label: "Skills the posting asks for", w: 45, part: skillPart,
+      detail: "You have " + r.haveReq.length + " of " + sk.req.length + " required" + (sk.pref.length ? " and " + r.havePref.length + " of " + sk.pref.length + " preferred" : "") + " skills." });
+    parts.push({ label: "Resume wording vs. the posting", w: skillPart == null ? 75 : 30, part: simPart,
+      detail: "How closely your resume's words match the posting (TF-IDF cosine similarity " + cos.toFixed(2) + "). Using the posting's own terms raises this." });
+    parts.push({ label: "Years of experience", w: 15, part: expPart,
+      detail: need == null ? "The posting doesn't ask for a number of years." : have == null ? "Asks for " + need + "+ years. Add your years on My resume." : "Asks for " + need + "+ years. You have about " + have + "." });
+    parts.push({ label: "Education", w: 10, part: eduPart,
+      detail: !needDeg ? "The posting doesn't name a degree." : "Asks for " + degreeName(needDeg) + ". You have " + (haveDeg ? degreeName(haveDeg) : "none listed") + "." });
+    var total = 0; parts.forEach(function (p) { p.pts = Math.round(p.w * p.part); total += p.w * p.part; });
+    r.parts = parts; r.cos = cos;
+    r.score = clamp(Math.round(total), 1, 100);
+    c.cache[key] = r;
+    return r;
+  }
+  function band(s) { return s >= 75 ? "" : s >= 55 ? "mid" : "low"; }
+  function verdict(s) { return s >= 75 ? "Strong fit" : s >= 55 ? "Good fit" : s >= 35 ? "Reach" : "Long shot"; }
+  function scoreDot(o) {
+    var r = scoreJob(o);
+    if (!r) return '<span class="score none" title="Add your resume and the job posting to get a score">–</span>';
+    return '<span class="score ' + band(r.score) + '" title="Qualification score: ' + r.score + ' out of 100">' + r.score + "</span>";
+  }
+
+  // ---------- Sample data (dates relative to today) ----------
+  var SAMPLE_RESUME = "Jordan Lee\nSan Luis Obispo, CA · jordan.lee@example.com\n\nSUMMARY\nMSBA candidate with three years of analytics experience in financial services. I turn messy data into dashboards and forecasts that managers use.\n\n" +
+    "EDUCATION\nCal Poly, Orfalea College of Business: M.S. Business Analytics (MSBA), expected June 2027\nUC Davis: B.A. Economics, 2017 – 2021\n\n" +
+    "EXPERIENCE\nData Analyst, Central Coast Credit Union | Jul 2023 – Aug 2026\n- Built Tableau dashboards tracking loan performance for 12 branch managers, cutting weekly reporting time by 6 hours\n" +
+    "- Wrote SQL queries in Snowflake to segment 40,000 members for marketing campaigns\n- Forecast deposit growth with regression models in Excel and R, landing within 3% of actuals\n- Presented monthly findings to leadership in PowerPoint\n\n" +
+    "Business Analyst Intern, Mission Foods | Jun 2022 – Sep 2022\n- Cleaned and joined sales data from 30 stores using Excel and Python (pandas)\n- Automated a weekly inventory report with VBA, saving the team 3 hours a week\n\n" +
+    "PROJECTS\n- Customer churn model (Python, scikit-learn), MSBA capstone, 81% recall\n\nSKILLS\nSQL, Python, R, Tableau, Excel, Snowflake, statistics, regression, forecasting, PowerPoint, data visualization";
   function samples() {
     var t = today();
     var rows = [
       { company: "Harborview Health", title: "Business Analytics Intern", location: "San Luis Obispo, CA", arrangement: "Hybrid", deadline: addDays(t, 4), status: "saved",
         nextAction: "Ask Priya (MSBA '24) about the team", nextDue: addDays(t, 1), link: "https://example.com/jobs/harborview",
-        description: "Business Analytics Intern. Build Tableau dashboards, write SQL against our data warehouse, and support forecasting of patient flow. Requirements: SQL, Excel, Tableau, statistics. Nice to have: Python, time series." },
+        description: "Business Analytics Intern at Harborview Health. Hybrid, San Luis Obispo, CA.\nYou will build Tableau dashboards for hospital operations, write SQL against our data warehouse, and support forecasting of patient flow.\nRequirements: currently pursuing a master's degree in business analytics or a related field. SQL, Excel, Tableau, statistics.\nNice to have: Python, time series." },
       { company: "Sierra Analytics Group", title: "Junior Data Scientist", location: "Remote", arrangement: "Remote", deadline: addDays(t, 9), status: "saved",
-        description: "Junior Data Scientist. Build machine learning models in Python (pandas, scikit-learn), run A/B testing, and present results. SQL, AWS, and Spark preferred." },
+        description: "Junior Data Scientist. Remote.\nBuild machine learning models in Python (pandas, scikit-learn), design and analyze A/B testing for product teams, and present results to stakeholders.\nRequirements: Master's degree in a quantitative field, 2+ years of experience in data science. Python, SQL, machine learning, statistics.\nPreferred: AWS, Spark, deep learning." },
       { company: "Pacific Grid Energy", title: "Pricing Analyst", location: "Oakland, CA", arrangement: "On-site", deadline: addDays(t, -12), status: "applied", appliedDate: addDays(t, -16),
-        description: "Pricing Analyst. Excel, SQL, regression and forecasting for rate design. PowerPoint for presenting to leadership." },
+        description: "Pricing Analyst. On-site in Oakland, CA.\nUse Excel, SQL, regression and forecasting for rate design, and present recommendations to leadership with PowerPoint.\nRequirements: Bachelor's degree, 3+ years of experience in analytics or finance.\nNice to have: SAS, financial modeling." },
       { company: "Brightline Media", title: "Data Analyst, Audience Insights", location: "Los Angeles, CA", arrangement: "Hybrid", deadline: addDays(t, -8), status: "applied", appliedDate: addDays(t, -6),
         nextAction: "Connect with the hiring manager on LinkedIn", nextDue: t,
-        description: "Data Analyst. Analyze viewership with SQL and Python, build Looker dashboards, use Google Analytics. Strong storytelling and PowerPoint skills." },
+        description: "Data Analyst, Audience Insights. Hybrid, Los Angeles, CA.\nAnalyze viewership with SQL and Python, build Looker dashboards, and use Google Analytics to understand audiences. Strong storytelling and PowerPoint skills.\nRequirements: Bachelor's degree, 1+ years of experience.\nPreferred: dbt, BigQuery." },
       { company: "Lumen Bank", title: "Risk Analytics Intern", location: "Charlotte, NC", arrangement: "On-site", deadline: addDays(t, -30), status: "interviewing", appliedDate: addDays(t, -33),
-        nextAction: "Prepare for your interview", nextDue: addDays(t, 2) },
-      { company: "Coastline Foods", title: "Supply Chain Data Analyst", location: "Fresno, CA", arrangement: "On-site", deadline: addDays(t, -35), status: "rejected", appliedDate: addDays(t, -38) }
+        nextAction: "Prepare for your interview", nextDue: addDays(t, 2),
+        description: "Risk Analytics Intern. On-site in Charlotte, NC.\nBuild credit risk models with regression in R or SAS, write SQL, and document model results for reviewers.\nRequirements: pursuing a master's degree. SQL, statistics, regression.\nPreferred: Tableau." },
+      { company: "Coastline Foods", title: "Supply Chain Data Analyst", location: "Fresno, CA", arrangement: "On-site", deadline: addDays(t, -35), status: "rejected", appliedDate: addDays(t, -38),
+        description: "Supply Chain Data Analyst. On-site in Fresno, CA.\nRequirements: Bachelor's degree, 2+ years of experience in supply chain analytics. SQL, Excel, optimization, Alteryx, supply chain.\nPreferred: SAP, Power BI." }
     ];
     return rows.map(function (r) { var o = blank(); Object.keys(r).forEach(function (k) { o[k] = r[k]; }); o.sample = true; return o; });
   }
+  function sampleProfile() { var p = parseResume(SAMPLE_RESUME); p.resumeName = "Sample resume (Jordan Lee)"; p.skills = p.skills.join(", "); p.roles = "data analyst, business analyst"; p.sample = true; return p; }
 
-  // ---------- Next steps ----------
+  // ---------- To-dos ----------
   function buildSteps() {
     var t = today(), out = [];
     jobs.forEach(function (o) {
       if (CLOSED[o.status]) return;
       if (o.nextAction) out.push({ act: "next", text: o.nextAction, due: o.nextDue, o: o });
       if (o.status === "saved") {
-        var m = match(o);
-        if (m && m.missing.length && !o.tailored)
-          out.push({ act: "tailor", text: "Tailor your resume: this job asks for " + m.missing.slice(0, 3).join(", "), due: o.deadline ? addDays(o.deadline, -2) : "", o: o });
+        var r = scoreJob(o);
+        if (r && r.score < 90 && !o.tailored)
+          out.push({ act: "tailor", text: "Tailor your resume for this job (score " + r.score + ")", due: o.deadline ? addDays(o.deadline, -2) : "", o: o, go: "#job/" + o.id + "/tailor" });
         if (o.deadline && diffDays(o.deadline, t) >= 0 && diffDays(o.deadline, t) <= 14)
           out.push({ act: "apply", text: "Apply before the posting closes on " + fmt(o.deadline), due: o.deadline, o: o });
       }
@@ -385,26 +619,39 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     if (act === "apply") { setStatus(o, "applied"); save(); render(); toast("Marked as applied. I'll remind you to follow up in 2 weeks.", "Undo", undo); return; }
     if (act === "followup") { o.followUpDate = today(); save(); render(); toast("Follow-up logged.", "Undo", undo); }
   }
-
-  // ---------- Rendering ----------
-  var ui = { q: "", filter: "open", sort: "match", showAll: false, skippedWelcome: false };
-
-  function render() {
-    var welcome = !me && !jobs.length && !ui.skippedWelcome;
-    $("#btnAdd").hidden = welcome; $("#btnMe").hidden = welcome;
-    $("#btnMe").textContent = me && me.name ? me.name.charAt(0).toUpperCase() : "Me";
-    var hasSamples = jobs.some(function (o) { return o.sample; });
-    var bs = $("#btnSamples"); bs.hidden = welcome; bs.textContent = hasSamples ? "Remove sample jobs" : "Try sample jobs";
-    $("#view").innerHTML = welcome ? renderWelcome() : renderHome();
-    if (welcome) wireUpload($("#view"), true); else renderJobs();
+  function tasksHTML(steps) {
+    return '<div class="tasks">' + steps.map(function (s) {
+      return '<div class="task"><button type="button" class="done" data-done="' + s.act + '" data-id="' + esc(s.o.id) + '" aria-label="Done: ' + esc(s.text) + '"></button>' +
+        '<div><button type="button" class="link what" data-go="' + esc(s.go || "#job/" + s.o.id) + '">' + esc(s.text) + '</button><div class="who">' + esc(s.o.company) + " · " + esc(s.o.title) + "</div></div>" + when(s.due) + "</div>";
+    }).join("") + "</div>";
   }
 
+  // ---------- Routing ----------
+  var ui = { q: "", filter: "open", sort: "score", showAll: false, skippedWelcome: false, busy: {} };
+  function route() { var p = (location.hash || "#dashboard").slice(1).split("/"); return { tab: p[0] || "dashboard", id: p[1], sub: p[2] }; }
+  function go(h) { if (location.hash === h) render(); else location.hash = h; }
+
+  function render() {
+    var welcome = !me && !jobs.length && !ui.skippedWelcome, r = route();
+    $("#btnAdd").hidden = welcome; $("#tabs").hidden = welcome;
+    $all("#tabs a").forEach(function (a) { var on = a.dataset.tab === r.tab || (r.tab === "job" && a.dataset.tab === "jobs"); if (on) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+    var hasSamples = jobs.some(function (o) { return o.sample; });
+    var bs = $("#btnSamples"); bs.hidden = welcome; bs.textContent = hasSamples ? "Remove sample jobs" : "Try sample jobs";
+    var view = $("#view");
+    if (welcome) { view.innerHTML = renderWelcome(); wireUpload(view, true); return; }
+    if (r.tab === "jobs") { view.innerHTML = renderJobsPage(); renderJobList(); }
+    else if (r.tab === "resume") { view.innerHTML = renderResumePage(); wireResumePage(view); }
+    else if (r.tab === "job" && byId(r.id)) { view.innerHTML = renderJobPage(byId(r.id), r.sub); wireJobPage(byId(r.id)); }
+    else view.innerHTML = renderDashboard();
+  }
+
+  // ---------- Welcome ----------
   function renderWelcome() {
     return '<section class="welcome"><h2>Let\'s set up your job search.</h2>' +
-      '<p class="lead">Start with your resume. NextMove reads it to learn your skills, then shows how well you match each job you save and what to work on next.</p>' +
-      uploadBox() +
-      '<div id="confirm"></div>' +
-      '<p class="muted"><button type="button" class="link" data-act="skip">Skip for now</button>. You can add your resume later.</p>' +
+      '<p class="lead">Upload your resume. NextMove scores how qualified you are for each job from 1 to 100, helps you tailor your resume to each posting, and tells you what to do next.</p>' +
+      '<div class="how"><div><b>1. Your resume</b>We read your skills, experience, and education.</div><div><b>2. Save jobs</b>Paste a posting and we fill in the details and score it.</div><div><b>3. Tailor and apply</b>Rewrite your resume for each job, then track it on your dashboard.</div></div>' +
+      uploadBox() + '<div id="profileBox"></div>' +
+      '<p class="muted"><button type="button" class="link" data-act="sample-all">Try it with a sample resume and jobs</button> · <button type="button" class="link" data-act="skip">Skip for now</button></p>' +
       (storageOK ? "" : '<p class="err">This browser is blocking storage, so nothing will be saved after you close the tab.</p>') + "</section>";
   }
   function uploadBox() {
@@ -412,15 +659,18 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
       '<span class="btnlike">Choose file</span><input id="resumeFile" type="file" accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"></label>' +
       '<p class="status" id="upStatus" aria-live="polite"></p>';
   }
-  // Shared by the welcome screen and the "Me" panel.
   function wireUpload(root, isWelcome) {
     var input = $("#resumeFile", root), drop = $("#drop", root);
+    if (!input) return;
     var handle = function (file) {
       var st = $("#upStatus", root); st.className = "status"; st.textContent = "Reading " + file.name + "…";
       readResume(file).then(function (text) {
         if (!text || text.trim().length < 40) throw new Error("I couldn't find any text in that file. If it's a scanned PDF, try the Word version or a .txt copy.");
         st.textContent = "";
-        showConfirm(root, parseResume(text), file.name, isWelcome);
+        var p = parseResume(text), cur = me || {};
+        var skills = splitList(cur.skills); p.skills.forEach(function (s) { if (skills.map(function (x) { return x.toLowerCase(); }).indexOf(s.toLowerCase()) < 0) skills.push(s); });
+        showProfile(root, { name: cur.name || p.name, locations: cur.locations || p.locations, roles: cur.roles || p.roles, years: p.years != null ? p.years : cur.years,
+          degree: p.degree || cur.degree || 0, skills: skills.join(", "), resumeText: p.resumeText, resumeName: file.name, found: p.skills.length }, isWelcome);
       }).catch(function (err) { st.className = "status err"; st.textContent = err.message || "I couldn't read that file."; });
     };
     input.addEventListener("change", function () { if (input.files[0]) handle(input.files[0]); });
@@ -428,60 +678,98 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     ["dragleave", "drop"].forEach(function (ev) { drop.addEventListener(ev, function () { drop.classList.remove("over"); }); });
     drop.addEventListener("drop", function (e) { e.preventDefault(); var f = e.dataTransfer && e.dataTransfer.files[0]; if (f) handle(f); });
   }
-  function showConfirm(root, r, fileName, isWelcome) {
-    var cur = me || {};
-    var skills = splitList(cur.skills);
-    r.skills.forEach(function (s) { if (skills.map(function (x) { return x.toLowerCase(); }).indexOf(s.toLowerCase()) < 0) skills.push(s); });
-    var name = cur.name || r.name;
-    $("#confirm", root).innerHTML = '<div class="card"><h3>' + (name ? "Hi " + esc(name) + "! " : "") + (r.skills.length || !me ? "Here's what I found on your resume." : "Your profile") + "</h3>" +
-      '<div><div class="section-label" style="margin-bottom:6px">Your skills (' + skills.length + ")</div>" +
-      (skills.length ? '<div class="chips">' + skills.map(function (s) { return '<span class="chip">' + esc(s) + "</span>"; }).join("") + "</div>" : '<p class="muted">I didn\'t spot any common analytics skills. Add yours below.</p>') + "</div>" +
+  // The profile form: used after an upload and on the My resume page.
+  function showProfile(root, p, isWelcome) {
+    var skills = splitList(p.skills);
+    var deg = DEGREES.map(function (d) { return '<option value="' + d[0] + '"' + (+p.degree === d[0] ? " selected" : "") + ">" + d[1] + "</option>"; }).join("");
+    $("#profileBox", root).innerHTML = '<div class="card"><h3>' + (p.found != null ? (p.name ? "Hi " + esc(p.name) + "! " : "") + "Here's what I found on your resume." : "Your profile") + "</h3>" +
+      '<p class="muted">Check these. They drive your scores and to-dos.</p>' +
+      (skills.length ? '<div class="chips">' + skills.map(function (s) { return '<span class="chip">' + esc(s) + "</span>"; }).join("") + "</div>" : '<p class="muted">I didn\'t spot any common analytics skills. Add yours below.</p>') +
       '<div class="form-grid">' +
-      '<label>First name<input id="c-name" value="' + esc(name) + '"></label>' +
-      '<label>Where do you want to work?<input id="c-loc" value="' + esc(cur.locations || r.location) + '" placeholder="e.g. San Francisco, Remote"></label>' +
-      '<label class="full">What roles are you looking for?<input id="c-roles" value="' + esc(cur.roles || r.roles) + '" placeholder="e.g. data analyst, business analyst"></label>' +
-      '<label class="full">Skills <span class="hint">Add anything I missed, separated by commas.</span><textarea id="c-skills" rows="2">' + esc(skills.join(", ")) + "</textarea></label></div>" +
-      '<div class="actions"><button type="button" class="primary" id="c-save">' + (isWelcome ? "Looks good, take me to my tracker" : "Save") + "</button></div></div>";
-    $("#c-save", root).addEventListener("click", function () {
-      me = { name: $("#c-name", root).value.trim(), locations: $("#c-loc", root).value.trim(), roles: $("#c-roles", root).value.trim(),
-        skills: $("#c-skills", root).value.trim(), resumeName: fileName || (me && me.resumeName) || "", updated: today() };
-      saveMe(); closeModal(); render();
-      toast(me.name ? "Welcome, " + esc(me.name) + "!" : "Saved.");
+      '<label>First name<input id="p-name" value="' + esc(p.name) + '"></label>' +
+      '<label>Where do you want to work?<input id="p-loc" value="' + esc(p.locations) + '" placeholder="e.g. San Francisco, Remote"></label>' +
+      '<label>Years of work experience <span class="hint">Estimated from the dates on your resume.</span><input id="p-years" type="number" min="0" max="50" step="0.5" value="' + esc(p.years == null ? "" : p.years) + '"></label>' +
+      '<label>Highest degree <span class="hint">In progress counts.</span><select id="p-degree">' + deg + "</select></label>" +
+      '<label class="full">What roles are you looking for?<input id="p-roles" value="' + esc(p.roles) + '" placeholder="e.g. data analyst, business analyst"></label>' +
+      '<label class="full">Skills <span class="hint">Add anything I missed, separated by commas.</span><textarea id="p-skills" rows="2">' + esc(skills.join(", ")) + "</textarea></label>" +
+      '<details class="full"><summary>Resume text (what the score and AI read)</summary><textarea id="p-text" rows="10">' + esc(p.resumeText) + "</textarea></details></div>" +
+      '<div class="actions"><button type="button" class="primary" id="p-save">' + (isWelcome ? "Looks good, take me to my dashboard" : "Save") + "</button></div></div>";
+    $("#p-save", root).addEventListener("click", function () {
+      var y = $("#p-years", root).value.trim();
+      me = { name: $("#p-name", root).value.trim(), locations: $("#p-loc", root).value.trim(), roles: $("#p-roles", root).value.trim(),
+        years: y === "" ? null : +y, degree: +$("#p-degree", root).value, skills: $("#p-skills", root).value.trim(), resumeText: $("#p-text", root).value.trim(),
+        resumeName: p.resumeName || (me && me.resumeName) || "", updated: today() };
+      saveMe();
+      if (isWelcome) { go("#dashboard"); toast(me.name ? "Welcome, " + esc(me.name) + "!" : "Saved."); }
+      else { render(); toast("Saved. Your scores are updated."); }
     });
   }
 
-  function renderHome() {
+  // ---------- Dashboard ----------
+  function renderDashboard() {
     var steps = buildSteps(), t = today();
     var dueNow = steps.filter(function (s) { return s.due && s.due <= t; }).length;
-    var hello = me && me.name ? "Hi " + me.name : "Hi there";
-    var sub = !jobs.length ? "Add a job you're interested in to get started." :
-      dueNow ? "You have " + dueNow + " thing" + (dueNow === 1 ? "" : "s") + " to do today." : "Nothing urgent today. Here's what's coming up.";
-    var h = '<section class="hello"><h2>' + esc(hello) + "</h2><p>" + esc(sub) + "</p>";
-    if (!me) h += '<p><button type="button" class="link" data-act="me">Add your resume</button> to see how well you match each job.</p>';
+    var open = jobs.filter(function (o) { return !CLOSED[o.status]; });
+    var sent = jobs.filter(function (o) { return o.status !== "saved"; }).length;
+    var interviews = jobs.filter(function (o) { return o.status === "interviewing" || o.status === "offer"; }).length;
+    var offers = jobs.filter(function (o) { return o.status === "offer"; }).length;
+    var scored = open.map(scoreJob).filter(Boolean), avg = scored.length ? Math.round(scored.reduce(function (a, r) { return a + r.score; }, 0) / scored.length) : null;
+
+    var h = '<section class="hello"><h2>' + esc(me && me.name ? "Hi " + me.name : "Hi there") + "</h2><p>" +
+      esc(!jobs.length ? "Add a job you're interested in to get started." : dueNow ? "You have " + plural(dueNow, "thing") + " to do today." : "Nothing urgent today. Here's where things stand.") + "</p>";
+    if (!me) h += '<p><button type="button" class="link" data-go="#resume">Add your resume</button> to get a 1–100 score for every job.</p>';
     h += "</section>";
 
+    h += '<section class="stats" aria-label="Your numbers">' +
+      '<div class="stat hero"><b>' + (avg == null ? "–" : avg) + '</b><span>Average match score</span><small>' + (avg == null ? (me ? "Add job postings to score" : "Add your resume") : "across " + plural(scored.length, "open job")) + "</small></div>" +
+      '<div class="stat"><b>' + open.length + "</b><span>Open jobs</span><small>" + jobs.filter(function (o) { return o.status === "saved"; }).length + " not applied yet</small></div>" +
+      '<div class="stat"><b>' + sent + "</b><span>Applications sent</span><small>" + (sent ? Math.round(100 * interviews / sent) + "% got an interview" : "None yet") + "</small></div>" +
+      '<div class="stat"><b>' + interviews + "</b><span>Interviews</span><small>" + plural(offers, "offer") + "</small></div></section>";
+
     var shown = ui.showAll ? steps : steps.slice(0, 5);
-    h += '<section class="card"><div class="card-h"><h3>Your next steps</h3>' + (steps.length ? '<span class="count">Tap the circle when done</span>' : "") + "</div>";
-    if (!steps.length) h += '<p class="empty">' + (jobs.length ? "You're all caught up. Give a job a next step and it will show up here." : "Your to-dos will show up here: deadlines, follow-ups, and ways to tailor your resume.") + "</p>";
+    h += '<div class="grid2"><section class="card"><div class="card-h"><h3>To do</h3>' + (steps.length ? '<span class="count">Tap the circle when done</span>' : "") + "</div>";
+    if (!steps.length) h += '<p class="empty">' + (jobs.length ? "You're all caught up. Give a job a next step and it will show up here." : "Deadlines, follow-ups, and resume tailoring will show up here.") + "</p>";
     else {
-      h += '<div class="tasks">' + shown.map(function (s) {
-        return '<div class="task"><button type="button" class="done" data-done="' + s.act + '" data-id="' + esc(s.o.id) + '" aria-label="Done: ' + esc(s.text) + '"></button>' +
-          '<div><div class="what">' + esc(s.text) + '</div><div class="who">' + esc(s.o.company) + " · " + esc(s.o.title) + "</div></div>" + when(s.due) + "</div>";
-      }).join("") + "</div>";
+      h += tasksHTML(shown);
       if (steps.length > 5) h += '<div><button type="button" class="link" data-act="all-steps">' + (ui.showAll ? "Show fewer" : "Show all " + steps.length) + "</button></div>";
     }
     h += "</section>";
 
-    var so = function (v, l, cur) { return '<option value="' + v + '"' + (v === cur ? " selected" : "") + ">" + l + "</option>"; };
-    h += '<section class="card"><div class="card-h"><h3>Your jobs</h3><span class="count" id="jobCount"></span></div>';
-    if (jobs.length) h += '<div class="controls"><input id="q" type="search" aria-label="Search your jobs" placeholder="Search company, title, or location" value="' + esc(ui.q) + '">' +
-      '<select id="filter" aria-label="Show">' + so("open", "Open jobs", ui.filter) + STATUSES.map(function (s) { return so(s[0], s[1], ui.filter); }).join("") + so("all", "All jobs", ui.filter) + "</select>" +
-      '<select id="sort" aria-label="Sort">' + so("match", "Best match first", ui.sort) + so("deadline", "Deadline soonest", ui.sort) + so("company", "Company A–Z", ui.sort) + so("updated", "Recently updated", ui.sort) + "</select></div>";
-    h += '<div class="jobs" id="jobs"></div></section>';
+    var max = Math.max.apply(null, [1].concat(STATUSES.map(function (s) { return jobs.filter(function (o) { return o.status === s[0]; }).length; })));
+    h += '<section class="card"><div class="card-h"><h3>Pipeline</h3><span class="count">' + plural(jobs.length, "job") + "</span></div><div class=\"pipe\">" +
+      STATUSES.map(function (s) {
+        var n = jobs.filter(function (o) { return o.status === s[0]; }).length;
+        return '<button type="button" class="' + (CLOSED[s[0]] ? "closed" : "") + '" data-filter="' + s[0] + '" aria-label="' + s[1] + ": " + n + '"><span>' + s[1] + '</span><span class="bar"><i style="width:' + (n ? Math.max(4, 100 * n / max) : 0) + '%"></i></span><span class="n">' + n + "</span></button>";
+      }).join("") + "</div></section></div>";
+
+    var best = jobs.filter(function (o) { return o.status === "saved"; }).map(function (o) { return { o: o, r: scoreJob(o) }; })
+      .filter(function (x) { return x.r; }).sort(function (a, b) { return b.r.score - a.r.score; }).slice(0, 3);
+    h += '<section class="card"><div class="card-h"><h3>Best matches to apply to</h3><button type="button" class="link" data-go="#jobs">See all jobs</button></div>';
+    if (!best.length) h += '<p class="empty">' + (me ? "Save a job with its posting and your best matches will show up here." : "Add your resume and some jobs to see your best matches.") + "</p>";
+    else h += '<div class="mini">' + best.map(function (x) { return jobRow(x.o, true); }).join("") + "</div>";
+    h += "</section>";
     return h;
   }
 
-  function renderJobs() {
+  // ---------- Jobs page ----------
+  function jobRow(o, compact) {
+    var next = o.nextAction ? '<span class="lbl">Next:</span> ' + esc(o.nextAction) + " " + when(o.nextDue)
+      : o.status === "saved" && o.deadline ? '<span class="lbl">Closes</span> ' + when(o.deadline) : '<span class="lbl">No next step yet</span>';
+    var r = scoreJob(o), right = compact ? '<span class="count">' + (r ? verdict(r.score) : "") + "</span>" :
+      '<select aria-label="Status for ' + esc(o.company) + '" data-status="' + esc(o.id) + '">' + STATUSES.map(function (s) { return '<option value="' + s[0] + '"' + (s[0] === o.status ? " selected" : "") + ">" + s[1] + "</option>"; }).join("") + "</select>";
+    return '<article class="job" tabindex="0" data-go="#job/' + esc(o.id) + '">' + scoreDot(o) + '<div><div class="co">' + esc(o.company) + "</div>" +
+      '<div class="ti">' + esc(o.title) + (o.location ? " · " + esc(o.location) : "") + (o.arrangement && o.arrangement !== o.location ? " · " + esc(o.arrangement) : "") + '</div><div class="nx">' + next + "</div></div>" + right + "</article>";
+  }
+  function renderJobsPage() {
+    var so = function (v, l, cur) { return '<option value="' + v + '"' + (v === cur ? " selected" : "") + ">" + l + "</option>"; };
+    var h = '<section class="hello"><h2>Jobs</h2><p>' + (me ? "The circle is your qualification score out of 100. Click a job to see why and tailor your resume." : "Add your resume on My resume to score each job.") + "</p></section>";
+    h += '<section class="card"><div class="card-h"><h3>Your jobs</h3><span class="count" id="jobCount"></span></div>';
+    if (jobs.length) h += '<div class="controls"><input id="q" type="search" aria-label="Search your jobs" placeholder="Search company, title, location, or notes" value="' + esc(ui.q) + '">' +
+      '<select id="filter" aria-label="Show">' + so("open", "Open jobs", ui.filter) + STATUSES.map(function (s) { return so(s[0], s[1], ui.filter); }).join("") + so("all", "All jobs", ui.filter) + "</select>" +
+      '<select id="sort" aria-label="Sort">' + so("score", "Highest score first", ui.sort) + so("deadline", "Deadline soonest", ui.sort) + so("company", "Company A–Z", ui.sort) + so("updated", "Recently updated", ui.sort) + "</select></div>";
+    return h + '<div class="jobs" id="jobs"></div></section>';
+  }
+  function renderJobList() {
     var box = $("#jobs"); if (!box) return;
     if (!jobs.length) {
       box.innerHTML = '<p class="empty">No jobs yet.</p><div class="actions"><button type="button" class="primary" data-act="add">+ Add your first job</button><button type="button" class="link" data-act="samples">or try sample jobs</button></div>';
@@ -491,26 +779,186 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     var list = jobs.filter(function (o) {
       if (ui.filter === "open" && CLOSED[o.status]) return false;
       if (ui.filter !== "open" && ui.filter !== "all" && o.status !== ui.filter) return false;
-      return !q || [o.company, o.title, o.location, o.notes].join(" ").toLowerCase().indexOf(q) >= 0;
+      return !q || [o.company, o.title, o.location, o.arrangement, o.notes].join(" ").toLowerCase().indexOf(q) >= 0;
     });
     list.sort(function (a, b) {
       if (ui.sort === "company") return (a.company || "").localeCompare(b.company || "");
       if (ui.sort === "updated") return (b.updatedAt || "").localeCompare(a.updatedAt || "");
-      if (ui.sort === "match") { var d = ((match(b) || {}).pct || -1) - ((match(a) || {}).pct || -1); if (d) return d; }
+      if (ui.sort === "score") { var d = ((scoreJob(b) || {}).score || -1) - ((scoreJob(a) || {}).score || -1); if (d) return d; }
       return (a.deadline || "9999").localeCompare(b.deadline || "9999");
     });
     $("#jobCount").textContent = list.length === jobs.length ? jobs.length + " total" : list.length + " of " + jobs.length;
-    box.innerHTML = list.map(function (o) {
-      var opts = STATUSES.map(function (s) { return '<option value="' + s[0] + '"' + (s[0] === o.status ? " selected" : "") + ">" + s[1] + "</option>"; }).join("");
-      var next = o.nextAction ? '<span class="lbl">Next:</span> ' + esc(o.nextAction) + " " + when(o.nextDue)
-        : o.status === "saved" && o.deadline ? '<span class="lbl">Closes</span> ' + when(o.deadline) : '<span class="lbl">No next step yet</span>';
-      return '<article class="job" tabindex="0" data-open="' + esc(o.id) + '"><div><div class="co">' + esc(o.company) + "</div>" +
-        '<div class="ti">' + esc(o.title) + (o.location ? " · " + esc(o.location) : "") + '</div><div class="nx">' + next + "</div></div>" +
-        '<div class="side">' + badge(o) + '<select aria-label="Status for ' + esc(o.company) + '" data-status="' + esc(o.id) + '">' + opts + "</select></div></article>";
-    }).join("") || '<p class="empty">No jobs match. Try a different search or filter.</p>';
+    box.innerHTML = list.map(function (o) { return jobRow(o); }).join("") || '<p class="empty">No jobs match. Try a different search or filter.</p>';
   }
 
-  // ---------- Modals ----------
+  // ---------- Job page ----------
+  function renderJobPage(o, sub) {
+    var r = scoreJob(o);
+    sub = sub === "tailor" || sub === "details" ? sub : r ? "score" : "details";
+    var opts = STATUSES.map(function (s) { return '<option value="' + s[0] + '"' + (s[0] === o.status ? " selected" : "") + ">" + s[1] + "</option>"; }).join("");
+    var h = '<div><a class="back" href="#jobs">← All jobs</a></div>' +
+      '<section class="job-head"><div><h2>' + esc(o.company) + '</h2><p class="sub">' + esc(o.title) + (o.location ? " · " + esc(o.location) : "") + (o.arrangement ? " · " + esc(o.arrangement) : "") +
+      (o.deadline ? " · Closes " + fmt(o.deadline) : "") + "</p></div>" +
+      '<div class="right"><select aria-label="Status" data-status="' + esc(o.id) + '">' + opts + '</select><button type="button" data-edit="' + esc(o.id) + '">Edit</button></div></section>';
+    var tab = function (k, l) { return '<a href="#job/' + esc(o.id) + "/" + k + '"' + (k === sub ? ' aria-current="page"' : "") + ">" + l + "</a>"; };
+    h += '<nav class="seg" aria-label="Job sections">' + tab("score", "Match score") + tab("tailor", "Tailor my resume") + tab("details", "Details & notes") + "</nav>";
+    if (sub === "score") h += scoreTab(o, r);
+    else if (sub === "tailor") h += tailorTab(o, r);
+    else h += detailsTab(o);
+    return h;
+  }
+  function needsHTML(o) {
+    if (!me) return '<section class="card"><p>Add your resume to get a qualification score for this job.</p><div><button type="button" class="primary" data-go="#resume">Add my resume</button></div></section>';
+    return '<section class="card"><p>Paste the job posting so I can compare it with your resume.</p><div><button type="button" class="primary" data-edit="' + esc(o.id) + '">Add the job posting</button></div></section>';
+  }
+  function scoreTab(o, r) {
+    if (!r) return needsHTML(o);
+    var C = 2 * Math.PI * 52, color = r.score >= 75 ? "var(--accent)" : r.score >= 55 ? "var(--warn)" : "var(--muted)";
+    var h = '<section class="card"><div class="ring-wrap"><div class="ring" role="img" aria-label="Score ' + r.score + ' out of 100"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" fill="none" stroke="var(--soft-bg)" stroke-width="12"/>' +
+      '<circle cx="60" cy="60" r="52" fill="none" stroke="' + color + '" stroke-width="12" stroke-linecap="round" stroke-dasharray="' + (C * r.score / 100).toFixed(1) + " " + C.toFixed(1) + '"/></svg>' +
+      '<div class="num"><div><b>' + r.score + "</b><small>out of 100</small></div></div></div>" +
+      '<div style="display:grid;gap:6px"><div class="verdict">' + verdict(r.score) + "</div><p class=\"muted\">" +
+      (r.missReq.length ? "Your biggest gap: " + esc(r.missReq.slice(0, 3).join(", ")) + ". If you have " + (r.missReq.length > 1 ? "these skills" : "this skill") + ", put " + (r.missReq.length > 1 ? "them" : "it") + " on your resume in the posting's words."
+        : r.score >= 75 ? "You meet the main requirements. Tailor your wording and apply." : "You have the listed skills. Tailoring your wording to the posting will raise this.") + "</p>" +
+      '<div><button type="button" class="primary" data-go="#job/' + esc(o.id) + '/tailor">Tailor my resume for this job</button></div></div></div></section>';
+    h += '<section class="card"><h3>How this score is calculated</h3><div class="rows">' + r.parts.map(function (p) {
+      return '<div class="row"><div class="row-h">' + esc(p.label) + "<span>" + p.pts + " / " + p.w + ' pts</span></div><div class="bar"><i style="width:' + Math.round(100 * p.part) + '%"></i></div><p>' + esc(p.detail) + "</p></div>";
+    }).join("") + "</div>";
+    var chips = function (arr, cls) { return '<div class="chips">' + arr.map(function (s) { return '<span class="chip ' + cls + '">' + esc(s) + "</span>"; }).join("") + "</div>"; };
+    if (r.haveReq.length + r.missReq.length) h += '<div class="section-label">Required skills</div>' + chips(r.haveReq, "") + (r.missReq.length ? chips(r.missReq, "miss") : "");
+    if (r.havePref.length + r.missPref.length) h += '<div class="section-label">Preferred skills</div>' + chips(r.havePref, "") + (r.missPref.length ? chips(r.missPref, "miss") : "");
+    if (r.keywords.length) h += '<div class="section-label">Words in the posting your resume doesn\'t use</div>' + chips(r.keywords, "plain");
+    h += '<p class="note">Green = on your resume. Yellow = missing. Computed in your browser with machine-learning text analysis (TF-IDF) and rules. It estimates fit; it doesn\'t predict hiring decisions.</p></section>';
+    return h;
+  }
+  function detailsTab(o) {
+    var row = function (k, v) { return v ? "<dt>" + k + "</dt><dd>" + v + "</dd>" : ""; };
+    var h = '<section class="card"><div class="card-h"><h3>Details</h3><button type="button" class="link" data-edit="' + esc(o.id) + '">Edit</button></div><dl class="kv">' +
+      row("Status", esc(statusLabel(o.status))) + row("Location", esc(o.location)) + row("Work arrangement", esc(o.arrangement)) + row("Deadline", o.deadline ? esc(fmt(o.deadline)) + " " + when(o.deadline) : "") +
+      row("Link", o.link ? '<a href="' + esc(o.link) + '" target="_blank" rel="noopener">Open the posting</a>' : "") + row("Applied", o.appliedDate ? esc(fmt(o.appliedDate)) : "") +
+      row("Next step", o.nextAction ? esc(o.nextAction) + " " + when(o.nextDue) : '<button type="button" class="link" data-edit="' + esc(o.id) + '" data-focus="f-nextAction">Add a next step</button>') +
+      row("Notes", esc(o.notes)) + "</dl></section>";
+    h += '<section class="card"><h3>Job posting</h3>' + (o.description ? '<p style="white-space:pre-wrap">' + esc(o.description) + "</p>" : '<p class="muted">No posting saved. <button type="button" class="link" data-edit="' + esc(o.id) + '">Paste it</button> to get a score.</p>') + "</section>";
+    return h;
+  }
+
+  // ---------- Tailoring ----------
+  function resumeLines() {
+    return (me && me.resumeText || "").split(/\n/).map(function (l) { return l.replace(/^[\s•\-–*·]+/, "").trim(); })
+      .filter(function (l) { return l.length > 35 && !EDU_LINE.test(l) && !/@|https?:/.test(l) && (l.match(/,/g) || []).length < 4; });
+  }
+  function ruleSuggestions(o, r) {
+    var c = corpus(), jv = weigh(tf(tokens(o.description)), c.idf);
+    var ranked = resumeLines().map(function (l) { var s = 0; tokens(l).forEach(function (t) { s += jv[t] || 0; }); return { l: l, s: s }; })
+      .filter(function (x) { return x.s > 0; }).sort(function (a, b) { return b.s - a.s; }).slice(0, 3);
+    var top = r.haveReq.concat(r.havePref).slice(0, 4);
+    var summary = "Analytics professional" + (me.degree >= 2 ? " pursuing a master's in business analytics" : "") + (me.years ? " with " + me.years + " years of experience" : "") +
+      (top.length ? " in " + top.slice(0, -1).join(", ") + (top.length > 1 ? " and " : "") + top[top.length - 1] : "") + ", looking to bring that to the " + (o.title || "role") + " role at " + (o.company || "your company") + ".";
+    var h = '<section class="card"><div class="card-h"><h3>Quick suggestions</h3><span class="ai-tag rule">Rule-based, not AI</span></div>';
+    if (r.missReq.length || r.missPref.length) h += '<div class="out"><div class="section-label">Add these skills, if you have them</div><p>' + esc(r.missReq.concat(r.missPref).join(", ")) + "</p></div>";
+    if (r.keywords.length) h += '<div class="out"><div class="section-label">Use the posting\'s words</div><p>Work these into your bullets where they\'re true: ' + esc(r.keywords.slice(0, 6).join(", ")) + ".</p></div>";
+    if (ranked.length) h += '<div class="out"><div class="section-label">Lead with these bullets</div><p class="muted">They overlap most with this posting. Move them to the top of their section.</p><ul>' + ranked.map(function (x) { return "<li>" + esc(x.l) + "</li>"; }).join("") + "</ul></div>";
+    h += '<div class="out"><div class="out-h"><div class="section-label">Starter summary (template)</div><button type="button" class="small" data-copy="' + esc(summary) + '">Copy</button></div><p class="txt">' + esc(summary) + "</p></div></section>";
+    return h;
+  }
+  function tailorTab(o, r) {
+    if (!r) return needsHTML(o);
+    var key = getKey(), t = o.tailoring, busy = ui.busy[o.id];
+    var h = '<section class="card"><div class="card-h"><h3>Tailor my resume with AI</h3><span class="ai-tag">AI · Claude</span></div>';
+    if (!key) h += '<p>Claude can rewrite your summary and bullets for this posting, using only what\'s already on your resume. It needs your own Anthropic API key, which you add once on My resume.</p><div class="actions"><button type="button" class="primary" data-go="#resume/ai">Add my API key</button><span class="note">Meanwhile, use the quick suggestions below.</span></div>';
+    else {
+      h += '<p class="muted">Claude reads your resume and this posting, then rewrites your summary and strongest bullets in the posting\'s language. It won\'t invent experience.</p>' +
+        '<div class="actions"><button type="button" class="primary" id="btnAI"' + (busy ? " disabled" : "") + ">" + (busy ? '<span class="spinner"></span> Tailoring… about 30–60 seconds' : t ? "Tailor again" : "Tailor my resume") + "</button>" +
+        '<span class="err" id="aiErr" role="alert"></span></div>';
+    }
+    if (t) h += aiResultHTML(t);
+    h += "</section>";
+    return h + ruleSuggestions(o, r);
+  }
+  function aiResultHTML(t) {
+    var copyAll = [t.summary].concat((t.bullets || []).map(function (b) { return "• " + b.rewritten; })).join("\n");
+    var h = '<div class="out-h"><span class="note">Written by Claude on ' + esc(fmt(t.at)) + ". Check every line before you use it.</span><button type=\"button\" class=\"small\" data-copy=\"" + esc(copyAll) + '">Copy all</button></div>';
+    if (t.summary) h += '<div class="out"><div class="out-h"><div class="section-label">Summary for this job</div><button type="button" class="small" data-copy="' + esc(t.summary) + '">Copy</button></div><p class="txt">' + esc(t.summary) + "</p></div>";
+    (t.bullets || []).forEach(function (b) {
+      h += '<div class="out"><div class="out-h"><div class="section-label">Rewritten bullet</div><button type="button" class="small" data-copy="' + esc(b.rewritten) + '">Copy</button></div>' +
+        (b.original ? '<p class="before">Before: ' + esc(b.original) + "</p>" : "") + '<p class="txt">' + esc(b.rewritten) + "</p></div>";
+    });
+    if (t.skills && t.skills.length) h += '<div class="out"><div class="section-label">Skills to add (only if true)</div><div class="chips">' + t.skills.map(function (s) { return '<span class="chip">' + esc(s) + "</span>"; }).join("") + "</div></div>";
+    if (t.gaps && t.gaps.length) h += '<div class="out"><div class="section-label">Gaps and how to handle them</div><ul>' + t.gaps.map(function (g) { return "<li>" + esc(g) + "</li>"; }).join("") + "</ul></div>";
+    return h;
+  }
+  var SYSTEM = "You are a career coach for business analytics students. You tailor a candidate's resume to one job posting. " +
+    "Rules: use only facts that are in the resume. Never invent employers, tools, numbers, or results. If a bullet would be stronger with a number the resume doesn't give, use a placeholder like [X%]. " +
+    "Mirror the posting's wording where it truthfully fits. Keep bullets to one line each, starting with a strong verb. " +
+    "Reply with only a JSON object, no other text, in this shape: " +
+    '{"summary": "2-3 sentence professional summary for this job", "bullets": [{"original": "existing resume bullet", "rewritten": "tailored version"}], ' +
+    '"skills": ["skills from the posting that the resume suggests the candidate has but does not list"], "gaps": ["honest gap and one sentence on how to address it in a cover letter or interview"]}. ' +
+    "Give 4 to 6 bullets, choosing the ones most relevant to the posting.";
+  function runAI(o) {
+    var key = getKey(); if (!key) return;
+    ui.busy[o.id] = true; render();
+    var user = "JOB: " + (o.title || "") + " at " + (o.company || "") + "\n\nJOB POSTING:\n" + o.description + "\n\nMY RESUME:\n" + (me.resumeText || "Skills: " + me.skills) +
+      "\n\nTailor my resume for this job.";
+    fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json", "anthropic-dangerous-direct-browser-access": "true" },
+      body: JSON.stringify({ model: MODEL, max_tokens: 16000, thinking: { type: "adaptive" }, system: SYSTEM, messages: [{ role: "user", content: user }] })
+    }).then(function (res) {
+      return res.json().catch(function () { return {}; }).then(function (j) {
+        if (res.status === 401) throw new Error("Anthropic didn't accept that API key. Check it on My resume.");
+        if (res.status === 429) throw new Error("Anthropic says you've hit a rate limit. Wait a minute and try again.");
+        if (!res.ok) throw new Error("Anthropic returned an error" + (j.error && j.error.message ? ": " + j.error.message : " (" + res.status + ")."));
+        if (j.stop_reason === "refusal") throw new Error("Claude declined to tailor this one. Try editing the posting text and run it again.");
+        var text = (j.content || []).filter(function (b) { return b.type === "text"; }).map(function (b) { return b.text; }).join("");
+        var a = text.indexOf("{"), b = text.lastIndexOf("}");
+        if (a < 0 || b < a) throw new Error("Claude's answer came back in an unexpected format. Try again.");
+        var data = JSON.parse(text.slice(a, b + 1));
+        return { at: today(), summary: String(data.summary || ""), bullets: (data.bullets || []).filter(function (x) { return x && x.rewritten; }).slice(0, 8),
+          skills: splitList(data.skills), gaps: Array.isArray(data.gaps) ? data.gaps.map(String) : splitList(data.gaps) };
+      });
+    }).then(function (t) {
+      var cur = byId(o.id); if (cur) { cur.tailoring = t; cur.tailored = true; cur.updatedAt = today(); save(); }
+      delete ui.busy[o.id]; render(); toast("Your tailored resume for " + esc(o.company) + " is ready.");
+    }).catch(function (err) {
+      delete ui.busy[o.id]; render();
+      var msg = err && err.message && !/fetch|network|load failed/i.test(err.message) ? err.message : "Couldn't reach Anthropic. Check your connection. Previews can block this; it works on the live site.";
+      var el = $("#aiErr"); if (el) el.textContent = msg; else toast(esc(msg));
+    });
+  }
+  function wireJobPage(o) {
+    var b = $("#btnAI"); if (b) b.addEventListener("click", function () { runAI(o); });
+  }
+
+  // ---------- My resume page ----------
+  function renderResumePage() {
+    var key = getKey();
+    var h = '<section class="hello"><h2>My resume</h2><p>Your resume powers every score and suggestion. ' + (me && me.resumeName ? "Current file: <strong>" + esc(me.resumeName) + "</strong>." : "Upload it to get started.") + "</p></section>";
+    h += '<div class="narrow" style="display:grid;gap:24px">' + uploadBox() + '<div id="profileBox"></div>';
+    h += '<section class="card" id="ai"><div class="card-h"><h3>AI tailoring (optional)</h3><span class="ai-tag">AI · Claude</span></div>' +
+      "<p>To have Claude rewrite your resume for a job, paste an Anthropic API key. You can create one at <a href=\"https://console.anthropic.com/settings/keys\" target=\"_blank\" rel=\"noopener\">console.anthropic.com</a>. Each tailoring costs a few cents on your account.</p>" +
+      (key ? '<p><strong>Key saved</strong> (ends in ' + esc(key.slice(-4)) + ').</p><div class="actions"><button type="button" class="danger" id="keyDel">Remove key</button></div>'
+        : '<label>Anthropic API key<input id="keyIn" type="password" autocomplete="off" placeholder="sk-ant-…"></label><div class="actions"><button type="button" class="primary" id="keySave">Save key</button><span class="err" id="keyErr"></span></div>') +
+      '<p class="note">The key is stored only in this browser. Your resume and the job posting are sent to Anthropic only when you click "Tailor my resume". Use a key with a spending limit, and don\'t save it on a shared computer.</p></section>';
+    if (me) h += '<div><button type="button" class="danger" id="meReset">Remove my resume and profile</button></div>';
+    return h + "</div>";
+  }
+  function wireResumePage(root) {
+    wireUpload(root, false);
+    if (me) showProfile(root, me, false);
+    var s = $("#keySave");
+    if (s) s.addEventListener("click", function () {
+      var v = $("#keyIn").value.trim();
+      if (!/^sk-ant-/.test(v)) { $("#keyErr").textContent = "That doesn't look like an Anthropic key. It should start with sk-ant-."; return; }
+      setKey(v); render(); toast("Key saved. Open a job and choose Tailor my resume.");
+    });
+    var d = $("#keyDel"); if (d) d.addEventListener("click", function () { setKey(""); render(); toast("Key removed."); });
+    var m = $("#meReset"); if (m) m.addEventListener("click", function () {
+      var prev = me; me = null; saveMe(); render(); toast("Removed your resume and profile.", "Undo", function () { me = prev; saveMe(); render(); });
+    });
+    if (route().id === "ai") setTimeout(function () { var el = $("#ai"); if (el) el.scrollIntoView({ block: "start" }); var i = $("#keyIn"); if (i) i.focus({ preventScroll: true }); }, 30);
+  }
+
+  // ---------- Add / edit job modal ----------
   function closeModal() { $("#modalRoot").innerHTML = ""; document.removeEventListener("keydown", escClose); }
   function escClose(e) { if (e.key === "Escape") closeModal(); }
   function openModal(html) {
@@ -519,30 +967,25 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     $(".overlay").addEventListener("mousedown", function (e) { if (e.target.dataset.overlay) closeModal(); });
     $all("[data-close]").forEach(function (b) { b.addEventListener("click", closeModal); });
   }
-  function matchHTML(o) {
-    if (!o.description) return "";
-    var m = match(o);
-    if (!me) return '<p class="note">Add your resume (top right) to see how well you match this job.</p>';
-    if (!m) return '<p class="note">I couldn\'t find specific skills in this posting to compare with your resume.</p>';
-    return '<div class="match-box"><p><strong>' + matchWord(m.pct) + ": " + m.pct + "%</strong> of the skills in this posting are on your resume.</p>" +
-      (m.have.length ? '<div class="chips">' + m.have.map(function (s) { return '<span class="chip">' + esc(s) + "</span>"; }).join("") + "</div>" : "") +
-      (m.missing.length ? '<p>Missing from your resume:</p><div class="chips">' + m.missing.map(function (s) { return '<span class="chip miss">' + esc(s) + "</span>"; }).join("") + "</div>" +
-        '<p class="note">If you have these skills, add them to your resume using the same words before you apply. Keyword matching, not AI.</p>' : "") + "</div>";
-  }
   function field(id, label, val, type, ph, full) {
     return "<label" + (full ? ' class="full"' : "") + ">" + label + '<input id="f-' + id + '" type="' + (type || "text") + '" value="' + esc(val) + '"' + (ph ? ' placeholder="' + esc(ph) + '"' : "") + "></label>";
   }
   function pick(id, label, val, opts) {
     return "<label>" + label + '<select id="f-' + id + '">' + opts.map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === val ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></label>";
   }
-
+  function previewScore(desc) {
+    if (!desc.trim()) return "";
+    if (!me) return '<p class="note">Add your resume to get a score for this job.</p>';
+    var r = scoreJob({ id: "preview", description: desc });
+    return r ? '<p><strong>Score: ' + r.score + "/100 · " + verdict(r.score) + "</strong>" + (r.missReq.length ? '<span class="muted"> · Missing: ' + esc(r.missReq.slice(0, 4).join(", ")) + "</span>" : "") + "</p>" : "";
+  }
   function openJob(id, focusId) {
     var isNew = !id, o = isNew ? blank() : JSON.parse(JSON.stringify(byId(id)));
     if (!o) return;
-    var h = '<form id="jobForm" novalidate><div class="modal-h"><h2>' + (isNew ? "Add a job" : esc(o.company)) + '</h2><button type="button" class="x" data-close="1" aria-label="Close">✕</button></div><div class="modal-b">' +
-      '<div class="paste"><label>Paste the job posting <span class="hint">Optional. I\'ll fill in the details and compare it with your resume.</span>' +
-      '<textarea id="f-description" rows="' + (o.description ? 5 : 4) + '" placeholder="Copy the whole posting from the job site and paste it here">' + esc(o.description) + "</textarea></label>" +
-      '<div class="actions"><button type="button" id="btnFill">Fill in the details</button><span id="fillMsg" class="note"></span></div><div id="matchBox">' + matchHTML(o) + "</div></div>" +
+    var h = '<form id="jobForm" novalidate><div class="modal-h"><h2>' + (isNew ? "Add a job" : "Edit " + esc(o.company)) + '</h2><button type="button" class="x" data-close="1" aria-label="Close">✕</button></div><div class="modal-b">' +
+      '<div class="paste"><label>Paste the job posting <span class="hint">I\'ll fill in the details and score it against your resume.</span>' +
+      '<textarea id="f-description" rows="' + (o.description ? 6 : 4) + '" placeholder="Copy the whole posting from the job site and paste it here">' + esc(o.description) + "</textarea></label>" +
+      '<div class="actions"><button type="button" id="btnFill">Fill in the details</button><span id="fillMsg" class="note"></span></div><div id="scorePrev">' + previewScore(o.description) + "</div></div>" +
       '<div class="form-grid">' +
       field("company", "Company", o.company) + field("title", "Job title", o.title) +
       field("location", "Location", o.location, "text", "City, State") +
@@ -554,8 +997,8 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
       '<p id="formErr" class="err" hidden></p></div><div class="modal-f"><div class="left">' + (isNew ? "" : '<button type="button" class="danger" id="btnDel">Delete</button>') + "</div>" +
       '<button type="button" data-close="1">Cancel</button><button type="submit" class="primary">' + (isNew ? "Add job" : "Save") + "</button></div></form>";
     openModal(h);
-    var desc = $("#f-description");
-    desc.addEventListener("input", function () { $("#matchBox").innerHTML = matchHTML({ description: desc.value }); });
+    var desc = $("#f-description"), timer;
+    desc.addEventListener("input", function () { clearTimeout(timer); timer = setTimeout(function () { $("#scorePrev").innerHTML = previewScore(desc.value); }, 250); });
     $("#btnFill").addEventListener("click", function () {
       var r = extractJD(desc.value), n = 0;
       Object.keys(r).forEach(function (k) { var el = $("#f-" + k); if (el && r[k] && !el.value) { el.value = r[k]; n++; } });
@@ -566,7 +1009,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
       left.innerHTML = '<span class="err">Delete this job?</span><button type="button" class="danger" id="delYes">Yes, delete</button>';
       $("#delYes").addEventListener("click", function () {
         var i = jobs.findIndex(function (x) { return x.id === o.id; }), removed = jobs[i];
-        jobs.splice(i, 1); save(); closeModal(); render();
+        jobs.splice(i, 1); save(); closeModal(); go("#jobs");
         toast("Deleted " + esc(removed.company) + ".", "Undo", function () { jobs.splice(i, 0, removed); save(); render(); });
       });
     });
@@ -575,28 +1018,16 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
       var g = function (k) { var el = $("#f-" + k); return el ? el.value.trim() : ""; };
       if (!g("company") || !g("title")) { var er = $("#formErr"); er.textContent = "Add the company and job title so you can find this job later."; er.hidden = false; (g("company") ? $("#f-title") : $("#f-company")).focus(); return; }
       var target = isNew ? o : byId(o.id);
+      if (!isNew && target.description !== g("description")) target.tailoring = null;
       ["company", "title", "location", "arrangement", "deadline", "link", "nextAction", "nextDue", "notes", "description"].forEach(function (k) { target[k] = g(k); });
       if (target.link && !/^https?:\/\//i.test(target.link)) target.link = "https://" + target.link;
-      if (isNew) { target.status = g("status"); if (target.status === "applied") target.appliedDate = today(); jobs.unshift(target); } else setStatus(target, g("status"));
+      if (isNew) { target.status = g("status"); if (target.status !== "saved") target.appliedDate = today(); jobs.unshift(target); } else setStatus(target, g("status"));
       target.updatedAt = today(); delete target.sample;
-      save(); closeModal(); render();
+      save(); closeModal();
+      if (isNew) go("#job/" + target.id); else render();
       toast(isNew ? "Added " + esc(target.company) + "." : "Saved.");
     });
     setTimeout(function () { var el = focusId ? $("#" + focusId) : isNew ? desc : null; if (el) el.focus(); }, 30);
-  }
-
-  function openMe() {
-    var h = '<div class="modal-h"><h2>Me &amp; my resume</h2><button type="button" class="x" data-close="1" aria-label="Close">✕</button></div><div class="modal-b" id="meBody">' +
-      (me && me.resumeName ? '<p class="muted">Current resume: <strong>' + esc(me.resumeName) + "</strong>. Upload a new one to replace it.</p>" : "") +
-      uploadBox() + '<div id="confirm"></div></div>' +
-      '<div class="modal-f"><div class="left">' + (me ? '<button type="button" class="danger" id="meReset">Remove my resume and profile</button>' : "") + '</div><button type="button" data-close="1">Close</button></div>';
-    openModal(h);
-    var body = $("#meBody");
-    wireUpload(body, false);
-    if (me) {
-      showConfirm(body, { skills: [], name: "", roles: "", location: "" }, me.resumeName, false);
-      $("#meReset").addEventListener("click", function () { me = null; saveMe(); closeModal(); render(); toast("Removed your resume and profile."); });
-    }
   }
 
   // ---------- Toast ----------
@@ -613,23 +1044,26 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   function toggleSamples() {
     if (jobs.some(function (o) { return o.sample; })) {
       var removed = jobs.filter(function (o) { return o.sample; });
-      jobs = jobs.filter(function (o) { return !o.sample; }); save(); render();
+      jobs = jobs.filter(function (o) { return !o.sample; }); save(); go("#dashboard");
       toast("Sample jobs removed.", "Undo", function () { jobs = removed.concat(jobs); save(); render(); });
     } else { ui.skippedWelcome = true; jobs = samples().concat(jobs); save(); render(); toast("Added 6 sample jobs. Remove them any time at the bottom of the page."); }
   }
   document.addEventListener("click", function (e) {
     var t = e.target;
     if (t.closest("#btnAdd") || t.closest("[data-act='add']")) { openJob(null); return; }
-    if (t.closest("#btnMe") || t.closest("[data-act='me']")) { openMe(); return; }
     if (t.closest("#btnSamples") || t.closest("[data-act='samples']")) { toggleSamples(); return; }
-    if (t.closest("[data-act='skip']")) { ui.skippedWelcome = true; render(); return; }
+    if (t.closest("[data-act='sample-all']")) { me = sampleProfile(); saveMe(); jobs = samples().concat(jobs); save(); go("#dashboard"); toast("Loaded a sample resume and 6 sample jobs."); return; }
+    if (t.closest("[data-act='skip']")) { ui.skippedWelcome = true; go("#dashboard"); return; }
     if (t.closest("[data-act='all-steps']")) { ui.showAll = !ui.showAll; render(); return; }
+    var c = t.closest("[data-copy]"); if (c) { (navigator.clipboard ? navigator.clipboard.writeText(c.dataset.copy) : Promise.reject()).then(function () { toast("Copied."); }, function () { toast("Couldn't copy. Select the text instead."); }); return; }
     var d = t.closest("[data-done]"); if (d) { completeStep(d.dataset.done, d.dataset.id); return; }
+    var ed = t.closest("[data-edit]"); if (ed) { openJob(ed.dataset.edit, ed.dataset.focus); return; }
+    var f = t.closest("[data-filter]"); if (f) { ui.filter = f.dataset.filter; go("#jobs"); return; }
     if (t.closest("select") || t.closest("a") || t.closest(".modal")) return;
-    var j = t.closest("[data-open]"); if (j) openJob(j.dataset.open);
+    var g = t.closest("[data-go]"); if (g) go(g.dataset.go);
   });
   document.addEventListener("keydown", function (e) {
-    if (e.key === "Enter" && e.target.classList && e.target.classList.contains("job")) openJob(e.target.dataset.open);
+    if (e.key === "Enter" && e.target.classList && e.target.classList.contains("job")) go(e.target.dataset.go);
   });
   document.addEventListener("change", function (e) {
     var t = e.target;
@@ -642,10 +1076,11 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
       else toast(msg, "Undo", function () { o.status = prev; save(); render(); });
       return;
     }
-    if (t.id === "filter") { ui.filter = t.value; renderJobs(); }
-    if (t.id === "sort") { ui.sort = t.value; renderJobs(); }
+    if (t.id === "filter") { ui.filter = t.value; renderJobList(); }
+    if (t.id === "sort") { ui.sort = t.value; renderJobList(); }
   });
-  document.addEventListener("input", function (e) { if (e.target.id === "q") { ui.q = e.target.value; renderJobs(); } });
+  document.addEventListener("input", function (e) { if (e.target.id === "q") { ui.q = e.target.value; renderJobList(); } });
+  window.addEventListener("hashchange", function () { closeModal(); render(); window.scrollTo(0, 0); });
 
   load();
   render();
