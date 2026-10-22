@@ -2,7 +2,7 @@
 
 A job and internship tracker for MSBA students. Upload your resume, save jobs, and NextMove scores how qualified you are for each one from 1 to 100, helps you tailor your resume to each posting, and shows everything on one dashboard.
 
-**Live app:** https://carlywaldeck.github.io/job-tracker/. Anyone can use it with no sign-up. Each person's data, including their resume, stays private in their own browser.
+**Live app:** https://weekender-trips.com/job-tracker/ (served by GitHub Pages). Anyone can use it with no sign-up. Each person's data, including their resume, stays private in their own browser.
 
 ## How it works
 
