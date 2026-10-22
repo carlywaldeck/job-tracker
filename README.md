@@ -31,13 +31,17 @@ A job and internship tracker for MSBA students. Upload your resume, save jobs, a
 
    It also lists missing skills and posting words your resume doesn't use. The app labels it as an estimate of fit, not a hiring prediction.
 2. **Resume tailoring with AI (Claude).** On any job, "Tailor my resume" sends your resume and the posting to Claude, which returns a tailored summary, rewritten bullets, skills to add if true, and gaps to address. It is told never to invent experience. It needs the user's own Anthropic API key, stored only in their browser. Without a key, users still get **Quick suggestions** clearly labeled *rule-based, not AI*.
-3. **Dashboard and to-dos.** Automatic reminders: apply before a posting closes, follow up 14 days after applying (the Career Services guide's rule), and tailor your resume for saved jobs.
+3. **A dashboard that does the spreadsheet's bookkeeping for you.** The Career Services sheet has columns for closing date, network connection, "heard back? reach out two weeks after closing", interview dates, and thank-you notes, but you have to check them yourself. NextMove turns them into reminders:
+   - **This week:** to-dos grouped into Overdue, Today, Next 7 days, and Later. Each one is tagged Apply, Follow up (two weeks after the posting closes), Interview, Thank-you note (the day after an interview), or Your step.
+   - **Pipeline:** how many jobs reached Applied, Interviewing, and Offer, and what share moved on from each stage.
+   - **Ready to apply:** saved jobs ranked by match score, with the closing date, network contact, and one button (Tailor or Mark applied).
+   - **Help from Career Services:** the same Resume Guide, Career Connections, Interview Guide, and counseling links the spreadsheet has.
 
 ## Demo script (2 minutes)
 
 1. **Who it's for** (15s): MSBA students juggling many applications. The Career Services spreadsheet records what happened but doesn't tell you where you fit or what to do next.
 2. **Setup** (20s): Upload a resume (or click "Try it with a sample resume and jobs"). Show the skills, years, and degree it found.
-3. **Dashboard** (25s): Average score, pipeline, To do, best matches.
+3. **Dashboard** (25s): This week's to-dos (follow-ups and thank-you notes appear on their own), the pipeline, and Ready to apply.
 4. **Score** (25s): Open a job and walk through the breakdown and the missing skills.
 5. **Tailor** (25s): Click Tailor my resume and show Claude's rewritten summary and bullets. Point out the rule-based fallback.
 6. **Track** (10s): Add a job by pasting a posting, change a status, search and filter.

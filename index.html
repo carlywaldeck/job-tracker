@@ -138,6 +138,29 @@ details[open] summary { margin-bottom: 10px; }
 .pipe .closed .bar i { background: var(--muted); opacity: .45; }
 .pipe .n { font-weight: 700; text-align: right; }
 
+.tag { display: inline-block; font-size: .72rem; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; color: var(--muted); background: var(--soft-bg); border-radius: 6px; padding: 1px 7px; margin-right: 4px; vertical-align: 1px; }
+.group { display: grid; gap: 4px; }
+.side-col { display: grid; gap: 24px; min-width: 0; }
+.links { list-style: none; padding: 0; gap: 8px; }
+.links .muted { font-size: .85rem; }
+.section-label.late { color: var(--late); }
+.done.cal { display: inline-block; border-style: dashed; }
+.pipe button { grid-template-columns: 96px minmax(0, 1fr) 28px 40px !important; }
+.pipe .conv { color: var(--muted); font-size: .85rem; text-align: right; }
+.kv.small { font-size: .9rem; gap: 4px 14px; border-top: 1px solid var(--line); padding-top: 12px; }
+.rt { display: grid; }
+.rt-h, .rt-r { display: grid; grid-template-columns: 52px minmax(0, 2fr) 110px minmax(0, 1.4fr) 120px; gap: 14px; align-items: center; }
+.rt-h { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 700; padding-bottom: 8px; }
+.rt-r { padding: 10px 0; border-top: 1px solid var(--line); cursor: pointer; }
+.rt-r:hover .rt-job b { text-decoration: underline; }
+.rt-job { display: grid; min-width: 0; }
+.rt-job span, .rt-c { color: var(--muted); font-size: .9rem; overflow-wrap: anywhere; }
+.rt-c .when { font-size: .9rem; }
+.rt-r > button { justify-self: end; white-space: nowrap; }
+.m-lbl { display: none; }
+.check { display: flex; gap: 10px; align-items: center; font-weight: 500; }
+.check input { width: 18px; height: 18px; accent-color: var(--accent); }
+
 /* Job rows */
 .controls { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
 .jobs { display: grid; gap: 10px; }
@@ -226,6 +249,10 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   .job { grid-template-columns: auto minmax(0, 1fr); }
   .job > select { grid-column: 2; justify-self: start; }
   .mini .job > .count { display: none; }
+  .rt-h { display: none; }
+  .m-lbl { display: inline; }
+  .rt-r { grid-template-columns: 52px minmax(0, 1fr); gap: 4px 12px; }
+  .rt-r > .rt-c, .rt-r > button { grid-column: 2; justify-self: start; }
   .task { grid-template-columns: auto minmax(0, 1fr); }
   .task .when { grid-column: 2; }
   .ring-wrap { grid-template-columns: minmax(0, 1fr); justify-items: start; }
@@ -318,7 +345,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   function setKey(k) { try { if (k) localStorage.setItem(AI_KEY, k); else localStorage.removeItem(AI_KEY); } catch (e) {} }
   function blank() {
     return { id: uid(), company: "", title: "", link: "", location: "", arrangement: "", deadline: "", status: "saved", nextAction: "", nextDue: "",
-      appliedDate: "", followUpDate: "", tailored: false, notes: "", description: "", tailoring: null, updatedAt: today() };
+      appliedDate: "", followUpDate: "", contact: "", interviewDate: "", thankYouSent: false, tailored: false, notes: "", description: "", tailoring: null, updatedAt: today() };
   }
   function byId(id) { for (var i = 0; i < jobs.length; i++) if (jobs[i].id === id) return jobs[i]; return null; }
   function setStatus(o, s) { if (o.status === s) return; o.status = s; if (s === "applied" && !o.appliedDate) o.appliedDate = today(); o.updatedAt = today(); }
@@ -570,18 +597,20 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     var t = today();
     var rows = [
       { company: "Harborview Health", title: "Business Analytics Intern", location: "San Luis Obispo, CA", arrangement: "Hybrid", deadline: addDays(t, 4), status: "saved",
-        nextAction: "Ask Priya (MSBA '24) about the team", nextDue: addDays(t, 1), link: "https://example.com/jobs/harborview",
+        contact: "Priya Shah, MSBA '24 (LinkedIn)", nextAction: "Ask Priya about the team", nextDue: addDays(t, 1), link: "https://example.com/jobs/harborview",
         description: "Business Analytics Intern at Harborview Health. Hybrid, San Luis Obispo, CA.\nYou will build Tableau dashboards for hospital operations, write SQL against our data warehouse, and support forecasting of patient flow.\nRequirements: currently pursuing a master's degree in business analytics or a related field. SQL, Excel, Tableau, statistics.\nNice to have: Python, time series." },
-      { company: "Sierra Analytics Group", title: "Junior Data Scientist", location: "Remote", arrangement: "Remote", deadline: addDays(t, 9), status: "saved",
+      { company: "Sierra Analytics Group", title: "Junior Data Scientist", location: "Remote", arrangement: "Remote", deadline: addDays(t, 9), status: "saved", tailored: true,
         description: "Junior Data Scientist. Remote.\nBuild machine learning models in Python (pandas, scikit-learn), design and analyze A/B testing for product teams, and present results to stakeholders.\nRequirements: Master's degree in a quantitative field, 2+ years of experience in data science. Python, SQL, machine learning, statistics.\nPreferred: AWS, Spark, deep learning." },
-      { company: "Pacific Grid Energy", title: "Pricing Analyst", location: "Oakland, CA", arrangement: "On-site", deadline: addDays(t, -12), status: "applied", appliedDate: addDays(t, -16),
+      { company: "Pacific Grid Energy", title: "Pricing Analyst", location: "Oakland, CA", arrangement: "On-site", deadline: addDays(t, -12), status: "applied", appliedDate: addDays(t, -16), contact: "Career fair: Dana Ortiz, recruiter",
         description: "Pricing Analyst. On-site in Oakland, CA.\nUse Excel, SQL, regression and forecasting for rate design, and present recommendations to leadership with PowerPoint.\nRequirements: Bachelor's degree, 3+ years of experience in analytics or finance.\nNice to have: SAS, financial modeling." },
       { company: "Brightline Media", title: "Data Analyst, Audience Insights", location: "Los Angeles, CA", arrangement: "Hybrid", deadline: addDays(t, -8), status: "applied", appliedDate: addDays(t, -6),
         nextAction: "Connect with the hiring manager on LinkedIn", nextDue: t,
         description: "Data Analyst, Audience Insights. Hybrid, Los Angeles, CA.\nAnalyze viewership with SQL and Python, build Looker dashboards, and use Google Analytics to understand audiences. Strong storytelling and PowerPoint skills.\nRequirements: Bachelor's degree, 1+ years of experience.\nPreferred: dbt, BigQuery." },
       { company: "Lumen Bank", title: "Risk Analytics Intern", location: "Charlotte, NC", arrangement: "On-site", deadline: addDays(t, -30), status: "interviewing", appliedDate: addDays(t, -33),
-        nextAction: "Prepare for your interview", nextDue: addDays(t, 2),
+        interviewDate: addDays(t, -1), contact: "Cal Poly Career Connections mentor", nextAction: "Prepare for the final round", nextDue: addDays(t, 5),
         description: "Risk Analytics Intern. On-site in Charlotte, NC.\nBuild credit risk models with regression in R or SAS, write SQL, and document model results for reviewers.\nRequirements: pursuing a master's degree. SQL, statistics, regression.\nPreferred: Tableau." },
+      { company: "Golden State Grocers", title: "Marketing Analytics Intern", location: "Sacramento, CA", arrangement: "Hybrid", deadline: addDays(t, 6), status: "saved",
+        description: "Marketing Analytics Intern. Hybrid, Sacramento, CA.\nMeasure campaign results with SQL and Excel, build Tableau reports, and run A/B testing on email offers.\nRequirements: Bachelor's degree. SQL, Excel, Tableau, A/B testing.\nPreferred: Google Analytics, Python." },
       { company: "Coastline Foods", title: "Supply Chain Data Analyst", location: "Fresno, CA", arrangement: "On-site", deadline: addDays(t, -35), status: "rejected", appliedDate: addDays(t, -38),
         description: "Supply Chain Data Analyst. On-site in Fresno, CA.\nRequirements: Bachelor's degree, 2+ years of experience in supply chain analytics. SQL, Excel, optimization, Alteryx, supply chain.\nPreferred: SAP, Power BI." }
     ];
@@ -590,22 +619,31 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   function sampleProfile() { var p = parseResume(SAMPLE_RESUME); p.resumeName = "Sample resume (Jordan Lee)"; p.skills = p.skills.join(", "); p.roles = "data analyst, business analyst"; p.sample = true; return p; }
 
   // ---------- To-dos ----------
+  // Every reminder comes from a column of the Career Services spreadsheet that students had to track by hand.
+  var KINDS = { step: "Your step", apply: "Apply", tailor: "Tailor resume", network: "Network", followup: "Follow up", interview: "Interview", thanks: "Thank-you note" };
+  function followUpDue(o) {
+    var base = o.deadline && o.deadline > o.appliedDate ? o.deadline : o.appliedDate; // guide: reach out two weeks after the posting closes
+    if (o.followUpDate && o.followUpDate > base) base = o.followUpDate;
+    return addDays(base, FOLLOW_UP_DAYS);
+  }
   function buildSteps() {
     var t = today(), out = [];
     jobs.forEach(function (o) {
-      if (CLOSED[o.status]) return;
-      if (o.nextAction) out.push({ act: "next", text: o.nextAction, due: o.nextDue, o: o });
+      if (CLOSED[o.status] || o.status === "offer" && !o.nextAction) return;
+      var add = function (kind, text, due, go) { out.push({ act: kind, kind: KINDS[kind], text: text, due: due, o: o, go: go }); };
+      if (o.nextAction) add("step", o.nextAction, o.nextDue);
       if (o.status === "saved") {
-        var r = scoreJob(o);
-        if (r && r.score < 90 && !o.tailored)
-          out.push({ act: "tailor", text: "Tailor your resume for this job (score " + r.score + ")", due: o.deadline ? addDays(o.deadline, -2) : "", o: o, go: "#job/" + o.id + "/tailor" });
-        if (o.deadline && diffDays(o.deadline, t) >= 0 && diffDays(o.deadline, t) <= 14)
-          out.push({ act: "apply", text: "Apply before the posting closes on " + fmt(o.deadline), due: o.deadline, o: o });
+        var r = scoreJob(o), open = o.deadline && o.deadline >= t;
+        if (o.deadline && !open) return;
+        // One item per job: what's left before applying (tailor, find a contact) goes in its subtitle, not separate rows.
+        var left = [];
+        if (r && r.score < 90 && !o.tailored) left.push("tailor your resume");
+        if (!o.contact) left.push("find a contact");
+        if (open) add("apply", left.length ? "Apply. First: " + left.join(", ") : "Apply before the posting closes", o.deadline, left[0] === "tailor your resume" ? "#job/" + o.id + "/tailor" : "");
       }
-      if (o.status === "applied" && o.appliedDate) {
-        var base = o.followUpDate && o.followUpDate > o.appliedDate ? o.followUpDate : o.appliedDate, due = addDays(base, FOLLOW_UP_DAYS);
-        if (diffDays(due, t) <= 7) out.push({ act: "followup", text: "No reply yet. Send a short follow-up to the recruiter", due: due, o: o });
-      }
+      if (o.status === "applied" && o.appliedDate) add("followup", "No reply yet? Send a short follow-up", followUpDue(o));
+      if (o.interviewDate && o.interviewDate >= t) add("interview", "Interview. Review the posting and your tailored resume", o.interviewDate);
+      if (o.interviewDate && o.interviewDate < t && !o.thankYouSent) add("thanks", "Send a thank-you note to your interviewers", addDays(o.interviewDate, 1));
     });
     out.sort(function (a, b) { if (!a.due !== !b.due) return a.due ? -1 : 1; return a.due < b.due ? -1 : a.due > b.due ? 1 : 0; });
     return out;
@@ -613,16 +651,21 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   function completeStep(act, id) {
     var o = byId(id); if (!o) return;
     var before = JSON.stringify(o), undo = function () { var i = jobs.indexOf(o); if (i >= 0) jobs[i] = JSON.parse(before); save(); render(); };
-    if (act === "next") { o.notes = (o.notes ? o.notes + "\n" : "") + "Done " + fmt(today()) + ": " + o.nextAction; o.nextAction = ""; o.nextDue = ""; save(); render();
+    if (act === "step") { o.notes = (o.notes ? o.notes + "\n" : "") + "Done " + fmt(today()) + ": " + o.nextAction; o.nextAction = ""; o.nextDue = ""; save(); render();
       toast("Nice. What's next for " + esc(o.company) + "?", "Add next step", function () { openJob(o.id, "f-nextAction"); }); return; }
+    if (act === "network") { openJob(o.id, "f-contact"); return; }
+    if (act === "interview") { go("#job/" + o.id); return; }
     if (act === "tailor") { o.tailored = true; save(); render(); toast("Resume tailored for " + esc(o.company) + ".", "Undo", undo); return; }
-    if (act === "apply") { setStatus(o, "applied"); save(); render(); toast("Marked as applied. I'll remind you to follow up in 2 weeks.", "Undo", undo); return; }
-    if (act === "followup") { o.followUpDate = today(); save(); render(); toast("Follow-up logged.", "Undo", undo); }
+    if (act === "apply") { setStatus(o, "applied"); save(); render(); toast("Marked as applied. I'll remind you to follow up two weeks after it closes.", "Undo", undo); return; }
+    if (act === "thanks") { o.thankYouSent = true; o.updatedAt = today(); save(); render(); toast("Thank-you note logged.", "Undo", undo); return; }
+    if (act === "followup") { o.followUpDate = today(); save(); render(); toast("Follow-up logged. I'll check back in two weeks.", "Undo", undo); }
   }
   function tasksHTML(steps) {
     return '<div class="tasks">' + steps.map(function (s) {
-      return '<div class="task"><button type="button" class="done" data-done="' + s.act + '" data-id="' + esc(s.o.id) + '" aria-label="Done: ' + esc(s.text) + '"></button>' +
-        '<div><button type="button" class="link what" data-go="' + esc(s.go || "#job/" + s.o.id) + '">' + esc(s.text) + '</button><div class="who">' + esc(s.o.company) + " · " + esc(s.o.title) + "</div></div>" + when(s.due) + "</div>";
+      var circle = s.act === "interview" ? '<span class="done cal" aria-hidden="true"></span>' :
+        '<button type="button" class="done" data-done="' + s.act + '" data-id="' + esc(s.o.id) + '" aria-label="Done: ' + esc(s.text) + '"></button>';
+      return '<div class="task">' + circle + '<div><span class="tag">' + esc(s.kind) + '</span> <button type="button" class="link what" data-go="' + esc(s.go || "#job/" + s.o.id) + '">' + esc(s.text) + '</button>' +
+        '<div class="who">' + esc(s.o.company) + " · " + esc(s.o.title) + "</div></div>" + when(s.due) + "</div>";
     }).join("") + "</div>";
   }
 
@@ -706,54 +749,74 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   }
 
   // ---------- Dashboard ----------
+  // The same resources the Career Services spreadsheet links to.
+  var HELP = [["Resume Guide", "https://content-calpoly-edu.s3.amazonaws.com/careerservices/1/images/new_exploreservices/new_resourcetoolkit/Resume%20Guide.pdf", "before you tailor"],
+    ["Cal Poly Career Connections", "https://careerconnections.calpoly.edu/", "find a contact"],
+    ["Interview Guide", "https://cdn.portfolium.com/ugcs3%2Fentry_attachment%2F8E714A7C-E13E-5340-80D6-96DF6433DFF0-InterviewingBooklet923.pdf", "prepare for interviews"],
+    ["Meet with a career counselor", "https://careerservices.calpoly.edu/explore-services/career-counseling", "get advice"]];
   function renderDashboard() {
-    var steps = buildSteps(), t = today();
-    var dueNow = steps.filter(function (s) { return s.due && s.due <= t; }).length;
-    var open = jobs.filter(function (o) { return !CLOSED[o.status]; });
-    var sent = jobs.filter(function (o) { return o.status !== "saved"; }).length;
-    var interviews = jobs.filter(function (o) { return o.status === "interviewing" || o.status === "offer"; }).length;
-    var offers = jobs.filter(function (o) { return o.status === "offer"; }).length;
-    var scored = open.map(scoreJob).filter(Boolean), avg = scored.length ? Math.round(scored.reduce(function (a, r) { return a + r.score; }, 0) / scored.length) : null;
+    var steps = buildSteps(), t = today(), week = addDays(t, 7);
+    var groups = [["Overdue", steps.filter(function (s) { return s.due && s.due < t; })], ["Today", steps.filter(function (s) { return s.due === t; })],
+      ["Next 7 days", steps.filter(function (s) { return s.due > t && s.due <= week; })], ["Later", steps.filter(function (s) { return !s.due || s.due > week; })]];
+    var nextIv = jobs.filter(function (o) { return o.interviewDate && o.interviewDate >= t && !CLOSED[o.status]; }).sort(function (a, b) { return a.interviewDate < b.interviewDate ? -1 : 1; })[0];
 
+    var bits = [];
+    if (groups[0][1].length) bits.push(groups[0][1].length + " overdue");
+    if (groups[1][1].length) bits.push(groups[1][1].length + " due today");
+    if (groups[2][1].length) bits.push(groups[2][1].length + (groups[1][1].length ? " more" : "") + " this week");
+    if (nextIv) bits.push("next interview " + (nextIv.interviewDate === t ? "today" : fmt(nextIv.interviewDate)) + " with " + nextIv.company);
     var h = '<section class="hello"><h2>' + esc(me && me.name ? "Hi " + me.name : "Hi there") + "</h2><p>" +
-      esc(!jobs.length ? "Add a job you're interested in to get started." : dueNow ? "You have " + plural(dueNow, "thing") + " to do today." : "Nothing urgent today. Here's where things stand.") + "</p>";
-    if (!me) h += '<p><button type="button" class="link" data-go="#resume">Add your resume</button> to get a 1–100 score for every job.</p>';
+      esc(!jobs.length ? "Add a job you're interested in to get started." : bits.length ? bits.join(" · ").replace(/^./, function (c) { return c.toUpperCase(); }) + "." : "You're all caught up.") + "</p>";
+    if (!me) h += '<p><button type="button" class="link" data-go="#resume">Add your resume</button> to get a 1–100 match score for every job.</p>';
     h += "</section>";
 
-    h += '<section class="stats" aria-label="Your numbers">' +
-      '<div class="stat hero"><b>' + (avg == null ? "–" : avg) + '</b><span>Average match score</span><small>' + (avg == null ? (me ? "Add job postings to score" : "Add your resume") : "across " + plural(scored.length, "open job")) + "</small></div>" +
-      '<div class="stat"><b>' + open.length + "</b><span>Open jobs</span><small>" + jobs.filter(function (o) { return o.status === "saved"; }).length + " not applied yet</small></div>" +
-      '<div class="stat"><b>' + sent + "</b><span>Applications sent</span><small>" + (sent ? Math.round(100 * interviews / sent) + "% got an interview" : "None yet") + "</small></div>" +
-      '<div class="stat"><b>' + interviews + "</b><span>Interviews</span><small>" + plural(offers, "offer") + "</small></div></section>";
-
-    var shown = ui.showAll ? steps : steps.slice(0, 5);
-    h += '<div class="grid2"><section class="card"><div class="card-h"><h3>To do</h3>' + (steps.length ? '<span class="count">Tap the circle when done</span>' : "") + "</div>";
-    if (!steps.length) h += '<p class="empty">' + (jobs.length ? "You're all caught up. Give a job a next step and it will show up here." : "Deadlines, follow-ups, and resume tailoring will show up here.") + "</p>";
-    else {
-      h += tasksHTML(shown);
-      if (steps.length > 5) h += '<div><button type="button" class="link" data-act="all-steps">' + (ui.showAll ? "Show fewer" : "Show all " + steps.length) + "</button></div>";
-    }
+    // This week
+    h += '<div class="grid2"><section class="card"><div class="card-h"><h3>This week</h3>' + (steps.length ? '<span class="count">Tap the circle when it\'s done</span>' : "") + "</div>";
+    if (!steps.length) h += '<p class="empty">' + (jobs.length ? "Nothing to do right now. Deadlines, follow-ups, interviews, and thank-you notes will show up here." : "Deadlines, follow-ups, interviews, and thank-you notes will show up here once you add jobs.") + "</p>";
+    groups.forEach(function (g, i) {
+      if (!g[1].length) return;
+      if (i === 3 && !ui.showAll) { h += '<div><button type="button" class="link" data-act="all-steps">Show ' + plural(g[1].length, "later item") + "</button></div>"; return; }
+      h += '<div class="group"><div class="section-label' + (i === 0 ? " late" : "") + '">' + g[0] + " · " + g[1].length + "</div>" + tasksHTML(g[1]) + "</div>";
+    });
+    if (ui.showAll && groups[3][1].length) h += '<div><button type="button" class="link" data-act="all-steps">Hide later items</button></div>';
     h += "</section>";
 
-    var max = Math.max.apply(null, [1].concat(STATUSES.map(function (s) { return jobs.filter(function (o) { return o.status === s[0]; }).length; })));
-    h += '<section class="card"><div class="card-h"><h3>Pipeline</h3><span class="count">' + plural(jobs.length, "job") + "</span></div><div class=\"pipe\">" +
-      STATUSES.map(function (s) {
-        var n = jobs.filter(function (o) { return o.status === s[0]; }).length;
-        return '<button type="button" class="' + (CLOSED[s[0]] ? "closed" : "") + '" data-filter="' + s[0] + '" aria-label="' + s[1] + ": " + n + '"><span>' + s[1] + '</span><span class="bar"><i style="width:' + (n ? Math.max(4, 100 * n / max) : 0) + '%"></i></span><span class="n">' + n + "</span></button>";
-      }).join("") + "</div></section></div>";
+    // Pipeline: how many jobs reached each stage
+    var applied = jobs.filter(function (o) { return o.status !== "saved" && (o.appliedDate || o.status !== "withdrawn"); }).length;
+    var iv = jobs.filter(function (o) { return o.status === "interviewing" || o.status === "offer" || o.interviewDate; }).length;
+    var offers = jobs.filter(function (o) { return o.status === "offer"; }).length;
+    var stages = [["Tracked", jobs.length, "", "all"], ["Applied", applied, jobs.length, "applied"], ["Interviewing", iv, applied, "interviewing"], ["Offer", offers, iv, "offer"]];
+    var cnt = function (st) { return jobs.filter(function (o) { return o.status === st; }).length; };
+    h += '<div class="side-col"><section class="card"><div class="card-h"><h3>Pipeline</h3><span class="count">jobs that reached each stage</span></div><div class="pipe">' +
+      stages.map(function (s) {
+        var pct = s[2] ? Math.round(100 * s[1] / s[2]) : null;
+        return '<button type="button" data-filter="' + s[3] + '" aria-label="' + s[0] + ": " + s[1] + '"><span>' + s[0] + '</span><span class="bar"><i style="width:' + (s[1] ? Math.max(4, 100 * s[1] / Math.max(1, jobs.length)) : 0) + '%"></i></span><span class="n">' + s[1] + "</span>" +
+          '<span class="conv">' + (pct == null ? "" : s[2] ? pct + "%" : "") + "</span></button>";
+      }).join("") + "</div>" +
+      '<p class="note">Percent = share of the stage above that moved on.</p>' +
+      '<dl class="kv small"><dt>Waiting to apply</dt><dd>' + cnt("saved") + "</dd><dt>Waiting to hear back</dt><dd>" + cnt("applied") + "</dd><dt>Closed</dt><dd>" +
+      cnt("rejected") + " rejected, " + cnt("withdrawn") + " withdrawn</dd></dl></section>" +
+      '<section class="card"><h3>Help from Career Services</h3><ul class="links">' + HELP.map(function (l) { return '<li><a href="' + l[1] + '" target="_blank" rel="noopener">' + l[0] + "</a> <span class=\"muted\">" + l[2] + "</span></li>"; }).join("") + "</ul></section></div></div>";
 
-    var best = jobs.filter(function (o) { return o.status === "saved"; }).map(function (o) { return { o: o, r: scoreJob(o) }; })
-      .filter(function (x) { return x.r; }).sort(function (a, b) { return b.r.score - a.r.score; }).slice(0, 3);
-    h += '<section class="card"><div class="card-h"><h3>Best matches to apply to</h3><button type="button" class="link" data-go="#jobs">See all jobs</button></div>';
-    if (!best.length) h += '<p class="empty">' + (me ? "Save a job with its posting and your best matches will show up here." : "Add your resume and some jobs to see your best matches.") + "</p>";
-    else h += '<div class="mini">' + best.map(function (x) { return jobRow(x.o, true); }).join("") + "</div>";
+    // Ready to apply
+    var ready = jobs.filter(function (o) { return o.status === "saved" && (!o.deadline || o.deadline >= t); })
+      .map(function (o) { return { o: o, r: scoreJob(o) }; }).sort(function (a, b) { return ((b.r || {}).score || -1) - ((a.r || {}).score || -1); });
+    var scored = ready.filter(function (x) { return x.r; });
+    h += '<section class="card"><div class="card-h"><h3>Ready to apply</h3><span class="count">' + (scored.length ? "Ranked by match · average " + Math.round(scored.reduce(function (a, x) { return a + x.r.score; }, 0) / scored.length) : "") + "</span></div>";
+    if (!ready.length) h += '<p class="empty">Jobs you save but haven\'t applied to will show up here, best match first.</p>';
+    else h += '<div class="rt"><div class="rt-h"><span>Match</span><span>Job</span><span>Closes</span><span>Contact</span><span></span></div>' + ready.slice(0, 6).map(function (x) {
+      var o = x.o, btn = !o.tailored && x.r ? '<button type="button" class="small" data-go="#job/' + esc(o.id) + '/tailor">Tailor</button>' : '<button type="button" class="small primary" data-done="apply" data-id="' + esc(o.id) + '">Mark applied</button>';
+      return '<div class="rt-r" data-go="#job/' + esc(o.id) + '" tabindex="0">' + scoreDot(o) + '<div class="rt-job"><b>' + esc(o.company) + "</b><span>" + esc(o.title) + "</span></div>" +
+        '<span class="rt-c"><span class="m-lbl">Closes </span>' + (o.deadline ? when(o.deadline) : '<span class="muted">No deadline</span>') + "</span>" +
+        '<span class="rt-c rt-contact"><span class="m-lbl">Contact: </span>' + (o.contact ? "✓ " + esc(o.contact) : '<span class="muted">None yet</span>') + "</span>" + btn + "</div>";
+    }).join("") + "</div>";
     h += "</section>";
     return h;
   }
 
   // ---------- Jobs page ----------
   function jobRow(o, compact) {
-    var next = o.nextAction ? '<span class="lbl">Next:</span> ' + esc(o.nextAction) + " " + when(o.nextDue)
+    var next = o.interviewDate && o.interviewDate >= today() ? '<span class="lbl">Interview</span> ' + when(o.interviewDate) : o.nextAction ? '<span class="lbl">Next:</span> ' + esc(o.nextAction) + " " + when(o.nextDue)
       : o.status === "saved" && o.deadline ? '<span class="lbl">Closes</span> ' + when(o.deadline) : '<span class="lbl">No next step yet</span>';
     var r = scoreJob(o), right = compact ? '<span class="count">' + (r ? verdict(r.score) : "") + "</span>" :
       '<select aria-label="Status for ' + esc(o.company) + '" data-status="' + esc(o.id) + '">' + STATUSES.map(function (s) { return '<option value="' + s[0] + '"' + (s[0] === o.status ? " selected" : "") + ">" + s[1] + "</option>"; }).join("") + "</select>";
@@ -835,7 +898,9 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     var row = function (k, v) { return v ? "<dt>" + k + "</dt><dd>" + v + "</dd>" : ""; };
     var h = '<section class="card"><div class="card-h"><h3>Details</h3><button type="button" class="link" data-edit="' + esc(o.id) + '">Edit</button></div><dl class="kv">' +
       row("Status", esc(statusLabel(o.status))) + row("Location", esc(o.location)) + row("Work arrangement", esc(o.arrangement)) + row("Deadline", o.deadline ? esc(fmt(o.deadline)) + " " + when(o.deadline) : "") +
-      row("Link", o.link ? '<a href="' + esc(o.link) + '" target="_blank" rel="noopener">Open the posting</a>' : "") + row("Applied", o.appliedDate ? esc(fmt(o.appliedDate)) : "") +
+      row("Link", o.link ? '<a href="' + esc(o.link) + '" target="_blank" rel="noopener">Open the posting</a>' : "") + row("Applied", o.appliedDate ? esc(fmt(o.appliedDate)) : "") + row("Follow up", o.status === "applied" && o.appliedDate ? esc(fmt(followUpDue(o))) + " (two weeks after it closes)" : "") +
+      row("Network contact", o.contact ? esc(o.contact) : '<button type="button" class="link" data-edit="' + esc(o.id) + '" data-focus="f-contact">Add a contact</button>') +
+      row("Interview", o.interviewDate ? esc(fmt(o.interviewDate)) + " " + when(o.interviewDate) + (o.interviewDate < today() ? (o.thankYouSent ? " · thank-you sent" : " · thank-you not sent yet") : "") : "") +
       row("Next step", o.nextAction ? esc(o.nextAction) + " " + when(o.nextDue) : '<button type="button" class="link" data-edit="' + esc(o.id) + '" data-focus="f-nextAction">Add a next step</button>') +
       row("Notes", esc(o.notes)) + "</dl></section>";
     h += '<section class="card"><h3>Job posting</h3>' + (o.description ? '<p style="white-space:pre-wrap">' + esc(o.description) + "</p>" : '<p class="muted">No posting saved. <button type="button" class="link" data-edit="' + esc(o.id) + '">Paste it</button> to get a score.</p>') + "</section>";
@@ -992,7 +1057,10 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
       pick("arrangement", "Work arrangement", o.arrangement, [["", "Not sure"], ["On-site", "On-site"], ["Hybrid", "Hybrid"], ["Remote", "Remote"]]) +
       field("deadline", "Application deadline", o.deadline, "date") + pick("status", "Status", o.status, STATUSES) +
       field("link", "Link to the posting", o.link, "url", "https://…", true) +
+      field("contact", "Network contact", o.contact, "text", "Alum, recruiter, career fair, club…", true) +
       field("nextAction", "Your next step", o.nextAction, "text", "e.g. Ask an alum for a referral") + field("nextDue", "Do it by", o.nextDue, "date") +
+      field("interviewDate", "Interview date", o.interviewDate, "date") +
+      '<label class="check" style="align-self:end"><input type="checkbox" id="f-thankYouSent"' + (o.thankYouSent ? " checked" : "") + '> Thank-you note sent</label>' +
       '<label class="full">Notes<textarea id="f-notes" rows="3" placeholder="Contacts, resume version sent, interview notes…">' + esc(o.notes) + "</textarea></label></div>" +
       '<p id="formErr" class="err" hidden></p></div><div class="modal-f"><div class="left">' + (isNew ? "" : '<button type="button" class="danger" id="btnDel">Delete</button>') + "</div>" +
       '<button type="button" data-close="1">Cancel</button><button type="submit" class="primary">' + (isNew ? "Add job" : "Save") + "</button></div></form>";
@@ -1019,9 +1087,11 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
       if (!g("company") || !g("title")) { var er = $("#formErr"); er.textContent = "Add the company and job title so you can find this job later."; er.hidden = false; (g("company") ? $("#f-title") : $("#f-company")).focus(); return; }
       var target = isNew ? o : byId(o.id);
       if (!isNew && target.description !== g("description")) target.tailoring = null;
-      ["company", "title", "location", "arrangement", "deadline", "link", "nextAction", "nextDue", "notes", "description"].forEach(function (k) { target[k] = g(k); });
+      ["company", "title", "location", "arrangement", "deadline", "link", "contact", "nextAction", "nextDue", "interviewDate", "notes", "description"].forEach(function (k) { target[k] = g(k); });
+      target.thankYouSent = $("#f-thankYouSent").checked;
       if (target.link && !/^https?:\/\//i.test(target.link)) target.link = "https://" + target.link;
       if (isNew) { target.status = g("status"); if (target.status !== "saved") target.appliedDate = today(); jobs.unshift(target); } else setStatus(target, g("status"));
+      if (target.interviewDate && (target.status === "saved" || target.status === "applied")) setStatus(target, "interviewing");
       target.updatedAt = today(); delete target.sample;
       save(); closeModal();
       if (isNew) go("#job/" + target.id); else render();
@@ -1071,8 +1141,8 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
       var o = byId(t.dataset.status); if (!o) return;
       var prev = o.status; setStatus(o, t.value); save(); render();
       var msg = esc(o.company) + " is now " + statusLabel(o.status).toLowerCase() + ".";
-      if (o.status === "applied") toast(msg + " I'll remind you to follow up in 2 weeks.", "Undo", function () { o.status = prev; save(); render(); });
-      else if (o.status === "interviewing") toast(msg + " Good luck!", "Add a prep step", function () { openJob(o.id, "f-nextAction"); });
+      if (o.status === "applied") toast(msg + " I'll remind you to follow up two weeks after it closes.", "Undo", function () { o.status = prev; save(); render(); });
+      else if (o.status === "interviewing") toast(msg + " Good luck!", "Add the interview date", function () { openJob(o.id, "f-interviewDate"); });
       else toast(msg, "Undo", function () { o.status = prev; save(); render(); });
       return;
     }
