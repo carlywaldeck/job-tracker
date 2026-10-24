@@ -528,10 +528,12 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     }
     if (!r.title) { var kw = /(analyst|scientist|intern|engineer|manager|associate|consultant|specialist|coordinator|developer|strategist)/i;
       for (var j = 0; j < Math.min(lines.length, 8); j++) if (kw.test(lines[j]) && !/^(about|in this|the)\s+(job|position|role)/i.test(lines[j]) && lines[j].length < 90) { r.title = lines[j].split(/[.,(]/)[0].trim(); break; } }
-    if (/\bhybrid\b/i.test(text)) r.arrangement = "Hybrid";
+    if (/\bhybrid\b/i.test(text) || /\b(?:in[-\s]person|office)[^.\n]{0,100}\b(?:at least\s+)?(?:[1-4]|one|two|three|four)\s+days?\s*(?:\/|per\s+)\s*week\b/i.test(text)) r.arrangement = "Hybrid";
     else if (/\bremote\b/i.test(text)) r.arrangement = "Remote";
     else if (/\b(on-?site|in[-\s]office|in[-\s]person|(?:exclusively|must be) based in (?:our|the))\b/i.test(text)) r.arrangement = "On-site";
     m = text.match(/\b([A-Z][a-zA-Z.]+(?: [A-Z][a-zA-Z.]+){0,2}, *(?:A[KLRZ]|C[AOT]|D[CE]|FL|GA|HI|I[ADLN]|K[SY]|LA|M[ADEINOST]|N[CDEHJMVY]|O[HKR]|PA|RI|S[CD]|T[NX]|UT|V[AT]|W[AIVY]))\b/); if (m) r.location = m[1];
+    if (!r.location && /\bNYC\s*(?:\/|or|and|&)\s*SF\b/i.test(text)) r.location = "New York, NY or San Francisco, CA";
+    else if (!r.location && /\bSF\s*(?:\/|or|and|&)\s*NYC\b/i.test(text)) r.location = "San Francisco, CA or New York, NY";
     if (!r.location) { m = text.match(/\b(?:exclusively|primarily|must be)?\s*based in (?:our |the )?([A-Z][A-Za-z.'-]+(?:[ ,]+[A-Z][A-Za-z.'-]+){0,2}?)(?=\s+(?:HQ|office)|[.;\n])/); if (m) r.location = m[1].trim(); }
     var dl = text.match(/(?:deadline|apply by|applications? (?:close|due)|closing date|closes)[^\n\d]{0,20}?([A-Za-z]{3,9}\.?\s+\d{1,2}(?:st|nd|rd|th)?,?\s*\d{0,4}|\d{1,2}\/\d{1,2}\/\d{2,4}|\d{4}-\d{2}-\d{2})/i);
     if (dl) { var d = parseLooseDate(dl[1]); if (d) r.deadline = d; }
@@ -568,9 +570,25 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     return "";
   }
   function addTitleHints(r, title, url) {
-    if (!title) { if (!r.company) r.company = companyFromJobURL(url); return; }
+    var u = new URL(url), host = u.hostname.replace(/^www\./, "").toLowerCase(), atsCompany = companyFromJobURL(url);
+    if (!title) { if (!r.company) r.company = atsCompany; return; }
     var m = title.match(/^Job Application for\s+(.+?)\s+at\s+(.+)$/i);
     if (m) { r.title = m[1].trim(); r.company = m[2].trim(); return; }
+    if (host === "jobs.ashbyhq.com") {
+      var ashTitle = title.replace(/\s+@\s+.+$/, "").trim();
+      if (ashTitle && !/^(careers?|jobs?)$/i.test(ashTitle)) r.title = ashTitle;
+      if (!r.company || !atsCompany || r.company.toLowerCase() !== atsCompany.toLowerCase()) r.company = atsCompany || r.company;
+      return;
+    }
+    if (/^(jobs\.lever\.co|boards\.greenhouse\.io|job-boards\.greenhouse\.io)$/.test(host) && atsCompany) {
+      var atsTitle = title.replace(/^Job Application for\s+/i, "").replace(new RegExp("\\s+(?:at|[-|])\\s+" + atsCompany.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "$", "i"), "").trim();
+      r.company = r.company && r.company.toLowerCase() === atsCompany.toLowerCase() ? r.company : atsCompany;
+      if (atsTitle && !/^(careers?|jobs?)$/i.test(atsTitle)) r.title = atsTitle;
+      return;
+    }
+    if (/\.myworkdayjobs\.com$/.test(host) && atsCompany) {
+      r.company = atsCompany; if (title && !/^(careers?|jobs?)$/i.test(title)) r.title = title.replace(/\s*[|–—-]\s*careers?.*$/i, "").trim(); return;
+    }
     var generic = /^(careers?|jobs?|job search|opportunities|apply)$/i;
     var role = /(analyst|scientist|intern|engineer|manager|associate|consultant|specialist|coordinator|developer|strategist|director|designer|researcher|product|marketing|sales|finance|operations)/i;
     var parts = title.split(/\s+[|–—-]\s+/).map(function (x) { return x.trim(); }).filter(Boolean);
@@ -578,7 +596,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     for (var i = 0; i < parts.length; i++) if (role.test(parts[i]) && !generic.test(parts[i])) { titlePart = parts[i]; break; }
     for (var j = 0; j < parts.length; j++) if (parts[j] !== titlePart && !generic.test(parts[j]) && !/(linkedin|indeed|glassdoor|greenhouse|lever|workday)/i.test(parts[j])) { companyPart = parts[j]; break; }
     if (titlePart) r.title = titlePart;
-    if (companyPart) r.company = companyPart;
+    if (companyPart && !r.company) r.company = companyPart;
     if (!r.company) r.company = companyFromJobURL(url);
   }
   function importJobLink(raw) {
