@@ -948,6 +948,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     $("#storeNote").textContent = session ? "Saved to your NextMove account. Your Claude API key stays only in this browser." : gate ? "Each account's jobs and resume are private to that account." : "Saved privately in this browser on this device. Your resume is never uploaded, except to Anthropic when you choose AI tailoring.";
     if (gate) { $("#btnAdd").hidden = true; $("#tabs").hidden = true; $("#btnSamples").hidden = true; setSync(""); $("#view").innerHTML = renderAuth(); wireAuth($("#view")); return; }
     var welcome = !me && !jobs.length && !ui.skippedWelcome, r = route();
+    if (r.tab === "job" && !byId(r.id)) r = { tab: "dashboard" }; // a deleted or unknown job
     $("#btnAdd").hidden = welcome; $("#tabs").hidden = welcome;
     $all("#tabs a").forEach(function (a) { var on = a.dataset.tab === r.tab || (r.tab === "job" && a.dataset.tab === "jobs"); if (on) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
     var hasSamples = jobs.some(function (o) { return o.sample; });
@@ -1452,7 +1453,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     var g = t.closest("[data-go]"); if (g) go(g.dataset.go);
   });
   document.addEventListener("keydown", function (e) {
-    if (e.key === "Enter" && e.target.classList && e.target.classList.contains("job")) go(e.target.dataset.go);
+    if (e.key === "Enter" && e.target.classList && (e.target.classList.contains("job") || e.target.classList.contains("bcard") || e.target.classList.contains("rt-r"))) go(e.target.dataset.go);
   });
   document.addEventListener("change", function (e) {
     var t = e.target;
