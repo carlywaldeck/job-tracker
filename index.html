@@ -158,6 +158,10 @@ details[open] summary { margin-bottom: 10px; }
 .rt-c .when { font-size: .9rem; }
 .rt-r > button { justify-self: end; white-space: nowrap; }
 .m-lbl { display: none; }
+.acct { width: 38px; height: 38px; padding: 0; border-radius: 50%; background: var(--tint); color: var(--accent-ink); border: 0; font-weight: 700; flex: none; }
+.auth .card { max-width: 440px; }
+.auth .seg { justify-self: start; }
+#syncState { color: var(--muted); }
 .check { display: flex; gap: 10px; align-items: center; font-weight: 500; }
 .check input { width: 18px; height: 18px; accent-color: var(--accent); }
 
@@ -319,13 +323,15 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
       <a href="#resume" data-tab="resume">My resume</a>
     </nav>
     <button id="btnAdd" class="primary" type="button" hidden>+ Add a job</button>
+    <button id="btnAcct" class="acct" type="button" hidden></button>
   </div>
 </header>
 
 <main class="wrap" id="view"></main>
 
 <footer><div class="wrap">
-  <span>Saved privately in this browser on this device. Your resume is never uploaded, except to Anthropic when you choose AI tailoring.</span>
+  <span id="storeNote">Saved privately in this browser on this device. Your resume is never uploaded, except to Anthropic when you choose AI tailoring.</span>
+  <span id="syncState" aria-live="polite"></span>
   <button type="button" class="link" id="btnSamples" hidden></button>
 </div></footer>
 
@@ -374,10 +380,122 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
 
   // ---------- Storage ----------
   var jobs = [], me = null, storageOK = true, version = 0;
+  // ---------- Accounts (Supabase) ----------
+  // Public project values; the anon key is meant to be shipped in the page. Row-level security keeps each person's row private.
+  var SB = window.NEXTMOVE_SUPABASE || { url: "", key: "" };
+  var AUTH = !!(SB.url && SB.key), SESSION_KEY = "nextmove.v3.session";
+  var session = null, sync = { timer: null, dirty: false, busy: false };
+  function k(base) { return AUTH && session ? base + "." + session.user.id : base; }
+  function sbFetch(path, opts) {
+    opts = opts || {};
+    var h = { apikey: SB.key, "content-type": "application/json" };
+    Object.keys(opts.headers || {}).forEach(function (x) { h[x] = opts.headers[x]; });
+    if (session && !opts.noAuth) h.Authorization = "Bearer " + session.access_token;
+    return fetch(SB.url.replace(/\/$/, "") + path, { method: opts.method || "GET", headers: h, body: opts.body ? JSON.stringify(opts.body) : undefined }).then(function (res) {
+      return res.text().then(function (t) {
+        var j = null; try { j = t ? JSON.parse(t) : null; } catch (e) {}
+        if (!res.ok) { var err = new Error((j && (j.msg || j.error_description || j.message || j.error)) || "Error " + res.status); err.status = res.status; throw err; }
+        return j;
+      });
+    });
+  }
+  function setSession(j) {
+    if (!j || !j.access_token) throw new Error("Sign-in didn't return a session.");
+    session = { access_token: j.access_token, refresh_token: j.refresh_token, expires_at: Date.now() + (j.expires_in || 3600) * 1000,
+      user: { id: (j.user || session.user).id, email: (j.user || session.user).email } };
+    try { localStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch (e) {}
+  }
+  function refreshSession() { return sbFetch("/auth/v1/token?grant_type=refresh_token", { method: "POST", body: { refresh_token: session.refresh_token }, noAuth: true }).then(setSession); }
+  function withAuth(fn) {
+    var fresh = session.expires_at - Date.now() < 60000 ? refreshSession() : Promise.resolve();
+    return fresh.then(fn).catch(function (err) { if (err.status === 401) return refreshSession().then(fn); throw err; });
+  }
+  function signIn(email, password, create) {
+    var path = create ? "/auth/v1/signup" : "/auth/v1/token?grant_type=password";
+    return sbFetch(path, { method: "POST", body: { email: email, password: password }, noAuth: true }).then(function (j) {
+      if (create && !j.access_token) throw new Error("Account created, but this project asks people to confirm their email first. Check your inbox, then sign in.");
+      setSession(j);
+    });
+  }
+  function signOut() {
+    var old = session;
+    clearTimeout(sync.timer);
+    if (sync.dirty) pushNow();
+    if (old) { sbFetch("/auth/v1/logout", { method: "POST" }).catch(function () {}); try { localStorage.removeItem(k(KEY)); localStorage.removeItem(k(PROFILE_KEY)); localStorage.removeItem(SESSION_KEY); } catch (e) {} }
+    session = null; jobs = []; me = null; ui.skippedWelcome = false; version++;
+    if (location.hash) history.replaceState(null, "", location.pathname + location.search);
+    render();
+  }
+  function setSync(text) { var el = $("#syncState"); if (el) el.textContent = text; }
+  function schedulePush() { sync.dirty = true; setSync("Saving…"); clearTimeout(sync.timer); sync.timer = setTimeout(pushNow, 700); }
+  function pushNow() {
+    if (!session) return Promise.resolve();
+    sync.dirty = false;
+    var body = { user_id: session.user.id, jobs: jobs, profile: me, updated_at: new Date().toISOString() };
+    return withAuth(function () { return sbFetch("/rest/v1/user_data?on_conflict=user_id", { method: "POST", headers: { Prefer: "resolution=merge-duplicates,return=minimal" }, body: body }); })
+      .then(function () { if (!sync.dirty) setSync("Saved to your account."); })
+      .catch(function () { sync.dirty = true; setSync("Couldn't reach your account. Your changes are kept on this device and will sync when you're back online."); clearTimeout(sync.timer); sync.timer = setTimeout(pushNow, 15000); });
+  }
+  function pull(quiet) {
+    if (!session || sync.busy) return;
+    sync.busy = true; if (!quiet) setSync("Loading your jobs…");
+    withAuth(function () { return sbFetch("/rest/v1/user_data?select=jobs,profile&user_id=eq." + encodeURIComponent(session.user.id)); }).then(function (rows) {
+      sync.busy = false;
+      if (sync.dirty) return; // a local change is about to be saved; don't overwrite it
+      if (rows && rows.length) {
+        jobs = Array.isArray(rows[0].jobs) ? rows[0].jobs : []; me = rows[0].profile || null;
+        writeLocal(); version++; render(); setSync("Saved to your account."); return;
+      }
+      // New account: bring over anything saved in this browser before accounts existed.
+      var anonJobs = [], anonMe = null;
+      try { anonJobs = JSON.parse(localStorage.getItem(KEY) || "[]") || []; anonMe = JSON.parse(localStorage.getItem(PROFILE_KEY) || "null"); } catch (e) {}
+      if (anonJobs.length || anonMe) { jobs = anonJobs; me = anonMe; writeLocal(); version++; render(); }
+      pushNow().then(function () {
+        if (anonJobs.length || anonMe) { try { localStorage.removeItem(KEY); localStorage.removeItem(PROFILE_KEY); } catch (e) {} toast("Moved what was saved in this browser into your account."); }
+      });
+    }).catch(function (err) {
+      sync.busy = false;
+      if (err.status === 400 || err.status === 401) { signOut(); toast("Please sign in again."); return; }
+      setSync(err.status === 404 ? "Your account storage isn't set up yet (the user_data table is missing)." : "Couldn't reach your account. Showing what's saved on this device.");
+    });
+  }
+  function writeLocal() { try { localStorage.setItem(k(KEY), JSON.stringify(jobs)); localStorage.setItem(k(PROFILE_KEY), JSON.stringify(me)); } catch (e) {} }
+
+  function renderAuth() {
+    return '<section class="welcome auth"><h2>Your job search, in one place.</h2>' +
+      '<p class="lead">Sign in to NextMove. Your jobs and resume are saved to your account, so they\'re there on any device.</p>' +
+      '<form class="card" id="authForm" novalidate><div class="seg" role="group" aria-label="Sign in or create an account"><a href="#" data-auth="in"' + (ui.authMode !== "up" ? ' aria-current="page"' : "") + '>Sign in</a><a href="#" data-auth="up"' + (ui.authMode === "up" ? ' aria-current="page"' : "") + ">Create an account</a></div>" +
+      '<label>Email<input id="au-email" type="email" autocomplete="email" required></label>' +
+      '<label>Password' + (ui.authMode === "up" ? ' <span class="hint">At least 6 characters.</span>' : "") + '<input id="au-pw" type="password" autocomplete="' + (ui.authMode === "up" ? "new-password" : "current-password") + '" required minlength="6"></label>' +
+      '<p class="err" id="au-err" role="alert" hidden></p><div class="actions"><button type="submit" class="primary" id="au-go">' + (ui.authMode === "up" ? "Create my account" : "Sign in") + "</button></div></form></section>";
+  }
+  function wireAuth(root) {
+    var f = $("#authForm", root);
+    f.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var email = $("#au-email").value.trim(), pw = $("#au-pw").value, er = $("#au-err"), btn = $("#au-go");
+      var fail = function (m) { er.textContent = m; er.hidden = false; };
+      if (!/^\S+@\S+\.\S+$/.test(email)) return fail("Enter your email address.");
+      if (pw.length < 6) return fail("Your password needs at least 6 characters.");
+      er.hidden = true; btn.disabled = true; btn.textContent = ui.authMode === "up" ? "Creating your account…" : "Signing in…";
+      signIn(email, pw, ui.authMode === "up").then(function () {
+        jobs = []; me = null; load(); render(); pull();
+      }).catch(function (err) {
+        btn.disabled = false; btn.textContent = ui.authMode === "up" ? "Create my account" : "Sign in";
+        var m = err.message || "";
+        fail(/invalid login|invalid_grant|credentials/i.test(m) ? "That email and password don't match. Try again, or create an account." :
+          /already registered|already exists/i.test(m) ? "There's already an account with that email. Sign in instead." :
+          /fetch|network|load failed/i.test(m) ? "Couldn't reach the sign-in service. Check your connection and try again." : m);
+      });
+    });
+    setTimeout(function () { var i = $("#au-email"); if (i) i.focus(); }, 30);
+  }
+
   function load() {
     try {
-      jobs = JSON.parse(localStorage.getItem(KEY) || "null");
-      me = JSON.parse(localStorage.getItem(PROFILE_KEY) || "null");
+      jobs = JSON.parse(localStorage.getItem(k(KEY)) || "null");
+      me = JSON.parse(localStorage.getItem(k(PROFILE_KEY)) || "null");
+      if (jobs === null && AUTH) jobs = [];
       if (jobs === null) { // carry over data from the previous version, if any
         jobs = JSON.parse(localStorage.getItem("nextmove.v2.jobs") || "[]");
         me = me || JSON.parse(localStorage.getItem("nextmove.v2.me") || "null");
@@ -385,8 +503,8 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     } catch (e) { storageOK = false; jobs = []; me = null; }
     if (!Array.isArray(jobs)) jobs = [];
   }
-  function save() { version++; try { localStorage.setItem(KEY, JSON.stringify(jobs)); storageOK = true; } catch (e) { storageOK = false; } }
-  function saveMe() { version++; try { if (me) localStorage.setItem(PROFILE_KEY, JSON.stringify(me)); else localStorage.removeItem(PROFILE_KEY); } catch (e) { storageOK = false; } }
+  function save() { version++; try { localStorage.setItem(k(KEY), JSON.stringify(jobs)); storageOK = true; } catch (e) { storageOK = false; } if (session) schedulePush(); }
+  function saveMe() { version++; try { if (me) localStorage.setItem(k(PROFILE_KEY), JSON.stringify(me)); else localStorage.removeItem(k(PROFILE_KEY)); } catch (e) { storageOK = false; } if (session) schedulePush(); }
   function getKey() { try { return localStorage.getItem(AI_KEY) || ""; } catch (e) { return ""; } }
   function setKey(k) { try { if (k) localStorage.setItem(AI_KEY, k); else localStorage.removeItem(AI_KEY); } catch (e) {} }
   function blank() {
@@ -825,6 +943,10 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   function go(h) { if (location.hash === h) render(); else location.hash = h; }
 
   function render() {
+    var gate = AUTH && !session;
+    $("#btnAcct").hidden = !session; if (session) { $("#btnAcct").textContent = session.user.email.charAt(0).toUpperCase(); $("#btnAcct").title = "Signed in as " + session.user.email; $("#btnAcct").setAttribute("aria-label", "Account: " + session.user.email); }
+    $("#storeNote").textContent = session ? "Saved to your NextMove account. Your Claude API key stays only in this browser." : gate ? "Each account's jobs and resume are private to that account." : "Saved privately in this browser on this device. Your resume is never uploaded, except to Anthropic when you choose AI tailoring.";
+    if (gate) { $("#btnAdd").hidden = true; $("#tabs").hidden = true; $("#btnSamples").hidden = true; setSync(""); $("#view").innerHTML = renderAuth(); wireAuth($("#view")); return; }
     var welcome = !me && !jobs.length && !ui.skippedWelcome, r = route();
     $("#btnAdd").hidden = welcome; $("#tabs").hidden = welcome;
     $all("#tabs a").forEach(function (a) { var on = a.dataset.tab === r.tab || (r.tab === "job" && a.dataset.tab === "jobs"); if (on) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
@@ -1182,7 +1304,9 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   function renderResumePage() {
     var key = getKey();
     var h = '<section class="hello"><h2>My resume</h2><p>Your resume powers every score and suggestion. ' + (me && me.resumeName ? "Current file: <strong>" + esc(me.resumeName) + "</strong>." : "Upload it to get started.") + "</p></section>";
-    h += '<div class="narrow" style="display:grid;gap:24px">' + uploadBox() + '<div id="profileBox"></div>';
+    h += '<div class="narrow" style="display:grid;gap:24px">';
+    if (session) h += '<section class="card" id="account"><div class="card-h"><h3>Your account</h3><button type="button" id="btnSignOut">Sign out</button></div><p class="muted">Signed in as <strong>' + esc(session.user.email) + "</strong>. Your jobs and resume sync to this account.</p></section>";
+    h += uploadBox() + '<div id="profileBox"></div>';
     h += '<section class="card" id="ai"><div class="card-h"><h3>AI tailoring (optional)</h3><span class="ai-tag">AI · Claude</span></div>' +
       "<p>To have Claude rewrite your resume for a job, paste an Anthropic API key. You can create one at <a href=\"https://console.anthropic.com/settings/keys\" target=\"_blank\" rel=\"noopener\">console.anthropic.com</a>. Each tailoring costs a few cents on your account.</p>" +
       (key ? '<p><strong>Key saved</strong> (ends in ' + esc(key.slice(-4)) + ').</p><div class="actions"><button type="button" class="danger" id="keyDel">Remove key</button></div>'
@@ -1192,6 +1316,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     return h + "</div>";
   }
   function wireResumePage(root) {
+    var so = $("#btnSignOut"); if (so) so.addEventListener("click", function () { signOut(); toast("Signed out."); });
     wireUpload(root, false);
     if (me) showProfile(root, me, false);
     var s = $("#keySave");
@@ -1304,6 +1429,8 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   }
   document.addEventListener("click", function (e) {
     var t = e.target;
+    var am = t.closest("[data-auth]"); if (am) { e.preventDefault(); ui.authMode = am.dataset.auth; render(); return; }
+    if (t.closest("#btnAcct")) { go("#resume"); return; }
     if (t.closest("#btnAdd") || t.closest("[data-act='add']")) { openJob(null); return; }
     if (t.closest("#btnSamples") || t.closest("[data-act='samples']")) { toggleSamples(); return; }
     if (t.closest("[data-act='sample-all']")) { me = sampleProfile(); saveMe(); jobs = samples().concat(jobs); save(); go("#dashboard"); toast("Loaded a sample resume and 6 sample jobs."); return; }
@@ -1355,8 +1482,13 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   });
   window.addEventListener("hashchange", function () { closeModal(); render(); window.scrollTo(0, 0); });
 
+  // Boot: with accounts on, show the cached copy right away, then load the latest from the account.
+  if (AUTH) { try { session = JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); } catch (e) { session = null; } }
   load();
   render();
+  if (session) pull();
+  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible" && session && !sync.dirty) pull(true); });
+  window.addEventListener("pagehide", function () { if (sync.dirty) pushNow(); });
 })();
 </script>
 </body>
