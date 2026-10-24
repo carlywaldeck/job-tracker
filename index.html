@@ -176,6 +176,10 @@ details[open] summary { margin-bottom: 10px; }
 .gdot { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--accent); display: grid; place-items: center; font-size: .8rem; font-weight: 700; color: var(--on-accent); }
 .gsteps li.ok .gdot { background: var(--accent); }
 .quick textarea { font-size: .92rem; }
+.url-import { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+.url-import button { white-space: nowrap; }
+.quick details { border-top: 1px solid var(--line); padding-top: 12px; }
+.import-note { font-size: .8rem; color: var(--muted); line-height: 1.4; }
 .task .draft { margin-top: 6px; }
 .boosts { display: grid; }
 .boost { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
@@ -306,6 +310,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   .stat b { font-size: 1.7rem; }
 }
 @media (prefers-reduced-motion: no-preference) { .job, button { transition: box-shadow .15s, border-color .15s, background-color .15s; } }
+@media (max-width: 560px) { .url-import { grid-template-columns: 1fr; } .url-import button { justify-self: start; } }
 </style>
 </head>
 <body>
@@ -325,7 +330,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
 <main class="wrap" id="view"></main>
 
 <footer><div class="wrap">
-  <span>Saved privately in this browser on this device. Your resume is never uploaded, except to Anthropic when you choose AI tailoring.</span>
+  <span>Saved privately in this browser. Public job links go to Jina AI Reader only when you import; your resume goes to Anthropic only when you choose AI tailoring.</span>
   <button type="button" class="link" id="btnSamples" hidden></button>
 </div></footer>
 
@@ -512,23 +517,85 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   }
   function extractJD(text) {
     var r = {}, m; if (!text || !text.trim()) return r;
-    var lines = text.split(/\r?\n/).map(function (l) { return l.trim(); }).filter(Boolean);
+    var lines = text.split(/\r?\n/).map(function (l) { return l.replace(/^\s*#{1,6}\s*/, "").replace(/^\s*[*_`]+|[*_`]+\s*$/g, "").trim(); }).filter(Boolean);
     m = text.match(/https?:\/\/[^\s)>"']+/i); if (m) r.link = m[0];
-    m = text.match(/(?:job\s*title|position|role)\s*[:\-–]\s*(.+)/i); if (m) r.title = m[1].trim();
-    m = text.match(/(?:company(?:\s*name)?|employer|organization)\s*[:\-–]\s*(.+)/i); if (m) r.company = m[1].trim();
+    m = text.match(/^\s*(?:job\s*title|position|role)\s*[:\-–]\s*(.+)$/im); if (m) r.title = m[1].replace(/[*_`]+/g, "").trim();
+    m = text.match(/^\s*(?:company(?:\s*name)?|employer|organization)\s*[:\-–]\s*(.+)$/im); if (m) r.company = m[1].replace(/[*_`]+/g, "").trim();
+    if (!r.company) { m = text.match(/^\s*(?:#{1,6}\s*)?[*_`]*About\s+(?!the\b)([A-Z][^\n*_`]{1,50})[*_`]*\s*$/im); if (m) r.company = m[1].trim(); }
     if (!r.title || !r.company) for (var i = 0; i < Math.min(lines.length, 6); i++) {
       var at = lines[i].match(/^(.{3,80}?)\s+(?:at|@|\||-|–|—)\s+(.{2,60}?)\.?$/);
       if (at && !/https?:/.test(lines[i])) { r.title = r.title || at[1].trim(); r.company = r.company || at[2].trim(); break; }
     }
     if (!r.title) { var kw = /(analyst|scientist|intern|engineer|manager|associate|consultant|specialist|coordinator|developer|strategist)/i;
-      for (var j = 0; j < Math.min(lines.length, 8); j++) if (kw.test(lines[j]) && lines[j].length < 90) { r.title = lines[j].split(/[.,(]/)[0].trim(); break; } }
+      for (var j = 0; j < Math.min(lines.length, 8); j++) if (kw.test(lines[j]) && !/^(about|in this|the)\s+(job|position|role)/i.test(lines[j]) && lines[j].length < 90) { r.title = lines[j].split(/[.,(]/)[0].trim(); break; } }
     if (/\bhybrid\b/i.test(text)) r.arrangement = "Hybrid";
     else if (/\bremote\b/i.test(text)) r.arrangement = "Remote";
-    else if (/\b(on-?site|in[-\s]office|in[-\s]person)\b/i.test(text)) r.arrangement = "On-site";
+    else if (/\b(on-?site|in[-\s]office|in[-\s]person|(?:exclusively|must be) based in (?:our|the))\b/i.test(text)) r.arrangement = "On-site";
     m = text.match(/\b([A-Z][a-zA-Z.]+(?: [A-Z][a-zA-Z.]+){0,2}, *(?:A[KLRZ]|C[AOT]|D[CE]|FL|GA|HI|I[ADLN]|K[SY]|LA|M[ADEINOST]|N[CDEHJMVY]|O[HKR]|PA|RI|S[CD]|T[NX]|UT|V[AT]|W[AIVY]))\b/); if (m) r.location = m[1];
+    if (!r.location) { m = text.match(/\b(?:exclusively|primarily|must be)?\s*based in (?:our |the )?([A-Z][A-Za-z.'-]+(?:[ ,]+[A-Z][A-Za-z.'-]+){0,2}?)(?=\s+(?:HQ|office)|[.;\n])/); if (m) r.location = m[1].trim(); }
     var dl = text.match(/(?:deadline|apply by|applications? (?:close|due)|closing date|closes)[^\n\d]{0,20}?([A-Za-z]{3,9}\.?\s+\d{1,2}(?:st|nd|rd|th)?,?\s*\d{0,4}|\d{1,2}\/\d{1,2}\/\d{2,4}|\d{4}-\d{2}-\d{2})/i);
     if (dl) { var d = parseLooseDate(dl[1]); if (d) r.deadline = d; }
     return r;
+  }
+
+  // Public job pages are read through Jina Reader because a static browser app cannot
+  // fetch most third-party sites directly. The returned text is still parsed locally.
+  function normalizeJobURL(raw) {
+    raw = String(raw || "").trim();
+    if (!raw) throw new Error("Paste a job-posting link first.");
+    if (!/^https?:\/\//i.test(raw)) raw = "https://" + raw;
+    var u;
+    try { u = new URL(raw); } catch (e) { throw new Error("Enter a complete link, such as https://company.com/jobs/123."); }
+    if (!/^https?:$/.test(u.protocol) || u.username || u.password) throw new Error("Use a public http or https job-posting link.");
+    return u.href;
+  }
+  function readerDescription(text) {
+    var marker = "Markdown Content:", at = text.indexOf(marker);
+    return (at >= 0 ? text.slice(at + marker.length) : text).trim().slice(0, 50000);
+  }
+  function readerTitle(text) {
+    var m = text.match(/^Title:\s*(.+)$/im);
+    return m ? m[1].trim() : "";
+  }
+  function prettySlug(s) {
+    return String(s || "").replace(/[-_]+/g, " ").replace(/\b\w/g, function (c) { return c.toUpperCase(); }).trim();
+  }
+  function companyFromJobURL(url) {
+    var u = new URL(url), host = u.hostname.replace(/^www\./, "").toLowerCase(), p = u.pathname.split("/").filter(Boolean);
+    if (/^(jobs\.lever\.co|boards\.greenhouse\.io|job-boards\.greenhouse\.io|jobs\.ashbyhq\.com)$/.test(host) && p[0]) return prettySlug(p[0]);
+    var wd = host.match(/^([^.]+)\.wd\d*\.myworkdayjobs\.com$/); if (wd) return prettySlug(wd[1]);
+    if (!/(linkedin|indeed|glassdoor|ziprecruiter|monster|workdayjobs|greenhouse|lever|ashbyhq)/.test(host)) return prettySlug(host.split(".")[0]);
+    return "";
+  }
+  function addTitleHints(r, title, url) {
+    if (!title) { if (!r.company) r.company = companyFromJobURL(url); return; }
+    var m = title.match(/^Job Application for\s+(.+?)\s+at\s+(.+)$/i);
+    if (m) { r.title = m[1].trim(); r.company = m[2].trim(); return; }
+    var generic = /^(careers?|jobs?|job search|opportunities|apply)$/i;
+    var role = /(analyst|scientist|intern|engineer|manager|associate|consultant|specialist|coordinator|developer|strategist|director|designer|researcher|product|marketing|sales|finance|operations)/i;
+    var parts = title.split(/\s+[|–—-]\s+/).map(function (x) { return x.trim(); }).filter(Boolean);
+    var titlePart = "", companyPart = "";
+    for (var i = 0; i < parts.length; i++) if (role.test(parts[i]) && !generic.test(parts[i])) { titlePart = parts[i]; break; }
+    for (var j = 0; j < parts.length; j++) if (parts[j] !== titlePart && !generic.test(parts[j]) && !/(linkedin|indeed|glassdoor|greenhouse|lever|workday)/i.test(parts[j])) { companyPart = parts[j]; break; }
+    if (titlePart) r.title = titlePart;
+    if (companyPart) r.company = companyPart;
+    if (!r.company) r.company = companyFromJobURL(url);
+  }
+  function importJobLink(raw) {
+    var url;
+    try { url = normalizeJobURL(raw); } catch (e) { return Promise.reject(e); }
+    return fetch("https://r.jina.ai/" + url, { headers: { "Accept": "text/plain" } }).then(function (res) {
+      if (!res.ok) throw new Error(res.status === 403 || res.status === 451 ? "That site does not allow this posting to be imported." : "I couldn't read that posting right now.");
+      return res.text();
+    }).then(function (text) {
+      var description = readerDescription(text);
+      if (description.length < 120) throw new Error("I couldn't find enough job-posting text at that link.");
+      var r = extractJD(description); r.link = url; addTitleHints(r, readerTitle(text), url);
+      return { fields: r, description: description };
+    }).catch(function (err) {
+      if (err && err.message && !/^Failed to fetch/i.test(err.message)) throw err;
+      throw new Error("I couldn't import that link. The site may block automated reading; paste the posting instead.");
+    });
   }
   // Splits the posting's skills into required and preferred, by section headings and by sentences that say "preferred" / "nice to have".
   function jdSkills(text) {
@@ -784,7 +851,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     var best = jobs.filter(function (o) { return o.status === "saved" && scoreJob(o); })[0];
     var steps = [
       ["Upload your resume", "It powers every score.", !!me, '<button type="button" class="small primary" data-go="#resume">Upload</button>'],
-      ["Add a job posting", "Paste it and get a 1–100 match score.", jobs.some(function (o) { return o.description; }), '<button type="button" class="small primary" data-act="focus-qa">Add a job</button>'],
+      ["Add a job posting", "Drop in a link and get editable details plus a 1–100 match score.", jobs.some(function (o) { return o.description; }), '<button type="button" class="small primary" data-act="focus-qa">Add a job</button>'],
       ["Tailor your resume for a job", "Rewrite it in the posting's words.", jobs.some(function (o) { return o.tailored || o.tailoring; }), best ? '<button type="button" class="small primary" data-go="#job/' + esc(best.id) + '/tailor">Tailor</button>' : ""],
       ["Apply and track it", "Drag it to Applied on your board. I'll remind you to follow up.", jobs.some(function (o) { return o.status !== "saved"; }), '<button type="button" class="small primary" data-go="#jobs">Open board</button>']];
     var done = steps.filter(function (x) { return x[2]; }).length, next = steps.filter(function (x) { return !x[2]; })[0];
@@ -842,7 +909,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   function renderWelcome() {
     return '<section class="welcome"><h2>Let\'s set up your job search.</h2>' +
       '<p class="lead">Upload your resume. NextMove scores how qualified you are for each job from 1 to 100, helps you tailor your resume to each posting, and tells you what to do next.</p>' +
-      '<div class="how"><div><b>1. Your resume</b>We read your skills, experience, and education.</div><div><b>2. Save jobs</b>Paste a posting and we fill in the details and score it.</div><div><b>3. Tailor and apply</b>Rewrite your resume for each job, then track it on your dashboard.</div></div>' +
+      '<div class="how"><div><b>1. Your resume</b>We read your skills, experience, and education.</div><div><b>2. Save jobs</b>Paste a public job link and review the details we find.</div><div><b>3. Tailor and apply</b>Rewrite your resume for each job, then track it on your dashboard.</div></div>' +
       uploadBox() + '<div id="profileBox"></div>' +
       '<p class="muted"><button type="button" class="link" data-act="sample-all">Try it with a sample resume and jobs</button> · <button type="button" class="link" data-act="skip">Skip for now</button></p>' +
       (storageOK ? "" : '<p class="err">This browser is blocking storage, so nothing will be saved after you close the tab.</p>') + "</section>";
@@ -939,9 +1006,11 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     var offers = jobs.filter(function (o) { return o.status === "offer"; }).length;
     var stages = [["Tracked", jobs.length, "", "all"], ["Applied", applied, jobs.length, "applied"], ["Interviewing", iv, applied, "interviewing"], ["Offer", offers, iv, "offer"]];
     var cnt = function (st) { return jobs.filter(function (o) { return o.status === st; }).length; };
-    h += '<div class="side-col"><section class="card quick"><h3>Add a job</h3><label for="qa" class="muted" style="font-weight:400">Paste a job posting. I\'ll fill in the details and score it.</label>' +
-      '<textarea id="qa" rows="4" placeholder="Copy the whole posting from the job site and paste it here"></textarea>' +
-      '<div class="actions"><button type="button" class="primary" id="qaGo">Add and score it</button><span class="err" id="qaErr" role="alert"></span></div></section>' +
+    h += '<div class="side-col"><section class="card quick"><h3>Add a job from a link</h3><label for="qaUrl" class="muted" style="font-weight:400">Paste a public job-posting link. I\'ll retrieve the posting and fill in editable details for you.</label>' +
+      '<div class="url-import"><input id="qaUrl" type="url" inputmode="url" placeholder="https://company.com/jobs/…"><button type="button" class="primary" id="qaGo">Import details</button></div>' +
+      '<span class="err" id="qaErr" role="alert"></span><p class="import-note">Public postings only. The link is sent to Jina AI Reader to retrieve the page; some job sites may block imports.</p>' +
+      '<details><summary>Can\'t import it? Paste the job description instead</summary><textarea id="qa" rows="5" placeholder="Copy the whole posting from the job site and paste it here"></textarea>' +
+      '<div class="actions"><button type="button" id="qaPaste">Use pasted posting</button></div></details></section>' +
       (!jobs.length ? "" : '<section class="card"><div class="card-h"><h3>Pipeline</h3><span class="count">jobs that reached each stage</span></div><div class="pipe">' +
       stages.map(function (s) {
         var pct = s[2] ? Math.round(100 * s[1] / s[2]) : null;
@@ -973,13 +1042,19 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   function wireDashboard() {
     var b = $("#qaGo"); if (!b) return;
     b.addEventListener("click", function () {
+      var input = $("#qaUrl"), raw = input.value.trim(), err = $("#qaErr");
+      err.textContent = ""; b.disabled = true; b.textContent = "Importing…";
+      importJobLink(raw).then(function (data) {
+        var o = blank(); Object.keys(data.fields).forEach(function (k) { o[k] = data.fields[k]; }); o.description = data.description;
+        openJob(null, o.company ? o.title ? null : "f-title" : "f-company", o);
+      }).catch(function (e) { err.textContent = e.message; input.focus(); }).then(function () { b.disabled = false; b.textContent = "Import details"; });
+    });
+    $("#qaPaste").addEventListener("click", function () {
       var text = $("#qa").value.trim();
       if (!text) { $("#qaErr").textContent = "Paste a posting first."; $("#qa").focus(); return; }
       var r = extractJD(text), o = blank();
       Object.keys(r).forEach(function (k) { o[k] = r[k]; }); o.description = text;
-      if (!o.company || !o.title) { openJob(null, o.company ? "f-title" : "f-company", o); return; }
-      jobs.unshift(o); save(); go("#job/" + o.id);
-      toast("Added " + esc(o.company) + ". Here's how you match.", "Edit details", function () { openJob(o.id); });
+      openJob(null, o.company ? o.title ? null : "f-title" : "f-company", o);
     });
   }
 
@@ -1231,16 +1306,19 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   function openJob(id, focusId, prefill) {
     var isNew = !id, o = isNew ? prefill || blank() : JSON.parse(JSON.stringify(byId(id)));
     if (!o) return;
-    var h = '<form id="jobForm" novalidate><div class="modal-h"><h2>' + (isNew ? "Add a job" : "Edit " + esc(o.company)) + '</h2><button type="button" class="x" data-close="1" aria-label="Close">✕</button></div><div class="modal-b">' +
-      '<div class="paste"><label>Paste the job posting <span class="hint">I\'ll fill in the details and score it against your resume.</span>' +
-      '<textarea id="f-description" rows="' + (o.description ? 6 : 4) + '" placeholder="Copy the whole posting from the job site and paste it here">' + esc(o.description) + "</textarea></label>" +
-      '<div class="actions"><button type="button" id="btnFill">Fill in the details</button><span id="fillMsg" class="note"></span></div><div id="scorePrev">' + previewScore(o.description) + "</div></div>" +
+    var heading = isNew ? o.link && o.description ? "Review imported job" : "Add a job" : "Edit " + esc(o.company);
+    var h = '<form id="jobForm" novalidate><div class="modal-h"><h2>' + heading + '</h2><button type="button" class="x" data-close="1" aria-label="Close">✕</button></div><div class="modal-b">' +
+      '<div class="paste"><label for="f-link">Job-posting link <span class="hint">Import a public posting, then check the editable details below.</span></label>' +
+      '<div class="url-import"><input id="f-link" type="url" inputmode="url" value="' + esc(o.link) + '" placeholder="https://company.com/jobs/…"><button type="button" id="btnImport">Import details</button></div>' +
+      '<p class="import-note">The link is sent to Jina AI Reader to retrieve the public page. Some sites may block imports.</p>' +
+      '<details' + (o.description ? " open" : "") + '><summary>Review or paste the job description</summary><label>Job description <span class="hint">This text is used for the match score.</span>' +
+      '<textarea id="f-description" rows="' + (o.description ? 8 : 5) + '" placeholder="If the link cannot be imported, paste the whole posting here">' + esc(o.description) + "</textarea></label>" +
+      '<div class="actions"><button type="button" id="btnFill">Fill details from this text</button><span id="fillMsg" class="note"></span></div></details><div id="scorePrev">' + previewScore(o.description) + "</div></div>" +
       '<div class="form-grid">' +
       field("company", "Company", o.company) + field("title", "Job title", o.title) +
       field("location", "Location", o.location, "text", "City, State") +
       pick("arrangement", "Work arrangement", o.arrangement, [["", "Not sure"], ["On-site", "On-site"], ["Hybrid", "Hybrid"], ["Remote", "Remote"]]) +
       field("deadline", "Application deadline", o.deadline, "date") + pick("status", "Status", o.status, STATUSES) +
-      field("link", "Link to the posting", o.link, "url", "https://…", true) +
       field("contact", "Network contact", o.contact, "text", "Alum, recruiter, career fair, club…", true) +
       field("nextAction", "Your next step", o.nextAction, "text", "e.g. Ask an alum for a referral") + field("nextDue", "Do it by", o.nextDue, "date") +
       field("interviewDate", "Interview date", o.interviewDate, "date") +
@@ -1251,6 +1329,14 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     openModal(h);
     var desc = $("#f-description"), timer;
     desc.addEventListener("input", function () { clearTimeout(timer); timer = setTimeout(function () { $("#scorePrev").innerHTML = previewScore(desc.value); }, 250); });
+    $("#btnImport").addEventListener("click", function () {
+      var btn = $("#btnImport"), msg = $("#fillMsg"); btn.disabled = true; btn.textContent = "Importing…"; msg.textContent = "";
+      importJobLink($("#f-link").value).then(function (data) {
+        Object.keys(data.fields).forEach(function (k) { var el = $("#f-" + k); if (el && data.fields[k]) el.value = data.fields[k]; });
+        desc.value = data.description; desc.closest("details").open = true; $("#scorePrev").innerHTML = previewScore(desc.value);
+        msg.textContent = "Imported the posting. Check every field below, then add the job.";
+      }).catch(function (e) { msg.textContent = e.message; }).then(function () { btn.disabled = false; btn.textContent = "Import details"; });
+    });
     $("#btnFill").addEventListener("click", function () {
       var r = extractJD(desc.value), n = 0;
       Object.keys(r).forEach(function (k) { var el = $("#f-" + k); if (el && r[k] && !el.value) { el.value = r[k]; n++; } });
@@ -1281,7 +1367,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
       if (isNew) go("#job/" + target.id); else render();
       toast(isNew ? "Added " + esc(target.company) + "." : "Saved.");
     });
-    setTimeout(function () { var el = focusId ? $("#" + focusId) : isNew ? desc : null; if (el) el.focus(); }, 30);
+    setTimeout(function () { var el = focusId ? $("#" + focusId) : isNew ? $("#f-link") : null; if (el) el.focus(); }, 30);
   }
 
   // ---------- Toast ----------
@@ -1316,7 +1402,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
       me.skills = splitList(me.skills).concat([ask.dataset.addskill]).join(", "); saveMe(); render();
       toast("Added " + esc(ask.dataset.addskill) + " to your skills. Score " + before + " → " + ((scoreJob(byId(jid)) || {}).score) + ". Make sure it's on your resume too."); return; }
     if (t.closest("[data-act='guide-hide']")) { try { localStorage.setItem("nextmove.v3.hideGuide", "1"); } catch (x) {} render(); return; }
-    if (t.closest("[data-act='focus-qa']")) { var qa = $("#qa"); if (qa) { qa.scrollIntoView({ block: "center" }); qa.focus(); } else openJob(null); return; }
+    if (t.closest("[data-act='focus-qa']")) { var qa = $("#qaUrl") || $("#qa"); if (qa) { qa.scrollIntoView({ block: "center" }); qa.focus(); } else openJob(null); return; }
     var c = t.closest("[data-copy]"); if (c) { (navigator.clipboard ? navigator.clipboard.writeText(c.dataset.copy) : Promise.reject()).then(function () { toast("Copied."); }, function () { toast("Couldn't copy. Select the text instead."); }); return; }
     var d = t.closest("[data-done]"); if (d) { completeStep(d.dataset.done, d.dataset.id); return; }
     var ed = t.closest("[data-edit]"); if (ed) { openJob(ed.dataset.edit, ed.dataset.focus); return; }
