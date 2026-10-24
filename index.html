@@ -180,6 +180,14 @@ details[open] summary { margin-bottom: 10px; }
 .url-import button { white-space: nowrap; }
 .quick details { border-top: 1px solid var(--line); padding-top: 12px; }
 .import-note { font-size: .8rem; color: var(--muted); line-height: 1.4; }
+.import-review { color: var(--warn); background: var(--warn-tint); border-radius: 10px; padding: 9px 12px; font-size: .88rem; font-weight: 500; }
+label.needs-review { color: var(--warn); }
+label.needs-review input, label.needs-review select { border-color: var(--warn); box-shadow: 0 0 0 2px var(--warn-tint); }
+label.needs-review::after { content: "Needs review"; color: var(--warn); font-size: .78rem; font-weight: 700; }
+.extra-fields { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.extra-fields > summary { font-size: 1rem; }
+.extra-fields[open] > summary { border-bottom: 1px solid var(--line); padding-bottom: 10px; }
+.extra-fields .form-grid { margin-top: 14px; }
 .task .draft { margin-top: 6px; }
 .boosts { display: grid; }
 .boost { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
@@ -1321,9 +1329,23 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     var r = scoreJob({ id: "preview", description: desc });
     return r ? '<p><strong>Score: ' + r.score + "/100 · " + verdict(r.score) + "</strong>" + (r.missReq.length ? '<span class="muted"> · Missing: ' + esc(r.missReq.slice(0, 4).join(", ")) + "</span>" : "") + "</p>" : "";
   }
+  var CORE_JOB_FIELDS = [["company", "Company"], ["title", "Job title"], ["location", "Location"], ["arrangement", "Work arrangement"], ["deadline", "Application deadline"]];
+  function reviewImportedFields() {
+    var missing = [];
+    CORE_JOB_FIELDS.forEach(function (f) {
+      var el = $("#f-" + f[0]), label = el && el.closest("label"), empty = !el || !String(el.value || "").trim();
+      if (label) label.classList.toggle("needs-review", empty);
+      if (empty) missing.push(f[1]);
+    });
+    var note = $("#importReview"); if (!note) return;
+    note.hidden = !missing.length;
+    note.textContent = missing.length ? "Please fill in the highlighted " + (missing.length === 1 ? "field" : "fields") + ": " + missing.join(", ") + "." : "";
+  }
   function openJob(id, focusId, prefill) {
     var isNew = !id, o = isNew ? prefill || blank() : JSON.parse(JSON.stringify(byId(id)));
     if (!o) return;
+    var reviewMode = isNew && !!prefill && !!o.description;
+    var hasExtra = !!(o.contact || o.nextAction || o.nextDue || o.interviewDate || o.thankYouSent || o.notes);
     var heading = isNew ? o.link && o.description ? "Review imported job" : "Add a job" : "Edit " + esc(o.company);
     var h = '<form id="jobForm" novalidate><div class="modal-h"><h2>' + heading + '</h2><button type="button" class="x" data-close="1" aria-label="Close">✕</button></div><div class="modal-b">' +
       '<div class="paste"><label for="f-link">Job-posting link <span class="hint">Import a public posting, then check the editable details below.</span></label>' +
@@ -1331,17 +1353,18 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
       '<p class="import-note">The link is sent to Jina AI Reader to retrieve the public page. Some sites may block imports.</p>' +
       '<details' + (o.description ? " open" : "") + '><summary>Review or paste the job description</summary><label>Job description <span class="hint">This text is used for the match score.</span>' +
       '<textarea id="f-description" rows="' + (o.description ? 8 : 5) + '" placeholder="If the link cannot be imported, paste the whole posting here">' + esc(o.description) + "</textarea></label>" +
-      '<div class="actions"><button type="button" id="btnFill">Fill details from this text</button><span id="fillMsg" class="note"></span></div></details><div id="scorePrev">' + previewScore(o.description) + "</div></div>" +
+      '<div class="actions"><button type="button" id="btnFill">Fill details from this text</button><span id="fillMsg" class="note"></span></div></details><div id="scorePrev">' + previewScore(o.description) + '</div></div><p id="importReview" class="import-review" hidden></p>' +
       '<div class="form-grid">' +
       field("company", "Company", o.company) + field("title", "Job title", o.title) +
       field("location", "Location", o.location, "text", "City, State") +
       pick("arrangement", "Work arrangement", o.arrangement, [["", "Not sure"], ["On-site", "On-site"], ["Hybrid", "Hybrid"], ["Remote", "Remote"]]) +
-      field("deadline", "Application deadline", o.deadline, "date") + pick("status", "Status", o.status, STATUSES) +
+      field("deadline", "Application deadline", o.deadline, "date") + pick("status", "Status", o.status, STATUSES) + "</div>" +
+      '<details class="extra-fields"' + (hasExtra ? " open" : "") + '><summary>Extra Notes/Information</summary><div class="form-grid">' +
       field("contact", "Network contact", o.contact, "text", "Alum, recruiter, career fair, club…", true) +
       field("nextAction", "Your next step", o.nextAction, "text", "e.g. Ask an alum for a referral") + field("nextDue", "Do it by", o.nextDue, "date") +
       field("interviewDate", "Interview date", o.interviewDate, "date") +
       '<label class="check" style="align-self:end"><input type="checkbox" id="f-thankYouSent"' + (o.thankYouSent ? " checked" : "") + '> Thank-you note sent</label>' +
-      '<label class="full">Notes<textarea id="f-notes" rows="3" placeholder="Contacts, resume version sent, interview notes…">' + esc(o.notes) + "</textarea></label></div>" +
+      '<label class="full">Notes<textarea id="f-notes" rows="3" placeholder="Contacts, resume version sent, interview notes…">' + esc(o.notes) + "</textarea></label></div></details>" +
       '<p id="formErr" class="err" hidden></p></div><div class="modal-f"><div class="left">' + (isNew ? "" : '<button type="button" class="danger" id="btnDel">Delete</button>') + "</div>" +
       '<button type="button" data-close="1">Cancel</button><button type="submit" class="primary">' + (isNew ? "Add job" : "Save") + "</button></div></form>";
     openModal(h);
@@ -1352,14 +1375,17 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
       importJobLink($("#f-link").value).then(function (data) {
         Object.keys(data.fields).forEach(function (k) { var el = $("#f-" + k); if (el && data.fields[k]) el.value = data.fields[k]; });
         desc.value = data.description; desc.closest("details").open = true; $("#scorePrev").innerHTML = previewScore(desc.value);
-        msg.textContent = "Imported the posting. Check every field below, then add the job.";
+        reviewMode = true; reviewImportedFields(); msg.textContent = "Imported the posting. Check every field below, then add the job.";
       }).catch(function (e) { msg.textContent = e.message; }).then(function () { btn.disabled = false; btn.textContent = "Import details"; });
     });
     $("#btnFill").addEventListener("click", function () {
       var r = extractJD(desc.value), n = 0;
       Object.keys(r).forEach(function (k) { var el = $("#f-" + k); if (el && r[k] && !el.value) { el.value = r[k]; n++; } });
+      reviewMode = !!desc.value.trim(); if (reviewMode) reviewImportedFields();
       $("#fillMsg").textContent = !desc.value.trim() ? "Paste a posting first." : n ? "Filled in " + n + " field" + (n > 1 ? "s" : "") + ". Check them below." : "I couldn't find more details. Fill them in below.";
     });
+    CORE_JOB_FIELDS.forEach(function (f) { var el = $("#f-" + f[0]); if (el) ["input", "change"].forEach(function (ev) { el.addEventListener(ev, function () { if (reviewMode) reviewImportedFields(); }); }); });
+    if (reviewMode) reviewImportedFields();
     if (!isNew) $("#btnDel").addEventListener("click", function () {
       var left = $(".modal-f .left");
       left.innerHTML = '<span class="err">Delete this job?</span><button type="button" class="danger" id="delYes">Yes, delete</button>';
