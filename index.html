@@ -161,6 +161,44 @@ details[open] summary { margin-bottom: 10px; }
 .check { display: flex; gap: 10px; align-items: center; font-weight: 500; }
 .check input { width: 18px; height: 18px; accent-color: var(--accent); }
 
+/* Guide, quick add, boosts, board */
+.guide { background: var(--tint); border-color: transparent; }
+.gbar { height: 6px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 18%, transparent); overflow: hidden; }
+.gbar i { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
+.gsteps { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.gsteps li { display: grid; gap: 8px; align-content: start; background: var(--card); border-radius: 12px; padding: 14px; }
+.gsteps li div { display: grid; gap: 2px; }
+.gsteps li div span { color: var(--muted); font-size: .88rem; }
+.gsteps li.ok { opacity: .7; }
+.gsteps li.ok b { text-decoration: line-through; text-decoration-color: var(--muted); }
+.gsteps li.next { box-shadow: 0 0 0 2px var(--accent); }
+.gsteps li > button { justify-self: start; }
+.gdot { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--accent); display: grid; place-items: center; font-size: .8rem; font-weight: 700; color: var(--on-accent); }
+.gsteps li.ok .gdot { background: var(--accent); }
+.quick textarea { font-size: .92rem; }
+.task .draft { margin-top: 6px; }
+.boosts { display: grid; }
+.boost { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.boost:first-child { border-top: 0; padding-top: 0; }
+.gain { font-weight: 700; color: var(--accent-ink); background: var(--tint); border-radius: 8px; text-align: center; padding: 4px 0; }
+.controls.board-c { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+.board { display: grid; grid-template-columns: repeat(4, minmax(180px, 1fr)) minmax(170px, .9fr); gap: 12px; overflow-x: auto; padding-bottom: 4px; }
+.bcol { background: var(--soft-bg); border-radius: 14px; padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 220px; border: 2px dashed transparent; }
+.bcol.over { border-color: var(--accent); background: var(--tint); }
+.bcol h4 { margin: 2px 4px 4px; font-size: .95rem; display: flex; justify-content: space-between; }
+.bcol h4 span { color: var(--muted); font-weight: 500; }
+.bcol.closed .bcard { opacity: .7; }
+.bcard { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px; display: grid; gap: 6px; cursor: grab; }
+.bcard:hover { box-shadow: var(--shadow); }
+.bcard.dragging { opacity: .4; }
+.bc-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.bc-top .score { width: auto; height: auto; min-width: 34px; padding: 2px 8px; border-radius: 999px; font-size: .82rem; }
+.bc-top b { font-size: .95rem; line-height: 1.3; min-width: 0; overflow-wrap: break-word; }
+.bc-t { color: var(--muted); font-size: .85rem; line-height: 1.35; }
+.bc-meta { font-size: .82rem; color: var(--muted); }
+.bc-move { display: none; }
+.bempty { color: var(--muted); font-size: .85rem; margin: 4px; }
+
 /* Job rows */
 .controls { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
 .jobs { display: grid; gap: 10px; }
@@ -236,6 +274,7 @@ footer { padding-block: 0 40px; color: var(--muted); font-size: .88rem; }
 footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
 
 @media (max-width: 860px) {
+  .gsteps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .grid2 { grid-template-columns: minmax(0, 1fr); }
   .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
@@ -250,6 +289,13 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   .job > select { grid-column: 2; justify-self: start; }
   .mini .job > .count { display: none; }
   .rt-h { display: none; }
+  .gsteps { grid-template-columns: minmax(0, 1fr); }
+  .board { grid-template-columns: repeat(5, minmax(220px, 82%)); scroll-snap-type: x mandatory; }
+  .bcol { scroll-snap-align: start; }
+  .bc-move { display: block; width: 100%; padding: 6px 10px; font-size: .85rem; border-radius: 8px; }
+  .controls.board-c { grid-template-columns: minmax(0, 1fr); }
+  .boost { grid-template-columns: 48px minmax(0, 1fr); }
+  .boost > button { grid-column: 2; justify-self: start; }
   .m-lbl { display: inline; }
   .rt-r { grid-template-columns: 52px minmax(0, 1fr); gap: 4px 12px; }
   .rt-r > .rt-c, .rt-r > button { grid-column: 2; justify-self: start; }
@@ -551,7 +597,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
 
     var jv = weigh(tf(tokens(o.description)), c.idf), cos = cosine(c.resume, jv);
     var simPart = clamp((cos - 0.04) / 0.26, 0, 1);
-    var coTok = tf(tokens(o.company || ""));
+    var coTok = tf(tokens([o.company, o.location, o.arrangement, "hybrid remote onsite site", SKILLS.join(" ")].join(" ")));
     r.keywords = Object.keys(jv).filter(function (t) { return !c.resumeTF[t] && !coTok[t] && t.length > 3; })
       .sort(function (a, b) { return jv[b] - jv[a]; }).slice(0, 8).map(function (t) { return display[t] || t; });
 
@@ -564,16 +610,27 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     var eduPart = !needDeg ? 1 : haveDeg >= needDeg ? 1 : haveDeg === needDeg - 1 ? 0.5 : 0;
 
     var parts = [];
-    if (skillPart != null) parts.push({ label: "Skills the posting asks for", w: 45, part: skillPart,
+    if (skillPart != null) parts.push({ label: "Skills they ask for", w: 45, part: skillPart,
       detail: "You have " + r.haveReq.length + " of " + sk.req.length + " required" + (sk.pref.length ? " and " + r.havePref.length + " of " + sk.pref.length + " preferred" : "") + " skills." });
-    parts.push({ label: "Resume wording vs. the posting", w: skillPart == null ? 75 : 30, part: simPart,
-      detail: "How closely your resume's words match the posting (TF-IDF cosine similarity " + cos.toFixed(2) + "). Using the posting's own terms raises this." });
+    var wordW = skillPart == null ? 75 : 30;
+    parts.push({ label: "Wording match", w: wordW, part: simPart,
+      detail: "How much of the posting's language your resume already uses. Using their words (truthfully) raises this." });
     parts.push({ label: "Years of experience", w: 15, part: expPart,
       detail: need == null ? "The posting doesn't ask for a number of years." : have == null ? "Asks for " + need + "+ years. Add your years on My resume." : "Asks for " + need + "+ years. You have about " + have + "." });
     parts.push({ label: "Education", w: 10, part: eduPart,
       detail: !needDeg ? "The posting doesn't name a degree." : "Asks for " + degreeName(needDeg) + ". You have " + (haveDeg ? degreeName(haveDeg) : "none listed") + "." });
     var total = 0; parts.forEach(function (p) { p.pts = Math.round(p.w * p.part); total += p.w * p.part; });
     r.parts = parts; r.cos = cos;
+    // "How to raise your score": the few changes worth the most points.
+    var boosts = [];
+    if (skillW) {
+      r.missReq.forEach(function (k) { boosts.push({ gain: 45 / skillW, text: "Add " + k + " to your resume, if you have it", skill: k }); });
+      r.missPref.forEach(function (k) { boosts.push({ gain: 22.5 / skillW, text: "Add " + k + " (a preferred skill), if you have it", skill: k }); });
+    }
+    if (simPart < 0.9 && r.keywords.length) boosts.push({ gain: wordW * (1 - simPart) * 0.5, text: "Use the posting's words in your bullets: " + r.keywords.slice(0, 3).join(", "), go: "#job/" + o.id + "/tailor", btn: "Tailor" });
+    if (need != null && have == null) boosts.push({ gain: 7.5, text: "Add your years of experience", go: "#resume", btn: "Add years" });
+    r.boosts = boosts.filter(function (b) { return b.gain >= 1; }).sort(function (a, b) { return b.gain - a.gain; }).slice(0, 3)
+      .map(function (b) { b.gain = Math.round(b.gain); return b; });
     r.score = clamp(Math.round(total), 1, 100);
     c.cache[key] = r;
     return r;
@@ -666,12 +723,104 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
       var circle = s.act === "interview" ? '<span class="done cal" aria-hidden="true"></span>' :
         '<button type="button" class="done" data-done="' + s.act + '" data-id="' + esc(s.o.id) + '" aria-label="Done: ' + esc(s.text) + '"></button>';
       return '<div class="task">' + circle + '<div><span class="tag">' + esc(s.kind) + '</span> <button type="button" class="link what" data-go="' + esc(s.go || "#job/" + s.o.id) + '">' + esc(s.text) + '</button>' +
-        '<div class="who">' + esc(s.o.company) + " · " + esc(s.o.title) + "</div></div>" + when(s.due) + "</div>";
+        '<div class="who">' + esc(s.o.company) + " · " + esc(s.o.title) + "</div>" +
+        (s.act === "followup" || s.act === "thanks" ? '<button type="button" class="small draft" data-email="' + s.act + '" data-id="' + esc(s.o.id) + '">Draft the email</button>' : "") + "</div>" + when(s.due) + "</div>";
+    }).join("") + "</div>";
+  }
+
+  // ---------- Email drafts (follow-up and thank-you) ----------
+  function contactFirst(o) {
+    // Only a real person's name: "Priya Shah, MSBA '24" -> Priya; "Cal Poly Career Connections mentor" -> none.
+    var w = String(o.contact || "").replace(/^[^:]*:\s*/, "").split(/[,(]/)[0].trim().split(/\s+/);
+    var ok = w.length >= 2 && w.length <= 3 && w.every(function (x) { return /^[A-Z][a-z'\-]+$/.test(x); }) && !/\b(Poly|Career|Careers|University|College|Club|Fair|Connections|Team|Recruiting)\b/.test(w.join(" "));
+    return ok ? w[0] : "";
+  }
+  function emailDraft(o, kind) {
+    var r = scoreJob(o), skills = r ? r.haveReq.concat(r.havePref).slice(0, 2) : [], who = contactFirst(o), sign = "Best,\n" + (me && me.name ? me.name : "[Your name]");
+    var sk = skills.length ? skills.join(" and ") : "[your most relevant skill]";
+    if (kind === "thanks") return { subject: "Thank you: " + o.title + " interview",
+      body: "Hi [Interviewer's name]" + ",\n\nThank you for taking the time to talk with me" + (o.interviewDate ? " on " + fmt(o.interviewDate) : "") + " about the " + o.title + " role. I enjoyed learning about [something you discussed] and the team at " + o.company + ".\n\n" +
+        "Our conversation made me even more excited to bring my experience with " + sk + " to the team. Please let me know if I can share anything else.\n\n" + sign };
+    return { subject: "Following up on my application: " + o.title,
+      body: "Hi " + (who || "Hiring Team") + ",\n\nI applied for the " + o.title + " role at " + o.company + (o.appliedDate ? " on " + fmt(o.appliedDate) : "") + " and wanted to follow up. I'm still very interested in the position.\n\n" +
+        "My experience with " + sk + " lines up well with what the team is looking for, and I'd welcome the chance to talk.\n\nThank you for your time.\n\n" + sign };
+  }
+  var EMAIL_SYSTEM = "You write short, warm, professional emails for a business analytics student's job search. Use only facts you are given; never invent details. " +
+    "Keep it under 150 words. Plain text only. Reply with the subject on the first line as 'Subject: ...', then a blank line, then the email body. " +
+    "For a thank-you note, keep a [bracketed placeholder] where the student should add a detail from the conversation.";
+  function openEmail(id, kind) {
+    var o = byId(id); if (!o) return;
+    var d = emailDraft(o, kind), label = kind === "thanks" ? "thank-you note" : "follow-up email";
+    openModal('<div class="modal-h"><h2>Your ' + label + '</h2><button type="button" class="x" data-close="1" aria-label="Close">✕</button></div><div class="modal-b">' +
+      '<p class="muted">To ' + (kind === "thanks" ? "your interviewers" : esc(o.contact || "the recruiter or hiring manager")) + " about " + esc(o.title) + " at " + esc(o.company) + '. <span class="ai-tag rule" id="emTag">Template</span></p>' +
+      '<label>Subject<input id="emSubj" value="' + esc(d.subject) + '"></label><label>Message<textarea id="emBody" rows="12">' + esc(d.body) + "</textarea></label>" +
+      '<div class="actions">' + (getKey() ? '<button type="button" id="emAI"><span class="ai-tag">AI</span> Personalize with Claude</button>' : '<span class="note">Add an API key on My resume to have Claude personalize this.</span>') +
+      '<span class="err" id="emErr" role="alert"></span></div></div>' +
+      '<div class="modal-f"><div class="left"><button type="button" id="emCopy">Copy</button><a id="emMail" href="#">Open in email app</a></div>' +
+      '<button type="button" data-close="1">Close</button><button type="button" class="primary" id="emSent">I sent it</button></div>');
+    var mail = function () { $("#emMail").href = "mailto:?subject=" + encodeURIComponent($("#emSubj").value) + "&body=" + encodeURIComponent($("#emBody").value); };
+    mail(); $("#emSubj").addEventListener("input", mail); $("#emBody").addEventListener("input", mail);
+    $("#emCopy").addEventListener("click", function () { var t = "Subject: " + $("#emSubj").value + "\n\n" + $("#emBody").value; (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () { toast("Copied."); }, function () { toast("Couldn't copy. Select the text instead."); }); });
+    $("#emSent").addEventListener("click", function () { closeModal(); completeStep(kind, id); });
+    var ai = $("#emAI");
+    if (ai) ai.addEventListener("click", function () {
+      ai.disabled = true; ai.innerHTML = '<span class="spinner"></span> Writing…'; $("#emErr").textContent = "";
+      var user = "Write a " + label + ".\nJob: " + o.title + " at " + o.company + "\nContact: " + (kind === "thanks" ? "the interviewer (name unknown; keep a placeholder)" : o.contact || "unknown") + "\n" +
+        (kind === "thanks" ? "Interview date: " + (o.interviewDate || "unknown") : "Applied on: " + (o.appliedDate || "unknown")) + "\nMy name: " + (me && me.name || "unknown") +
+        "\nNotes: " + (o.notes || "none") + "\n\nJob posting (excerpt):\n" + String(o.description || "").slice(0, 1500) + "\n\nMy resume (excerpt):\n" + String(me && me.resumeText || "").slice(0, 3000) + "\n\nStarting draft:\n" + $("#emBody").value;
+      callClaude(EMAIL_SYSTEM, user).then(function (text) {
+        var m = text.trim().match(/^Subject:\s*(.+)\n+([\s\S]+)$/i);
+        if (!$("#emBody")) return;
+        if (m) { $("#emSubj").value = m[1].trim(); $("#emBody").value = m[2].trim(); } else $("#emBody").value = text.trim();
+        $("#emTag").textContent = "Written by Claude · check it before sending"; $("#emTag").className = "ai-tag"; mail();
+        ai.disabled = false; ai.innerHTML = '<span class="ai-tag">AI</span> Rewrite again';
+      }).catch(function (err) { if (!$("#emErr")) return; $("#emErr").textContent = aiError(err); ai.disabled = false; ai.innerHTML = '<span class="ai-tag">AI</span> Personalize with Claude'; });
+    });
+  }
+
+  // ---------- Getting started ----------
+  function guideHTML() {
+    var hidden; try { hidden = localStorage.getItem("nextmove.v3.hideGuide"); } catch (e) {}
+    var best = jobs.filter(function (o) { return o.status === "saved" && scoreJob(o); })[0];
+    var steps = [
+      ["Upload your resume", "It powers every score.", !!me, '<button type="button" class="small primary" data-go="#resume">Upload</button>'],
+      ["Add a job posting", "Paste it and get a 1–100 match score.", jobs.some(function (o) { return o.description; }), '<button type="button" class="small primary" data-act="focus-qa">Add a job</button>'],
+      ["Tailor your resume for a job", "Rewrite it in the posting's words.", jobs.some(function (o) { return o.tailored || o.tailoring; }), best ? '<button type="button" class="small primary" data-go="#job/' + esc(best.id) + '/tailor">Tailor</button>' : ""],
+      ["Apply and track it", "Drag it to Applied on your board. I'll remind you to follow up.", jobs.some(function (o) { return o.status !== "saved"; }), '<button type="button" class="small primary" data-go="#jobs">Open board</button>']];
+    var done = steps.filter(function (x) { return x[2]; }).length, next = steps.filter(function (x) { return !x[2]; })[0];
+    if (hidden || done === steps.length) return "";
+    return '<section class="card guide"><div class="card-h"><h3>Get started</h3><span class="count">' + done + " of " + steps.length + ' done · <button type="button" class="link" data-act="guide-hide">Hide</button></span></div>' +
+      '<div class="gbar"><i style="width:' + Math.round(100 * done / steps.length) + '%"></i></div><ol class="gsteps">' + steps.map(function (x) {
+        return '<li class="' + (x[2] ? "ok" : x === next ? "next" : "") + '"><span class="gdot" aria-hidden="true">' + (x[2] ? "✓" : "") + "</span><div><b>" + x[0] + "</b><span>" + x[1] + "</span></div>" + (x === next ? x[3] : "") + "</li>";
+      }).join("") + "</ol></section>";
+  }
+
+  // ---------- Status changes (board drag, dropdowns) ----------
+  function changeStatus(o, st) {
+    var prev = o.status; if (prev === st) return;
+    setStatus(o, st); save(); render();
+    var msg = esc(o.company) + " is now " + statusLabel(o.status).toLowerCase() + ".", undo = function () { o.status = prev; save(); render(); };
+    if (st === "applied") toast(msg + " I'll remind you to follow up two weeks after it closes.", "Undo", undo);
+    else if (st === "interviewing") toast(msg + " Good luck!", "Add the interview date", function () { openJob(o.id, "f-interviewDate"); });
+    else toast(msg, "Undo", undo);
+  }
+  var COLS = [["saved", "Saved"], ["applied", "Applied"], ["interviewing", "Interviewing"], ["offer", "Offer"], ["closed", "Closed"]];
+  function boardHTML(list) {
+    return '<div class="board">' + COLS.map(function (c) {
+      var items = list.filter(function (o) { return c[0] === "closed" ? CLOSED[o.status] : o.status === c[0]; });
+      return '<section class="bcol' + (c[0] === "closed" ? " closed" : "") + '" data-col="' + c[0] + '" aria-label="' + c[1] + '"><h4>' + c[1] + ' <span>' + items.length + "</span></h4>" +
+        items.map(function (o) {
+          var meta = o.interviewDate && o.interviewDate >= today() ? "Interview " + when(o.interviewDate) : o.nextAction ? esc(o.nextAction) + " " + when(o.nextDue)
+            : o.status === "saved" && o.deadline ? "Closes " + when(o.deadline) : o.status === "applied" && o.appliedDate ? "Follow up " + when(followUpDue(o)) : c[0] === "closed" ? esc(statusLabel(o.status)) : "";
+          return '<article class="bcard" draggable="true" tabindex="0" data-id="' + esc(o.id) + '" data-go="#job/' + esc(o.id) + '"><div class="bc-top"><b>' + esc(o.company) + "</b>" + scoreDot(o) + '</div><span class="bc-t">' + esc(o.title) + "</span>" +
+            (meta ? '<div class="bc-meta">' + meta + "</div>" : "") +
+            '<select class="bc-move" aria-label="Move ' + esc(o.company) + '" data-status="' + esc(o.id) + '">' + STATUSES.map(function (s) { return '<option value="' + s[0] + '"' + (s[0] === o.status ? " selected" : "") + ">" + s[1] + "</option>"; }).join("") + "</select></article>";
+        }).join("") + (items.length ? "" : '<p class="bempty">' + (c[0] === "saved" ? "Jobs you save land here." : "Drag a job here.") + "</p>") + "</section>";
     }).join("") + "</div>";
   }
 
   // ---------- Routing ----------
-  var ui = { q: "", filter: "open", sort: "score", showAll: false, skippedWelcome: false, busy: {} };
+  var ui = { q: "", filter: "open", sort: "score", view: "board", showAll: false, skippedWelcome: false, busy: {} };
   function route() { var p = (location.hash || "#dashboard").slice(1).split("/"); return { tab: p[0] || "dashboard", id: p[1], sub: p[2] }; }
   function go(h) { if (location.hash === h) render(); else location.hash = h; }
 
@@ -686,7 +835,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     if (r.tab === "jobs") { view.innerHTML = renderJobsPage(); renderJobList(); }
     else if (r.tab === "resume") { view.innerHTML = renderResumePage(); wireResumePage(view); }
     else if (r.tab === "job" && byId(r.id)) { view.innerHTML = renderJobPage(byId(r.id), r.sub); wireJobPage(byId(r.id)); }
-    else view.innerHTML = renderDashboard();
+    else { view.innerHTML = renderDashboard(); wireDashboard(); }
   }
 
   // ---------- Welcome ----------
@@ -771,6 +920,8 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     if (!me) h += '<p><button type="button" class="link" data-go="#resume">Add your resume</button> to get a 1–100 match score for every job.</p>';
     h += "</section>";
 
+    h += guideHTML();
+
     // This week
     h += '<div class="grid2"><section class="card"><div class="card-h"><h3>This week</h3>' + (steps.length ? '<span class="count">Tap the circle when it\'s done</span>' : "") + "</div>";
     if (!steps.length) h += '<p class="empty">' + (jobs.length ? "Nothing to do right now. Deadlines, follow-ups, interviews, and thank-you notes will show up here." : "Deadlines, follow-ups, interviews, and thank-you notes will show up here once you add jobs.") + "</p>";
@@ -788,7 +939,10 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     var offers = jobs.filter(function (o) { return o.status === "offer"; }).length;
     var stages = [["Tracked", jobs.length, "", "all"], ["Applied", applied, jobs.length, "applied"], ["Interviewing", iv, applied, "interviewing"], ["Offer", offers, iv, "offer"]];
     var cnt = function (st) { return jobs.filter(function (o) { return o.status === st; }).length; };
-    h += '<div class="side-col"><section class="card"><div class="card-h"><h3>Pipeline</h3><span class="count">jobs that reached each stage</span></div><div class="pipe">' +
+    h += '<div class="side-col"><section class="card quick"><h3>Add a job</h3><label for="qa" class="muted" style="font-weight:400">Paste a job posting. I\'ll fill in the details and score it.</label>' +
+      '<textarea id="qa" rows="4" placeholder="Copy the whole posting from the job site and paste it here"></textarea>' +
+      '<div class="actions"><button type="button" class="primary" id="qaGo">Add and score it</button><span class="err" id="qaErr" role="alert"></span></div></section>' +
+      (!jobs.length ? "" : '<section class="card"><div class="card-h"><h3>Pipeline</h3><span class="count">jobs that reached each stage</span></div><div class="pipe">' +
       stages.map(function (s) {
         var pct = s[2] ? Math.round(100 * s[1] / s[2]) : null;
         return '<button type="button" data-filter="' + s[3] + '" aria-label="' + s[0] + ": " + s[1] + '"><span>' + s[0] + '</span><span class="bar"><i style="width:' + (s[1] ? Math.max(4, 100 * s[1] / Math.max(1, jobs.length)) : 0) + '%"></i></span><span class="n">' + s[1] + "</span>" +
@@ -796,13 +950,14 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
       }).join("") + "</div>" +
       '<p class="note">Percent = share of the stage above that moved on.</p>' +
       '<dl class="kv small"><dt>Waiting to apply</dt><dd>' + cnt("saved") + "</dd><dt>Waiting to hear back</dt><dd>" + cnt("applied") + "</dd><dt>Closed</dt><dd>" +
-      cnt("rejected") + " rejected, " + cnt("withdrawn") + " withdrawn</dd></dl></section>" +
+      cnt("rejected") + " rejected, " + cnt("withdrawn") + " withdrawn</dd></dl></section>") +
       '<section class="card"><h3>Help from Career Services</h3><ul class="links">' + HELP.map(function (l) { return '<li><a href="' + l[1] + '" target="_blank" rel="noopener">' + l[0] + "</a> <span class=\"muted\">" + l[2] + "</span></li>"; }).join("") + "</ul></section></div></div>";
 
     // Ready to apply
     var ready = jobs.filter(function (o) { return o.status === "saved" && (!o.deadline || o.deadline >= t); })
       .map(function (o) { return { o: o, r: scoreJob(o) }; }).sort(function (a, b) { return ((b.r || {}).score || -1) - ((a.r || {}).score || -1); });
     var scored = ready.filter(function (x) { return x.r; });
+    if (!jobs.length) return h;
     h += '<section class="card"><div class="card-h"><h3>Ready to apply</h3><span class="count">' + (scored.length ? "Ranked by match · average " + Math.round(scored.reduce(function (a, x) { return a + x.r.score; }, 0) / scored.length) : "") + "</span></div>";
     if (!ready.length) h += '<p class="empty">Jobs you save but haven\'t applied to will show up here, best match first.</p>';
     else h += '<div class="rt"><div class="rt-h"><span>Match</span><span>Job</span><span>Closes</span><span>Contact</span><span></span></div>' + ready.slice(0, 6).map(function (x) {
@@ -813,6 +968,19 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     }).join("") + "</div>";
     h += "</section>";
     return h;
+  }
+
+  function wireDashboard() {
+    var b = $("#qaGo"); if (!b) return;
+    b.addEventListener("click", function () {
+      var text = $("#qa").value.trim();
+      if (!text) { $("#qaErr").textContent = "Paste a posting first."; $("#qa").focus(); return; }
+      var r = extractJD(text), o = blank();
+      Object.keys(r).forEach(function (k) { o[k] = r[k]; }); o.description = text;
+      if (!o.company || !o.title) { openJob(null, o.company ? "f-title" : "f-company", o); return; }
+      jobs.unshift(o); save(); go("#job/" + o.id);
+      toast("Added " + esc(o.company) + ". Here's how you match.", "Edit details", function () { openJob(o.id); });
+    });
   }
 
   // ---------- Jobs page ----------
@@ -826,10 +994,11 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   }
   function renderJobsPage() {
     var so = function (v, l, cur) { return '<option value="' + v + '"' + (v === cur ? " selected" : "") + ">" + l + "</option>"; };
-    var h = '<section class="hello"><h2>Jobs</h2><p>' + (me ? "The circle is your qualification score out of 100. Click a job to see why and tailor your resume." : "Add your resume on My resume to score each job.") + "</p></section>";
-    h += '<section class="card"><div class="card-h"><h3>Your jobs</h3><span class="count" id="jobCount"></span></div>';
-    if (jobs.length) h += '<div class="controls"><input id="q" type="search" aria-label="Search your jobs" placeholder="Search company, title, location, or notes" value="' + esc(ui.q) + '">' +
-      '<select id="filter" aria-label="Show">' + so("open", "Open jobs", ui.filter) + STATUSES.map(function (s) { return so(s[0], s[1], ui.filter); }).join("") + so("all", "All jobs", ui.filter) + "</select>" +
+    var board = ui.view === "board";
+    var h = '<section class="hello"><h2>Jobs</h2><p>' + (board ? "Drag a job to a new column when its status changes (on a phone, use the menu on each card). The number is your match score out of 100." : me ? "The circle is your match score out of 100. Click a job to see why and tailor your resume." : "Add your resume on My resume to score each job.") + "</p></section>";
+    h += '<section class="card"><div class="card-h"><div class="seg" role="group" aria-label="View"><a href="#jobs" data-view="board"' + (board ? ' aria-current="page"' : "") + '>Board</a><a href="#jobs" data-view="list"' + (board ? "" : ' aria-current="page"') + ">List</a></div><span class=\"count\" id=\"jobCount\"></span></div>";
+    if (jobs.length) h += '<div class="controls' + (board ? " board-c" : "") + '"><input id="q" type="search" aria-label="Search your jobs" placeholder="Search company, title, location, or notes" value="' + esc(ui.q) + '">' +
+      (board ? "" : '<select id="filter" aria-label="Show">' + so("open", "Open jobs", ui.filter) + STATUSES.map(function (s) { return so(s[0], s[1], ui.filter); }).join("") + so("all", "All jobs", ui.filter) + "</select>") +
       '<select id="sort" aria-label="Sort">' + so("score", "Highest score first", ui.sort) + so("deadline", "Deadline soonest", ui.sort) + so("company", "Company A–Z", ui.sort) + so("updated", "Recently updated", ui.sort) + "</select></div>";
     return h + '<div class="jobs" id="jobs"></div></section>';
   }
@@ -840,7 +1009,9 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
       $("#jobCount").textContent = ""; return;
     }
     var q = ui.q.trim().toLowerCase();
+    var board = ui.view === "board";
     var list = jobs.filter(function (o) {
+      if (board) return !q || [o.company, o.title, o.location, o.arrangement, o.notes].join(" ").toLowerCase().indexOf(q) >= 0;
       if (ui.filter === "open" && CLOSED[o.status]) return false;
       if (ui.filter !== "open" && ui.filter !== "all" && o.status !== ui.filter) return false;
       return !q || [o.company, o.title, o.location, o.arrangement, o.notes].join(" ").toLowerCase().indexOf(q) >= 0;
@@ -852,6 +1023,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
       return (a.deadline || "9999").localeCompare(b.deadline || "9999");
     });
     $("#jobCount").textContent = list.length === jobs.length ? jobs.length + " total" : list.length + " of " + jobs.length;
+    if (board) { box.innerHTML = boardHTML(list); return; }
     box.innerHTML = list.map(function (o) { return jobRow(o); }).join("") || '<p class="empty">No jobs match. Try a different search or filter.</p>';
   }
 
@@ -885,6 +1057,10 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
       (r.missReq.length ? "Your biggest gap: " + esc(r.missReq.slice(0, 3).join(", ")) + ". If you have " + (r.missReq.length > 1 ? "these skills" : "this skill") + ", put " + (r.missReq.length > 1 ? "them" : "it") + " on your resume in the posting's words."
         : r.score >= 75 ? "You meet the main requirements. Tailor your wording and apply." : "You have the listed skills. Tailoring your wording to the posting will raise this.") + "</p>" +
       '<div><button type="button" class="primary" data-go="#job/' + esc(o.id) + '/tailor">Tailor my resume for this job</button></div></div></div></section>';
+    if (r.boosts.length) h += '<section class="card"><div class="card-h"><h3>How to raise your score</h3><span class="count">Biggest wins first</span></div><div class="boosts">' + r.boosts.map(function (b) {
+      var act = b.skill ? '<button type="button" class="small" data-addskill="' + esc(b.skill) + '">I have this</button>' : '<button type="button" class="small" data-go="' + esc(b.go) + '">' + esc(b.btn) + "</button>";
+      return '<div class="boost"><span class="gain">+' + b.gain + "</span><span>" + esc(b.text) + "</span>" + act + "</div>";
+    }).join("") + "</div></section>";
     h += '<section class="card"><h3>How this score is calculated</h3><div class="rows">' + r.parts.map(function (p) {
       return '<div class="row"><div class="row-h">' + esc(p.label) + "<span>" + p.pts + " / " + p.w + ' pts</span></div><div class="bar"><i style="width:' + Math.round(100 * p.part) + '%"></i></div><p>' + esc(p.detail) + "</p></div>";
     }).join("") + "</div>";
@@ -892,7 +1068,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     if (r.haveReq.length + r.missReq.length) h += '<div class="section-label">Required skills</div>' + chips(r.haveReq, "") + (r.missReq.length ? chips(r.missReq, "miss") : "");
     if (r.havePref.length + r.missPref.length) h += '<div class="section-label">Preferred skills</div>' + chips(r.havePref, "") + (r.missPref.length ? chips(r.missPref, "miss") : "");
     if (r.keywords.length) h += '<div class="section-label">Words in the posting your resume doesn\'t use</div>' + chips(r.keywords, "plain");
-    h += '<p class="note">Green = on your resume. Yellow = missing. Computed in your browser with machine-learning text analysis (TF-IDF) and rules. It estimates fit; it doesn\'t predict hiring decisions.</p></section>';
+    h += '<p class="note">Green = on your resume. Yellow = missing. Computed in your browser. Wording match uses TF-IDF text similarity, a machine-learning technique (similarity ' + r.cos.toFixed(2) + '); the rest are rules. It estimates fit; it doesn\'t predict hiring decisions.</p></section>';
     return h;
   }
   function detailsTab(o) {
@@ -900,6 +1076,8 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     var h = '<section class="card"><div class="card-h"><h3>Details</h3><button type="button" class="link" data-edit="' + esc(o.id) + '">Edit</button></div><dl class="kv">' +
       row("Status", esc(statusLabel(o.status))) + row("Location", esc(o.location)) + row("Work arrangement", esc(o.arrangement)) + row("Deadline", o.deadline ? esc(fmt(o.deadline)) + " " + when(o.deadline) : "") +
       row("Link", o.link ? '<a href="' + esc(o.link) + '" target="_blank" rel="noopener">Open the posting</a>' : "") + row("Applied", o.appliedDate ? esc(fmt(o.appliedDate)) : "") + row("Follow up", o.status === "applied" && o.appliedDate ? esc(fmt(followUpDue(o))) + " (two weeks after it closes)" : "") +
+      row("Emails", (o.status === "applied" ? '<button type="button" class="small" data-email="followup" data-id="' + esc(o.id) + '">Draft a follow-up</button> ' : "") +
+        (o.interviewDate && o.interviewDate <= today() ? '<button type="button" class="small" data-email="thanks" data-id="' + esc(o.id) + '">Draft a thank-you note</button>' : "")) +
       row("Network contact", o.contact ? esc(o.contact) : '<button type="button" class="link" data-edit="' + esc(o.id) + '" data-focus="f-contact">Add a contact</button>') +
       row("Interview", o.interviewDate ? esc(fmt(o.interviewDate)) + " " + when(o.interviewDate) + (o.interviewDate < today() ? (o.thankYouSent ? " · thank-you sent" : " · thank-you not sent yet") : "") : "") +
       row("Next step", o.nextAction ? esc(o.nextAction) + " " + when(o.nextDue) : '<button type="button" class="link" data-edit="' + esc(o.id) + '" data-focus="f-nextAction">Add a next step</button>') +
@@ -965,30 +1143,35 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     ui.busy[o.id] = true; render();
     var user = "JOB: " + (o.title || "") + " at " + (o.company || "") + "\n\nJOB POSTING:\n" + o.description + "\n\nMY RESUME:\n" + (me.resumeText || "Skills: " + me.skills) +
       "\n\nTailor my resume for this job.";
-    fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json", "anthropic-dangerous-direct-browser-access": "true" },
-      body: JSON.stringify({ model: MODEL, max_tokens: 16000, thinking: { type: "adaptive" }, system: SYSTEM, messages: [{ role: "user", content: user }] })
-    }).then(function (res) {
-      return res.json().catch(function () { return {}; }).then(function (j) {
-        if (res.status === 401) throw new Error("Anthropic didn't accept that API key. Check it on My resume.");
-        if (res.status === 429) throw new Error("Anthropic says you've hit a rate limit. Wait a minute and try again.");
-        if (!res.ok) throw new Error("Anthropic returned an error" + (j.error && j.error.message ? ": " + j.error.message : " (" + res.status + ")."));
-        if (j.stop_reason === "refusal") throw new Error("Claude declined to tailor this one. Try editing the posting text and run it again.");
-        var text = (j.content || []).filter(function (b) { return b.type === "text"; }).map(function (b) { return b.text; }).join("");
+    callClaude(SYSTEM, user).then(function (text) {
         var a = text.indexOf("{"), b = text.lastIndexOf("}");
         if (a < 0 || b < a) throw new Error("Claude's answer came back in an unexpected format. Try again.");
         var data = JSON.parse(text.slice(a, b + 1));
         return { at: today(), summary: String(data.summary || ""), bullets: (data.bullets || []).filter(function (x) { return x && x.rewritten; }).slice(0, 8),
           skills: splitList(data.skills), gaps: Array.isArray(data.gaps) ? data.gaps.map(String) : splitList(data.gaps) };
-      });
     }).then(function (t) {
       var cur = byId(o.id); if (cur) { cur.tailoring = t; cur.tailored = true; cur.updatedAt = today(); save(); }
       delete ui.busy[o.id]; render(); toast("Your tailored resume for " + esc(o.company) + " is ready.");
     }).catch(function (err) {
       delete ui.busy[o.id]; render();
-      var msg = err && err.message && !/fetch|network|load failed/i.test(err.message) ? err.message : "Couldn't reach Anthropic. Check your connection. Previews can block this; it works on the live site.";
-      var el = $("#aiErr"); if (el) el.textContent = msg; else toast(esc(msg));
+      var msg = aiError(err), el = $("#aiErr"); if (el) el.textContent = msg; else toast(esc(msg));
+    });
+  }
+  function aiError(err) { return err && err.message && !/fetch|network|load failed/i.test(err.message) ? err.message : "Couldn't reach Anthropic. Check your connection. Previews can block this; it works on the live site."; }
+  // One request to Claude from the browser with the user's own key; resolves to the reply text.
+  function callClaude(system, user) {
+    return fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "x-api-key": getKey(), "anthropic-version": "2023-06-01", "content-type": "application/json", "anthropic-dangerous-direct-browser-access": "true" },
+      body: JSON.stringify({ model: MODEL, max_tokens: 16000, thinking: { type: "adaptive" }, system: system, messages: [{ role: "user", content: user }] })
+    }).then(function (res) {
+      return res.json().catch(function () { return {}; }).then(function (j) {
+        if (res.status === 401) throw new Error("Anthropic didn't accept that API key. Check it on My resume.");
+        if (res.status === 429) throw new Error("Anthropic says you've hit a rate limit. Wait a minute and try again.");
+        if (!res.ok) throw new Error("Anthropic returned an error" + (j.error && j.error.message ? ": " + j.error.message : " (" + res.status + ")."));
+        if (j.stop_reason === "refusal") throw new Error("Claude declined this one. Try editing the text and run it again.");
+        return (j.content || []).filter(function (b) { return b.type === "text"; }).map(function (b) { return b.text; }).join("");
+      });
     });
   }
   function wireJobPage(o) {
@@ -1045,8 +1228,8 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     var r = scoreJob({ id: "preview", description: desc });
     return r ? '<p><strong>Score: ' + r.score + "/100 · " + verdict(r.score) + "</strong>" + (r.missReq.length ? '<span class="muted"> · Missing: ' + esc(r.missReq.slice(0, 4).join(", ")) + "</span>" : "") + "</p>" : "";
   }
-  function openJob(id, focusId) {
-    var isNew = !id, o = isNew ? blank() : JSON.parse(JSON.stringify(byId(id)));
+  function openJob(id, focusId, prefill) {
+    var isNew = !id, o = isNew ? prefill || blank() : JSON.parse(JSON.stringify(byId(id)));
     if (!o) return;
     var h = '<form id="jobForm" novalidate><div class="modal-h"><h2>' + (isNew ? "Add a job" : "Edit " + esc(o.company)) + '</h2><button type="button" class="x" data-close="1" aria-label="Close">✕</button></div><div class="modal-b">' +
       '<div class="paste"><label>Paste the job posting <span class="hint">I\'ll fill in the details and score it against your resume.</span>' +
@@ -1126,10 +1309,18 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     if (t.closest("[data-act='sample-all']")) { me = sampleProfile(); saveMe(); jobs = samples().concat(jobs); save(); go("#dashboard"); toast("Loaded a sample resume and 6 sample jobs."); return; }
     if (t.closest("[data-act='skip']")) { ui.skippedWelcome = true; go("#dashboard"); return; }
     if (t.closest("[data-act='all-steps']")) { ui.showAll = !ui.showAll; render(); return; }
+    var em = t.closest("[data-email]"); if (em) { openEmail(em.dataset.id, em.dataset.email); return; }
+    var vw = t.closest("[data-view]"); if (vw) { e.preventDefault(); ui.view = vw.dataset.view; render(); return; }
+    var ask = t.closest("[data-addskill]"); if (ask) {
+      var jid = route().id, before = (scoreJob(byId(jid)) || {}).score;
+      me.skills = splitList(me.skills).concat([ask.dataset.addskill]).join(", "); saveMe(); render();
+      toast("Added " + esc(ask.dataset.addskill) + " to your skills. Score " + before + " → " + ((scoreJob(byId(jid)) || {}).score) + ". Make sure it's on your resume too."); return; }
+    if (t.closest("[data-act='guide-hide']")) { try { localStorage.setItem("nextmove.v3.hideGuide", "1"); } catch (x) {} render(); return; }
+    if (t.closest("[data-act='focus-qa']")) { var qa = $("#qa"); if (qa) { qa.scrollIntoView({ block: "center" }); qa.focus(); } else openJob(null); return; }
     var c = t.closest("[data-copy]"); if (c) { (navigator.clipboard ? navigator.clipboard.writeText(c.dataset.copy) : Promise.reject()).then(function () { toast("Copied."); }, function () { toast("Couldn't copy. Select the text instead."); }); return; }
     var d = t.closest("[data-done]"); if (d) { completeStep(d.dataset.done, d.dataset.id); return; }
     var ed = t.closest("[data-edit]"); if (ed) { openJob(ed.dataset.edit, ed.dataset.focus); return; }
-    var f = t.closest("[data-filter]"); if (f) { ui.filter = f.dataset.filter; go("#jobs"); return; }
+    var f = t.closest("[data-filter]"); if (f) { ui.filter = f.dataset.filter; ui.view = "list"; go("#jobs"); return; }
     if (t.closest("select") || t.closest("a") || t.closest(".modal")) return;
     var g = t.closest("[data-go]"); if (g) go(g.dataset.go);
   });
@@ -1139,18 +1330,29 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   document.addEventListener("change", function (e) {
     var t = e.target;
     if (t.dataset.status) {
-      var o = byId(t.dataset.status); if (!o) return;
-      var prev = o.status; setStatus(o, t.value); save(); render();
-      var msg = esc(o.company) + " is now " + statusLabel(o.status).toLowerCase() + ".";
-      if (o.status === "applied") toast(msg + " I'll remind you to follow up two weeks after it closes.", "Undo", function () { o.status = prev; save(); render(); });
-      else if (o.status === "interviewing") toast(msg + " Good luck!", "Add the interview date", function () { openJob(o.id, "f-interviewDate"); });
-      else toast(msg, "Undo", function () { o.status = prev; save(); render(); });
+      var o = byId(t.dataset.status); if (o) changeStatus(o, t.value);
       return;
     }
     if (t.id === "filter") { ui.filter = t.value; renderJobList(); }
     if (t.id === "sort") { ui.sort = t.value; renderJobList(); }
   });
   document.addEventListener("input", function (e) { if (e.target.id === "q") { ui.q = e.target.value; renderJobList(); } });
+  // Board drag and drop
+  document.addEventListener("dragstart", function (e) {
+    var card = e.target.closest && e.target.closest(".bcard"); if (!card) return;
+    e.dataTransfer.setData("text/plain", card.dataset.id); e.dataTransfer.effectAllowed = "move"; card.classList.add("dragging");
+  });
+  document.addEventListener("dragend", function () { $all(".bcard.dragging, .bcol.over").forEach(function (el) { el.classList.remove("dragging", "over"); }); });
+  document.addEventListener("dragover", function (e) {
+    var col = e.target.closest && e.target.closest(".bcol"); if (!col) return;
+    e.preventDefault(); $all(".bcol.over").forEach(function (el) { if (el !== col) el.classList.remove("over"); }); col.classList.add("over");
+  });
+  document.addEventListener("drop", function (e) {
+    var col = e.target.closest && e.target.closest(".bcol"); if (!col) return;
+    e.preventDefault(); col.classList.remove("over");
+    var o = byId(e.dataTransfer.getData("text/plain")), st = col.dataset.col; if (!o) return;
+    if (st === "closed") { if (!CLOSED[o.status]) changeStatus(o, "rejected"); } else changeStatus(o, st);
+  });
   window.addEventListener("hashchange", function () { closeModal(); render(); window.scrollTo(0, 0); });
 
   load();
