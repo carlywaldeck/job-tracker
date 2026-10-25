@@ -319,13 +319,220 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
 }
 @media (prefers-reduced-motion: no-preference) { .job, button { transition: box-shadow .15s, border-color .15s, background-color .15s; } }
 @media (max-width: 560px) { .url-import { grid-template-columns: 1fr; } .url-import button { justify-self: start; } }
+
+/* Vanta-inspired visual refresh: cool paper, editorial spacing, restrained primary colors. */
+:root,
+:root[data-theme="dark"] {
+  --bg: #eef0ee;
+  --card: #fafafa;
+  --soft-bg: #f0f1ee;
+  --ink: #111c2e;
+  --muted: #68717c;
+  --line: #dde0dc;
+  --accent: #111c2e;
+  --accent-ink: #111c2e;
+  --on-accent: #ffffff;
+  --tint: #e9edf4;
+  --warn: #9a7117;
+  --warn-tint: #f7edcf;
+  --late: #c95631;
+  --yellow: #d8ae3e;
+  --orange: #dd6738;
+  --blue: #416fba;
+  --shadow: 0 2px 5px rgba(17,28,46,.06), 0 18px 48px rgba(17,28,46,.08);
+  color-scheme: light;
+}
+html { background: var(--bg); }
+body { margin: 0; padding: 14px; min-height: 100vh; background: var(--bg); font-size: 15px; }
+body::before { background: var(--bg); }
+.site-shell {
+  width: min(1220px, 100%);
+  min-height: calc(100vh - 28px);
+  margin: 0 auto;
+  background: #fafafa;
+  border: 1px solid #dfe2de;
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+}
+.wrap { max-width: none; padding-inline: clamp(22px, 5vw, 70px); }
+h1, h2, h3 { color: var(--ink); letter-spacing: -.035em; }
+h2 { font-size: clamp(2.4rem, 5vw, 4.2rem); font-weight: 500; line-height: .98; }
+h3 { font-size: 1.25rem; font-weight: 600; letter-spacing: -.025em; }
+a { text-underline-offset: 3px; }
+
+button { border-color: transparent; background: var(--soft-bg); border-radius: 8px; padding: 9px 15px; font-size: .9rem; }
+button:hover { border-color: color-mix(in srgb, var(--ink) 22%, transparent); box-shadow: 0 4px 12px rgba(17,28,46,.07); }
+button.primary { background: var(--ink); border-color: var(--ink); color: #fff; }
+button.primary:hover { filter: none; background: #223149; border-color: #223149; }
+button.link { color: var(--ink); font-weight: 600; }
+button.small { padding: 6px 11px; font-size: .8rem; }
+:focus-visible { outline-color: var(--blue); outline-width: 3px; }
+input, select, textarea { background: #fff; border-color: #d9ddd9; border-radius: 11px; padding: 12px 14px; }
+input:hover, select:hover, textarea:hover { border-color: #bfc5c1; }
+input:focus, select:focus, textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 14%, transparent); outline: 0; }
+label { color: var(--ink); font-weight: 600; }
+
+/* Compact, centered masthead like the reference. */
+.top { position: sticky; top: 14px; background: color-mix(in srgb, #fafafa 92%, transparent); border: 0; border-radius: 24px 24px 0 0; backdrop-filter: blur(16px); }
+.top-in { min-height: 74px; display: grid; grid-template-columns: 1fr auto 1fr; gap: 24px; padding-block: 16px; }
+.logo { display: inline-flex; align-items: center; gap: 9px; color: var(--ink); font-size: 1rem; font-weight: 700; letter-spacing: -.02em; white-space: nowrap; }
+.logo-mark { display: inline-flex; align-items: center; gap: 3px; }
+.logo-mark i { display: block; width: 9px; height: 9px; background: var(--yellow); }
+.logo-mark i:first-child { border-radius: 50%; }
+.logo-mark i:nth-child(2) { background: var(--orange); border-radius: 7px 7px 2px 2px; }
+.logo-mark i:nth-child(3) { background: var(--blue); }
+.logo-word { color: var(--ink) !important; }
+.tabs { justify-content: center; gap: 2px; }
+.tabs a { padding: 7px 12px; border-radius: 7px; color: #5f6874; font-size: .82rem; }
+.tabs a:hover { color: var(--ink); background: transparent; }
+.tabs a[aria-current="page"] { color: var(--ink); background: var(--soft-bg); font-weight: 700; }
+#btnAdd { justify-self: end; margin-left: 0; }
+
+main { padding-block: 34px 76px; gap: 42px; }
+.hello { grid-template-columns: minmax(0, 1.5fr) minmax(240px, .7fr); gap: 22px 64px; align-items: end; padding: 48px 0 54px; border-bottom: 1px solid var(--line); }
+.hello::before { content: attr(data-eyebrow); grid-column: 1 / -1; color: var(--muted); font-size: .73rem; font-weight: 700; letter-spacing: .04em; }
+.hello h2 { max-width: 13ch; }
+.hello p { color: var(--muted); font-size: 1rem; line-height: 1.45; max-width: 40ch; }
+
+.card { background: transparent; border: 0; border-top: 1px solid var(--line); border-radius: 0; padding: 30px 0; gap: 20px; }
+.card-h { align-items: center; }
+.grid2 { grid-template-columns: minmax(0, 1.65fr) minmax(300px, .85fr); gap: clamp(36px, 6vw, 76px); }
+.side-col { gap: 34px; }
+.count { font-size: .78rem; }
+
+/* A soft four-step panel echoes Vanta's admissions sequence. */
+.guide { background: var(--soft-bg); border: 0; border-radius: 20px; padding: clamp(24px, 4vw, 40px); }
+.guide .card-h { align-items: baseline; }
+.gbar { height: 3px; background: #d9ddd8; }
+.gbar i { background: var(--blue); }
+.gsteps { gap: 0; border-top: 1px solid var(--line); }
+.gsteps li { position: relative; grid-template-columns: 44px minmax(0, 1fr); gap: 10px 14px; background: transparent; border-radius: 0; padding: 20px 16px 18px 0; }
+.gsteps li + li { padding-left: 16px; border-left: 1px solid var(--line); }
+.gsteps li > button { grid-column: 2; }
+.gsteps li.next { box-shadow: none; }
+.gsteps li.next b { color: var(--ink); }
+.gdot { width: 34px; height: 34px; border: 0; border-radius: 50%; background: var(--yellow); color: var(--ink); font-size: .72rem; }
+.gsteps li:nth-child(2) .gdot { background: var(--orange); border-radius: 17px 17px 4px 4px; color: #fff; }
+.gsteps li:nth-child(3) .gdot { background: var(--blue); border-radius: 0; color: #fff; }
+.gsteps li:nth-child(4) .gdot { background: var(--yellow); }
+.gsteps li.ok { opacity: .58; }
+.gsteps li.ok .gdot { background: var(--ink); color: #fff; }
+
+/* Dashboard content is open and editorial; the quick action remains prominent. */
+.quick { background: var(--soft-bg); border: 0; border-radius: 20px; padding: 28px; }
+.quick details { border-color: #d7dad6; }
+.url-import { grid-template-columns: minmax(0, 1fr); }
+.url-import button { justify-self: start; }
+.tasks { border-bottom: 1px solid var(--line); }
+.task { padding: 16px 0; }
+.done { width: 28px; height: 28px; border: 1px solid #c7ccc8; }
+.done:hover { border-color: var(--blue); background: color-mix(in srgb, var(--blue) 10%, transparent); }
+.pipe { gap: 0; border-top: 1px solid var(--line); }
+.pipe button { min-height: 48px; border-bottom: 1px solid var(--line); border-radius: 0; }
+.pipe .bar { height: 5px; background: #e2e4e1; }
+.pipe .bar i { background: var(--blue); }
+.links { gap: 12px; }
+
+/* Job tables and boards borrow the theme's calm list rhythm and color markers. */
+.seg { background: var(--soft-bg); border-radius: 9px; padding: 3px; }
+.seg a { border-radius: 7px; padding: 7px 14px; font-size: .86rem; }
+.seg a[aria-current="page"] { background: #fff; box-shadow: 0 1px 3px rgba(17,28,46,.08); }
+.controls { padding: 4px 0 8px; }
+.board { gap: 14px; }
+.bcol { --stage: var(--yellow); position: relative; background: #f3f4f1; border: 1px solid #e3e5e1; border-radius: 16px; padding: 16px 12px 12px; min-height: 270px; }
+.bcol:nth-child(2) { --stage: var(--orange); }
+.bcol:nth-child(3) { --stage: var(--blue); }
+.bcol:nth-child(4) { --stage: var(--yellow); }
+.bcol:nth-child(5) { --stage: #8a9299; }
+.bcol h4 { justify-content: flex-start; gap: 8px; margin-bottom: 10px; font-size: .9rem; }
+.bcol h4::before { content: ""; width: 10px; height: 10px; margin-top: 5px; flex: none; border-radius: 50%; background: var(--stage); }
+.bcol:nth-child(2) h4::before { border-radius: 8px 8px 2px 2px; }
+.bcol:nth-child(3) h4::before { border-radius: 0; }
+.bcol h4 span { margin-left: auto; }
+.bcard { border-color: #e0e3df; border-radius: 14px; padding: 13px; gap: 8px; box-shadow: 0 1px 1px rgba(17,28,46,.025); }
+.bcard:hover { border-color: color-mix(in srgb, var(--stage) 65%, #dfe2de); box-shadow: 0 8px 20px rgba(17,28,46,.08); transform: translateY(-1px); }
+.bc-top .score { border-radius: 6px; }
+.job { border-width: 0 0 1px; border-radius: 0; background: transparent; padding: 19px 4px; }
+.job:first-child { border-top: 1px solid var(--line); }
+.job:hover { background: var(--soft-bg); box-shadow: none; padding-inline: 12px; }
+.score { background: var(--blue); color: #fff; border-radius: 50%; }
+.score.mid { background: var(--yellow); color: var(--ink); }
+.score.low { background: var(--orange); color: #fff; }
+.score.none { background: transparent; color: var(--muted); }
+
+/* Job detail and resume surfaces. */
+.job-head { padding: 44px 0 24px; }
+.job-head h2 { font-size: clamp(2.5rem, 5vw, 4.2rem); font-weight: 500; }
+.job-head select { border-radius: 8px; }
+.ring-wrap { gap: clamp(28px, 5vw, 58px); }
+.ring { width: 150px; height: 150px; }
+.out { background: var(--soft-bg); border-radius: 16px; padding: 20px; }
+.row .bar { height: 5px; }
+.row .bar i { background: var(--blue); }
+.chip { border-radius: 5px; background: color-mix(in srgb, var(--blue) 11%, #fff); color: #2f5c9f; }
+.chip.miss { background: var(--warn-tint); color: var(--warn); }
+.chip.plain { background: var(--soft-bg); color: var(--muted); }
+
+/* Forms and overlays keep every field and interaction, with quieter framing. */
+.overlay { background: rgba(17,28,46,.48); padding-top: max(32px, env(safe-area-inset-top, 0px)); }
+.modal { max-width: 720px; background: #fafafa; border: 1px solid rgba(255,255,255,.7); border-radius: 22px; box-shadow: 0 24px 80px rgba(17,28,46,.2); }
+.modal-h { padding: 28px 30px 8px; }
+.modal-h h2 { font-size: 1.65rem; font-weight: 600; }
+.modal-b { padding: 18px 30px 12px; gap: 24px; }
+.modal-f { padding: 18px 30px 28px; border-top: 1px solid var(--line); margin-top: 12px; }
+.paste { background: var(--soft-bg); border-radius: 16px; padding: 20px; }
+#btnImport { background: var(--ink); border-color: var(--ink); color: #fff; }
+#btnImport:hover { background: #223149; border-color: #223149; }
+.extra-fields { border-color: var(--line); border-radius: 12px; background: #fff; padding: 14px 16px; }
+.import-review { border-left: 4px solid var(--yellow); border-radius: 8px; }
+label.needs-review input, label.needs-review select { border-color: var(--yellow); box-shadow: 0 0 0 3px color-mix(in srgb, var(--yellow) 18%, transparent); }
+.toast { border-radius: 9px; background: var(--ink); color: #fff; }
+
+footer { padding: 0; }
+footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(--line); font-size: .78rem; }
+
+@media (max-width: 900px) {
+  body { padding: 8px; }
+  .site-shell { min-height: calc(100vh - 16px); border-radius: 18px; }
+  .top { top: 8px; border-radius: 18px 18px 0 0; }
+  .top-in { grid-template-columns: auto 1fr auto; }
+  .grid2 { grid-template-columns: minmax(0, 1fr); }
+  .guide .gsteps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .gsteps li:nth-child(3) { border-left: 0; border-top: 1px solid var(--line); padding-left: 0; }
+  .gsteps li:nth-child(4) { border-top: 1px solid var(--line); }
+}
+@media (max-width: 650px) {
+  body { padding: 0; }
+  .site-shell { min-height: 100vh; border: 0; border-radius: 0; }
+  .wrap { padding-inline: 18px; }
+  .top { top: 0; border-radius: 0; }
+  .top-in { display: flex; min-height: auto; padding-block: 12px; }
+  .logo-word { font-size: .95rem; }
+  #btnAdd { margin-left: auto; }
+  .tabs { order: 3; }
+  main { gap: 28px; padding-block: 16px 48px; }
+  .hello { grid-template-columns: 1fr; gap: 14px; padding: 34px 0 38px; }
+  .hello::before { grid-column: auto; }
+  .hello h2 { font-size: clamp(2.5rem, 13vw, 3.5rem); }
+  .guide { padding: 22px 18px; }
+  .guide .gsteps { grid-template-columns: 1fr; }
+  .gsteps li, .gsteps li + li, .gsteps li:nth-child(3) { border-left: 0; border-top: 1px solid var(--line); padding: 16px 0; }
+  .gsteps li:first-child { border-top: 0; }
+  .card { padding: 24px 0; }
+  .quick { padding: 22px 18px; }
+  .modal { border-radius: 18px; }
+  .modal-h { padding: 22px 20px 6px; }
+  .modal-b { padding: 14px 20px 10px; }
+  .modal-f { padding: 16px 20px 22px; }
+}
 </style>
 </head>
 <body>
 
+<div class="site-shell">
 <header class="top">
   <div class="wrap top-in">
-    <div class="logo">Next<span>Move</span></div>
+    <div class="logo"><span class="logo-mark" aria-hidden="true"><i></i><i></i><i></i></span><span class="logo-word">Next Move</span></div>
     <nav class="tabs" id="tabs" aria-label="Main" hidden>
       <a href="#dashboard" data-tab="dashboard">Dashboard</a>
       <a href="#jobs" data-tab="jobs">Jobs</a>
@@ -341,6 +548,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   <span>Saved privately in this browser. Public job links go to Jina AI Reader only when you import; your resume goes to Anthropic only when you choose AI tailoring.</span>
   <button type="button" class="link" id="btnSamples" hidden></button>
 </div></footer>
+</div>
 
 <div id="modalRoot"></div>
 <div id="toastRoot"></div>
@@ -1008,7 +1216,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     if (groups[1][1].length) bits.push(groups[1][1].length + " due today");
     if (groups[2][1].length) bits.push(groups[2][1].length + (groups[1][1].length ? " more" : "") + " this week");
     if (nextIv) bits.push("next interview " + (nextIv.interviewDate === t ? "today" : fmt(nextIv.interviewDate)) + " with " + nextIv.company);
-    var h = '<section class="hello"><h2>' + esc(me && me.name ? "Hi " + me.name : "Hi there") + "</h2><p>" +
+    var h = '<section class="hello" data-eyebrow="Your workspace"><h2>' + esc(me && me.name ? "Hi " + me.name : "Hi there") + "</h2><p>" +
       esc(!jobs.length ? "Add a job you're interested in to get started." : bits.length ? bits.join(" · ").replace(/^./, function (c) { return c.toUpperCase(); }) + "." : "You're all caught up.") + "</p>";
     if (!me) h += '<p><button type="button" class="link" data-go="#resume">Add your resume</button> to get a 1–100 match score for every job.</p>';
     h += "</section>";
@@ -1096,7 +1304,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   function renderJobsPage() {
     var so = function (v, l, cur) { return '<option value="' + v + '"' + (v === cur ? " selected" : "") + ">" + l + "</option>"; };
     var board = ui.view === "board";
-    var h = '<section class="hello"><h2>Jobs</h2><p>' + (board ? "Drag a job to a new column when its status changes (on a phone, use the menu on each card). The number is your match score out of 100." : me ? "The circle is your match score out of 100. Click a job to see why and tailor your resume." : "Add your resume on My resume to score each job.") + "</p></section>";
+    var h = '<section class="hello" data-eyebrow="Your search"><h2>Jobs</h2><p>' + (board ? "Drag a job to a new column when its status changes (on a phone, use the menu on each card). The number is your match score out of 100." : me ? "The circle is your match score out of 100. Click a job to see why and tailor your resume." : "Add your resume on My resume to score each job.") + "</p></section>";
     h += '<section class="card"><div class="card-h"><div class="seg" role="group" aria-label="View"><a href="#jobs" data-view="board"' + (board ? ' aria-current="page"' : "") + '>Board</a><a href="#jobs" data-view="list"' + (board ? "" : ' aria-current="page"') + ">List</a></div><span class=\"count\" id=\"jobCount\"></span></div>";
     if (jobs.length) h += '<div class="controls' + (board ? " board-c" : "") + '"><input id="q" type="search" aria-label="Search your jobs" placeholder="Search company, title, location, or notes" value="' + esc(ui.q) + '">' +
       (board ? "" : '<select id="filter" aria-label="Show">' + so("open", "Open jobs", ui.filter) + STATUSES.map(function (s) { return so(s[0], s[1], ui.filter); }).join("") + so("all", "All jobs", ui.filter) + "</select>") +
@@ -1282,7 +1490,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   // ---------- My resume page ----------
   function renderResumePage() {
     var key = getKey();
-    var h = '<section class="hello"><h2>My resume</h2><p>Your resume powers every score and suggestion. ' + (me && me.resumeName ? "Current file: <strong>" + esc(me.resumeName) + "</strong>." : "Upload it to get started.") + "</p></section>";
+    var h = '<section class="hello" data-eyebrow="Your profile"><h2>My resume</h2><p>Your resume powers every score and suggestion. ' + (me && me.resumeName ? "Current file: <strong>" + esc(me.resumeName) + "</strong>." : "Upload it to get started.") + "</p></section>";
     h += '<div class="narrow" style="display:grid;gap:24px">' + uploadBox() + '<div id="profileBox"></div>';
     h += '<section class="card" id="ai"><div class="card-h"><h3>AI tailoring (optional)</h3><span class="ai-tag">AI · Claude</span></div>' +
       "<p>To have Claude rewrite your resume for a job, paste an Anthropic API key. You can create one at <a href=\"https://console.anthropic.com/settings/keys\" target=\"_blank\" rel=\"noopener\">console.anthropic.com</a>. Each tailoring costs a few cents on your account.</p>" +
