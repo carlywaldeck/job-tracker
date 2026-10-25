@@ -155,6 +155,9 @@ details[open] summary { margin-bottom: 10px; }
 .rt-r:hover .rt-job b { text-decoration: underline; }
 .rt-job { display: grid; min-width: 0; }
 .rt-job span, .rt-c { color: var(--muted); font-size: .9rem; overflow-wrap: anywhere; }
+.company-cell { display: flex; align-items: center; gap: 10px; }
+.company-copy { display: grid; min-width: 0; }
+.company-copy b, .company-copy span { overflow-wrap: anywhere; }
 .rt-c .when { font-size: .9rem; }
 .rt-r > button { justify-self: end; white-space: nowrap; }
 .m-lbl { display: none; }
@@ -206,6 +209,14 @@ label.needs-review::after { content: "Needs review"; color: var(--warn); font-si
 .bc-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
 .bc-top .score { width: auto; height: auto; min-width: 34px; padding: 2px 8px; border-radius: 999px; font-size: .82rem; }
 .bc-top b { font-size: .95rem; line-height: 1.3; min-width: 0; overflow-wrap: break-word; }
+.company-line { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.company-logo { display: inline-grid; place-items: center; width: 36px; height: 36px; flex: 0 0 36px; overflow: hidden; border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--ink); }
+.company-logo.small { width: 30px; height: 30px; flex-basis: 30px; border-radius: 5px; }
+.company-logo.large { width: 56px; height: 56px; flex-basis: 56px; border-radius: 8px; }
+.company-logo img, .company-logo .company-initials { grid-area: 1 / 1; width: 100%; height: 100%; }
+.company-logo img { display: block; object-fit: contain; padding: 5px; background: #fff; }
+.company-logo .company-initials { display: grid; place-items: center; background: color-mix(in srgb, var(--yellow) 24%, #fff); color: var(--ink); font-size: .72rem; font-weight: 800; letter-spacing: .02em; }
+.company-logo.large .company-initials { font-size: 1rem; }
 .bc-t { color: var(--muted); font-size: .85rem; line-height: 1.35; }
 .bc-meta { font-size: .82rem; color: var(--muted); }
 .bc-move { display: none; }
@@ -235,6 +246,8 @@ label.needs-review::after { content: "Needs review"; color: var(--warn); font-si
 .job-head .sub { color: var(--muted); margin-top: 4px; }
 .job-head .right { display: flex; gap: 10px; align-items: center; }
 .job-head select { width: auto; border-radius: 999px; padding: 8px 12px; }
+.job-identity { display: flex; align-items: center; gap: 16px; min-width: 0; }
+.job-identity > div { min-width: 0; }
 .seg { display: inline-flex; gap: 4px; background: var(--soft-bg); border-radius: 999px; padding: 4px; flex-wrap: wrap; }
 .seg a { text-decoration: none; color: var(--muted); padding: 7px 16px; border-radius: 999px; font-weight: 500; white-space: nowrap; }
 .seg a[aria-current="page"] { background: var(--card); color: var(--ink); font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
@@ -545,7 +558,7 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
 <main class="wrap" id="view"></main>
 
 <footer><div class="wrap">
-  <span>Saved privately in this browser. Public job links go to Jina AI Reader only when you import; your resume goes to Anthropic only when you choose AI tailoring.</span>
+  <span>Saved privately in this browser. Job links go to Jina AI Reader when you import; company names may be used to find a public logo; your resume goes to Anthropic only when you choose AI tailoring.</span>
   <button type="button" class="link" id="btnSamples" hidden></button>
 </div></footer>
 </div>
@@ -611,7 +624,7 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
   function getKey() { try { return localStorage.getItem(AI_KEY) || ""; } catch (e) { return ""; } }
   function setKey(k) { try { if (k) localStorage.setItem(AI_KEY, k); else localStorage.removeItem(AI_KEY); } catch (e) {} }
   function blank() {
-    return { id: uid(), company: "", title: "", link: "", location: "", arrangement: "", deadline: "", status: "saved", nextAction: "", nextDue: "",
+    return { id: uid(), company: "", title: "", link: "", logoDomain: "", location: "", arrangement: "", deadline: "", status: "saved", nextAction: "", nextDue: "",
       appliedDate: "", followUpDate: "", contact: "", interviewDate: "", thankYouSent: false, tailored: false, notes: "", description: "", tailoring: null, updatedAt: today() };
   }
   function byId(id) { for (var i = 0; i < jobs.length; i++) if (jobs[i].id === id) return jobs[i]; return null; }
@@ -785,6 +798,69 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     if (!/(linkedin|indeed|glassdoor|ziprecruiter|monster|workdayjobs|greenhouse|lever|ashbyhq)/.test(host)) return prettySlug(host.split(".")[0]);
     return "";
   }
+  var THIRD_PARTY_JOB_HOST = /(linkedin|indeed|glassdoor|ziprecruiter|monster|workdayjobs|greenhouse|lever|ashbyhq|smartrecruiters|jobvite|icims|jina\.ai)/i;
+  var NON_COMPANY_HOST = /(facebook|instagram|youtube|youtu\.be|twitter|x\.com|tiktok|github|google|apple|microsoft|cloudfront|amazonaws|wistia|vimeo|gravatar)/i;
+  function cleanDomain(host) {
+    host = String(host || "").toLowerCase().replace(/^www\./, "").replace(/:\d+$/, "");
+    if (!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(host)) return "";
+    var parts = host.split("."), countrySuffix = /^(co|com|org|net|gov|ac)$/;
+    if (parts.length > 2 && parts[parts.length - 1].length === 2 && countrySuffix.test(parts[parts.length - 2])) return parts.slice(-3).join(".");
+    return parts.slice(-2).join(".");
+  }
+  function nameKey(s) {
+    return String(s || "").toLowerCase().replace(/&/g, "and").replace(/\b(incorporated|corporation|company|limited|holdings|technologies|technology|group|inc|llc|ltd|corp|co)\b/g, "").replace(/[^a-z0-9]/g, "");
+  }
+  function domainFromPosting(company, postingURL, text) {
+    var companyKey = nameKey(company), choices = [], seen = {};
+    function add(host, bonus) {
+      var domain = cleanDomain(host); if (!domain || seen[domain] || THIRD_PARTY_JOB_HOST.test(domain) || NON_COMPANY_HOST.test(domain)) return;
+      seen[domain] = 1;
+      var stem = nameKey(domain.split(".")[0]), score = bonus || 0;
+      if (companyKey && stem === companyKey) score += 8;
+      else if (companyKey && (stem.indexOf(companyKey) >= 0 || companyKey.indexOf(stem) >= 0)) score += 4;
+      choices.push({ domain: domain, score: score });
+    }
+    try { add(new URL(postingURL || "").hostname, 2); } catch (e) {}
+    (String(text || "").match(/https?:\/\/[^\s)<>'\"]+/gi) || []).forEach(function (link) { try { add(new URL(link.replace(/[.,;:]+$/, "")).hostname, 0); } catch (e) {} });
+    choices.sort(function (a, b) { return b.score - a.score; });
+    return choices.length && choices[0].score >= 4 ? choices[0].domain : "";
+  }
+  function resolveCompanyDomain(company, postingURL, text) {
+    var found = domainFromPosting(company, postingURL, text);
+    if (found) return Promise.resolve(found);
+    if (!company || company.length < 2) return Promise.resolve("");
+    var ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+    var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 3500) : null;
+    return fetch("https://autocomplete.clearbit.com/v1/companies/suggest?query=" + encodeURIComponent(company), ctrl ? { signal: ctrl.signal } : {}).then(function (res) {
+      if (!res.ok) return [];
+      return res.json();
+    }).then(function (rows) {
+      var key = nameKey(company), exact = (rows || []).filter(function (row) { return nameKey(row.name) === key; })[0];
+      var close = (rows || []).filter(function (row) { var other = nameKey(row.name); return other && key && (other.indexOf(key) === 0 || key.indexOf(other) === 0); })[0];
+      var match = exact || close;
+      return match && cleanDomain(match.domain) || "";
+    }).catch(function () { return ""; }).then(function (domain) { if (timer) clearTimeout(timer); return domain; });
+  }
+  function logoURL(domain) { var clean = cleanDomain(domain); return clean ? "https://logos.hunter.io/" + encodeURIComponent(clean) : ""; }
+  function companyInitials(name) {
+    var words = String(name || "?").trim().split(/\s+/).filter(Boolean);
+    return ((words[0] || "?").charAt(0) + (words.length > 1 ? words[words.length - 1].charAt(0) : "")).toUpperCase();
+  }
+  function companyMark(o, size) {
+    var src = logoURL(o && o.logoDomain), initials = esc(companyInitials(o && o.company));
+    return '<span class="company-logo' + (size ? " " + size : "") + '" aria-hidden="true">' +
+      (src ? '<img src="' + esc(src) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.hidden=true;this.nextElementSibling.hidden=false">' : "") +
+      '<span class="company-initials"' + (src ? " hidden" : "") + '>' + initials + "</span></span>";
+  }
+  function enrichCompanyLogo(job, force) {
+    if (!job || !job.company || (job.logoDomain && !force)) return;
+    var id = job.id, company = job.company;
+    resolveCompanyDomain(company, job.link, job.description).then(function (domain) {
+      var current = byId(id);
+      if (!domain || !current || current.company !== company || (current.logoDomain && !force)) return;
+      current.logoDomain = domain; save(); render();
+    });
+  }
   function addTitleHints(r, title, url) {
     var u = new URL(url), host = u.hostname.replace(/^www\./, "").toLowerCase(), atsCompany = companyFromJobURL(url);
     if (!title) { if (!r.company) r.company = atsCompany; return; }
@@ -825,7 +901,10 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
       var description = readerDescription(text);
       if (description.length < 120) throw new Error("I couldn't find enough job-posting text at that link.");
       var r = extractJD(description); r.link = url; addTitleHints(r, readerTitle(text), url);
-      return { fields: r, description: description };
+      return resolveCompanyDomain(r.company, url, description).then(function (domain) {
+        if (domain) r.logoDomain = domain;
+        return { fields: r, description: description };
+      });
     }).catch(function (err) {
       if (err && err.message && !/^Failed to fetch/i.test(err.message)) throw err;
       throw new Error("I couldn't import that link. The site may block automated reading; paste the posting instead.");
@@ -1113,7 +1192,7 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
         items.map(function (o) {
           var meta = o.interviewDate && o.interviewDate >= today() ? "Interview " + when(o.interviewDate) : o.nextAction ? esc(o.nextAction) + " " + when(o.nextDue)
             : o.status === "saved" && o.deadline ? "Closes " + when(o.deadline) : o.status === "applied" && o.appliedDate ? "Follow up " + when(followUpDue(o)) : c[0] === "closed" ? esc(statusLabel(o.status)) : "";
-          return '<article class="bcard" draggable="true" tabindex="0" data-id="' + esc(o.id) + '" data-go="#job/' + esc(o.id) + '"><div class="bc-top"><b>' + esc(o.company) + "</b>" + scoreDot(o) + '</div><span class="bc-t">' + esc(o.title) + "</span>" +
+          return '<article class="bcard" draggable="true" tabindex="0" data-id="' + esc(o.id) + '" data-go="#job/' + esc(o.id) + '"><div class="bc-top"><div class="company-line">' + companyMark(o, "small") + '<b>' + esc(o.company) + "</b></div>" + scoreDot(o) + '</div><span class="bc-t">' + esc(o.title) + "</span>" +
             (meta ? '<div class="bc-meta">' + meta + "</div>" : "") +
             '<select class="bc-move" aria-label="Move ' + esc(o.company) + '" data-status="' + esc(o.id) + '">' + STATUSES.map(function (s) { return '<option value="' + s[0] + '"' + (s[0] === o.status ? " selected" : "") + ">" + s[1] + "</option>"; }).join("") + "</select></article>";
         }).join("") + (items.length ? "" : '<p class="bempty">' + (c[0] === "saved" ? "Jobs you save land here." : "Drag a job here.") + "</p>") + "</section>";
@@ -1242,7 +1321,7 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     var cnt = function (st) { return jobs.filter(function (o) { return o.status === st; }).length; };
     h += '<div class="side-col"><section class="card quick"><h3>Add a job from a link</h3><label for="qaUrl" class="muted" style="font-weight:400">Paste a public job-posting link. I\'ll retrieve the posting and fill in editable details for you.</label>' +
       '<div class="url-import"><input id="qaUrl" type="url" inputmode="url" placeholder="https://company.com/jobs/…"><button type="button" class="primary" id="qaGo">Import details</button></div>' +
-      '<span class="err" id="qaErr" role="alert"></span><p class="import-note">Public postings only. The link is sent to Jina AI Reader to retrieve the page; some job sites may block imports.</p>' +
+      '<span class="err" id="qaErr" role="alert"></span><p class="import-note">Public postings only. The link is sent to Jina AI Reader to retrieve the page, and the company name may be used to find a public logo; some sites may block imports.</p>' +
       '<details><summary>Can\'t import it? Paste the job description instead</summary><textarea id="qa" rows="5" placeholder="Copy the whole posting from the job site and paste it here"></textarea>' +
       '<div class="actions"><button type="button" id="qaPaste">Use pasted posting</button></div></details></section>' +
       (!jobs.length ? "" : '<section class="card"><div class="card-h"><h3>Pipeline</h3><span class="count">jobs that reached each stage</span></div><div class="pipe">' +
@@ -1265,7 +1344,7 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     if (!ready.length) h += '<p class="empty">Jobs you save but haven\'t applied to will show up here, best match first.</p>';
     else h += '<div class="rt"><div class="rt-h"><span>Match</span><span>Job</span><span>Closes</span><span>Contact</span><span></span></div>' + ready.slice(0, 6).map(function (x) {
       var o = x.o, btn = !o.tailored && x.r ? '<button type="button" class="small" data-go="#job/' + esc(o.id) + '/tailor">Tailor</button>' : '<button type="button" class="small primary" data-done="apply" data-id="' + esc(o.id) + '">Mark applied</button>';
-      return '<div class="rt-r" data-go="#job/' + esc(o.id) + '" tabindex="0">' + scoreDot(o) + '<div class="rt-job"><b>' + esc(o.company) + "</b><span>" + esc(o.title) + "</span></div>" +
+      return '<div class="rt-r" data-go="#job/' + esc(o.id) + '" tabindex="0">' + scoreDot(o) + '<div class="rt-job company-cell">' + companyMark(o, "small") + '<span class="company-copy"><b>' + esc(o.company) + "</b><span>" + esc(o.title) + "</span></span></div>" +
         '<span class="rt-c"><span class="m-lbl">Closes </span>' + (o.deadline ? when(o.deadline) : '<span class="muted">No deadline</span>') + "</span>" +
         '<span class="rt-c rt-contact"><span class="m-lbl">Contact: </span>' + (o.contact ? "✓ " + esc(o.contact) : '<span class="muted">None yet</span>') + "</span>" + btn + "</div>";
     }).join("") + "</div>";
@@ -1298,7 +1377,7 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
       : o.status === "saved" && o.deadline ? '<span class="lbl">Closes</span> ' + when(o.deadline) : '<span class="lbl">No next step yet</span>';
     var r = scoreJob(o), right = compact ? '<span class="count">' + (r ? verdict(r.score) : "") + "</span>" :
       '<select aria-label="Status for ' + esc(o.company) + '" data-status="' + esc(o.id) + '">' + STATUSES.map(function (s) { return '<option value="' + s[0] + '"' + (s[0] === o.status ? " selected" : "") + ">" + s[1] + "</option>"; }).join("") + "</select>";
-    return '<article class="job" tabindex="0" data-go="#job/' + esc(o.id) + '">' + scoreDot(o) + '<div><div class="co">' + esc(o.company) + "</div>" +
+    return '<article class="job" tabindex="0" data-go="#job/' + esc(o.id) + '">' + scoreDot(o) + '<div><div class="company-line">' + companyMark(o) + '<div class="co">' + esc(o.company) + "</div></div>" +
       '<div class="ti">' + esc(o.title) + (o.location ? " · " + esc(o.location) : "") + (o.arrangement && o.arrangement !== o.location ? " · " + esc(o.arrangement) : "") + '</div><div class="nx">' + next + "</div></div>" + right + "</article>";
   }
   function renderJobsPage() {
@@ -1342,8 +1421,8 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     sub = sub === "tailor" || sub === "details" ? sub : r ? "score" : "details";
     var opts = STATUSES.map(function (s) { return '<option value="' + s[0] + '"' + (s[0] === o.status ? " selected" : "") + ">" + s[1] + "</option>"; }).join("");
     var h = '<div><a class="back" href="#jobs">← All jobs</a></div>' +
-      '<section class="job-head"><div><h2>' + esc(o.company) + '</h2><p class="sub">' + esc(o.title) + (o.location ? " · " + esc(o.location) : "") + (o.arrangement ? " · " + esc(o.arrangement) : "") +
-      (o.deadline ? " · Closes " + fmt(o.deadline) : "") + "</p></div>" +
+      '<section class="job-head"><div class="job-identity">' + companyMark(o, "large") + '<div><h2>' + esc(o.company) + '</h2><p class="sub">' + esc(o.title) + (o.location ? " · " + esc(o.location) : "") + (o.arrangement ? " · " + esc(o.arrangement) : "") +
+      (o.deadline ? " · Closes " + fmt(o.deadline) : "") + "</p></div></div>" +
       '<div class="right"><select aria-label="Status" data-status="' + esc(o.id) + '">' + opts + '</select><button type="button" data-edit="' + esc(o.id) + '">Edit</button></div></section>';
     var tab = function (k, l) { return '<a href="#job/' + esc(o.id) + "/" + k + '"' + (k === sub ? ' aria-current="page"' : "") + ">" + l + "</a>"; };
     h += '<nav class="seg" aria-label="Job sections">' + tab("score", "Match score") + tab("tailor", "Tailor my resume") + tab("details", "Details & notes") + "</nav>";
@@ -1558,7 +1637,7 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     var h = '<form id="jobForm" novalidate><div class="modal-h"><h2>' + heading + '</h2><button type="button" class="x" data-close="1" aria-label="Close">✕</button></div><div class="modal-b">' +
       '<div class="paste"><label for="f-link">Job-posting link <span class="hint">Import a public posting, then check the editable details below.</span></label>' +
       '<div class="url-import"><input id="f-link" type="url" inputmode="url" value="' + esc(o.link) + '" placeholder="https://company.com/jobs/…"><button type="button" id="btnImport">Import details</button></div>' +
-      '<p class="import-note">The link is sent to Jina AI Reader to retrieve the public page. Some sites may block imports.</p>' +
+      '<p class="import-note">The link is sent to Jina AI Reader to retrieve the public page. If the company is recognized, its name and website domain are used to request a public logo. Some sites may block imports.</p>' +
       '<details' + (o.description ? " open" : "") + '><summary>Review or paste the job description</summary><label>Job description <span class="hint">This text is used for the match score.</span>' +
       '<textarea id="f-description" rows="' + (o.description ? 8 : 5) + '" placeholder="If the link cannot be imported, paste the whole posting here">' + esc(o.description) + "</textarea></label>" +
       '<div class="actions"><button type="button" id="btnFill">Fill details from this text</button><span id="fillMsg" class="note"></span></div></details><div id="scorePrev">' + previewScore(o.description) + '</div></div><p id="importReview" class="import-review" hidden></p>' +
@@ -1582,6 +1661,7 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
       var btn = $("#btnImport"), msg = $("#fillMsg"); btn.disabled = true; btn.textContent = "Importing…"; msg.textContent = "";
       importJobLink($("#f-link").value).then(function (data) {
         Object.keys(data.fields).forEach(function (k) { var el = $("#f-" + k); if (el && data.fields[k]) el.value = data.fields[k]; });
+        if (data.fields.logoDomain) o.logoDomain = data.fields.logoDomain;
         desc.value = data.description; desc.closest("details").open = true; $("#scorePrev").innerHTML = previewScore(desc.value);
         reviewMode = true; reviewImportedFields(); msg.textContent = "Imported the posting. Check every field below, then add the job.";
       }).catch(function (e) { msg.textContent = e.message; }).then(function () { btn.disabled = false; btn.textContent = "Import details"; });
@@ -1607,9 +1687,10 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
       e.preventDefault();
       var g = function (k) { var el = $("#f-" + k); return el ? el.value.trim() : ""; };
       if (!g("company") || !g("title")) { var er = $("#formErr"); er.textContent = "Add the company and job title so you can find this job later."; er.hidden = false; (g("company") ? $("#f-title") : $("#f-company")).focus(); return; }
-      var target = isNew ? o : byId(o.id);
+      var target = isNew ? o : byId(o.id), previousCompany = target.company;
       if (!isNew && target.description !== g("description")) target.tailoring = null;
       ["company", "title", "location", "arrangement", "deadline", "link", "contact", "nextAction", "nextDue", "interviewDate", "notes", "description"].forEach(function (k) { target[k] = g(k); });
+      if (previousCompany !== target.company) target.logoDomain = "";
       target.thankYouSent = $("#f-thankYouSent").checked;
       if (target.link && !/^https?:\/\//i.test(target.link)) target.link = "https://" + target.link;
       if (isNew) { target.status = g("status"); if (target.status !== "saved") target.appliedDate = today(); jobs.unshift(target); } else setStatus(target, g("status"));
@@ -1618,6 +1699,7 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
       save(); closeModal();
       if (isNew) go("#job/" + target.id); else render();
       toast(isNew ? "Added " + esc(target.company) + "." : "Saved.");
+      enrichCompanyLogo(target, previousCompany !== target.company);
     });
     setTimeout(function () { var el = focusId ? $("#" + focusId) : isNew ? $("#f-link") : null; if (el) el.focus(); }, 30);
   }
