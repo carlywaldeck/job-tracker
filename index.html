@@ -375,11 +375,11 @@ label { color: var(--ink); font-weight: 600; }
 .top { position: sticky; top: 14px; background: color-mix(in srgb, #fafafa 92%, transparent); border: 0; border-radius: 12px 12px 0 0; backdrop-filter: blur(16px); }
 .top-in { min-height: 74px; display: grid; grid-template-columns: 1fr auto 1fr; gap: 24px; padding-block: 16px; }
 .logo { display: inline-flex; align-items: center; gap: 9px; color: var(--ink); font-size: 1rem; font-weight: 700; letter-spacing: -.02em; white-space: nowrap; }
-.logo-mark { display: inline-flex; align-items: center; gap: 2px; }
-.logo-mark i { display: block; width: 14px; height: 14px; background: var(--yellow); clip-path: polygon(0 35%, 57% 35%, 57% 4%, 100% 50%, 57% 96%, 57% 65%, 0 65%); }
-.logo-mark i:first-child { opacity: .38; transform: rotate(-35deg); }
-.logo-mark i:nth-child(2) { opacity: .68; transform: rotate(0deg); }
-.logo-mark i:nth-child(3) { opacity: 1; transform: rotate(35deg); }
+.logo .logo-mark { display: inline-flex; align-items: center; width: 50px; color: var(--yellow); }
+.logo-mark svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chevrons path:nth-child(1) { opacity: .34; }
+.chevrons path:nth-child(2) { opacity: .66; }
+.chevrons path:nth-child(3) { opacity: 1; }
 .logo-word { color: var(--ink) !important; }
 .tabs { justify-content: center; gap: 2px; }
 .tabs a { padding: 7px 12px; border-radius: 4px; color: #5f6874; font-size: .82rem; }
@@ -405,18 +405,18 @@ main { padding-block: 34px 76px; gap: 42px; }
 .gbar { height: 3px; background: #d9ddd8; }
 .gbar i { background: var(--blue); }
 .gsteps { gap: 0; border-top: 1px solid var(--line); }
-.gsteps li { position: relative; grid-template-columns: 44px minmax(0, 1fr); gap: 10px 14px; background: transparent; border-radius: 0; padding: 20px 16px 18px 0; }
+.gsteps li { position: relative; grid-template-columns: 58px minmax(0, 1fr); gap: 10px 14px; background: transparent; border-radius: 0; padding: 20px 16px 18px 0; }
 .gsteps li + li { padding-left: 16px; border-left: 1px solid var(--line); }
 .gsteps li > button { grid-column: 2; }
 .gsteps li.next { box-shadow: none; }
 .gsteps li.next b { color: var(--ink); }
-.gdot { width: 38px; height: 38px; border: 0; border-radius: 0; background: transparent !important; color: transparent; font-size: 0; }
-.gdot::before { content: ""; display: block; width: 34px; height: 34px; background: var(--yellow); clip-path: polygon(0 35%, 57% 35%, 57% 4%, 100% 50%, 57% 96%, 57% 65%, 0 65%); opacity: .32; transform: rotate(-28deg); }
-.gsteps li:nth-child(2) .gdot::before { opacity: .52; transform: rotate(12deg); }
-.gsteps li:nth-child(3) .gdot::before { opacity: .76; transform: rotate(-8deg); }
-.gsteps li:nth-child(4) .gdot::before { opacity: 1; transform: rotate(28deg); }
-.gsteps li.ok { opacity: .58; }
-.gsteps li.ok .gdot::before { background: var(--yellow); }
+.gdot { width: 54px; height: 28px; border: 0; border-radius: 0; background: transparent !important; color: #8a9299; }
+.gdot svg { display: block; width: 54px; height: 22px; overflow: visible; }
+.gdot path { fill: none; stroke: currentColor; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.gsteps li.ok { opacity: 1; }
+.gsteps li.ok > div { opacity: .58; }
+.gsteps li.ok .gdot { color: var(--yellow); }
+.gsteps li.ok .gdot path { fill: currentColor; stroke: currentColor; }
 
 /* Dashboard content is open and editorial; the quick action remains prominent. */
 .quick { background: var(--soft-bg); border: 0; border-radius: 10px; padding: 28px; }
@@ -532,7 +532,7 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
 <div class="site-shell">
 <header class="top">
   <div class="wrap top-in">
-    <div class="logo"><span class="logo-mark" aria-hidden="true"><i></i><i></i><i></i></span><span class="logo-word">Next Move</span></div>
+    <div class="logo"><span class="logo-mark" aria-hidden="true"><svg class="chevrons" viewBox="0 0 56 22"><path fill="currentColor" d="M0 2h9l10 9-10 9H0l10-9z"/><path fill="currentColor" d="M18 2h9l10 9-10 9h-9l10-9z"/><path fill="currentColor" d="M36 2h9l10 9-10 9h-9l10-9z"/></svg></span><span class="logo-word">Next Move</span></div>
     <nav class="tabs" id="tabs" aria-label="Main" hidden>
       <a href="#dashboard" data-tab="dashboard">Dashboard</a>
       <a href="#jobs" data-tab="jobs">Jobs</a>
@@ -1092,7 +1092,7 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     if (hidden || done === steps.length) return "";
     return '<section class="card guide"><div class="card-h"><h3>Get started</h3><span class="count">' + done + " of " + steps.length + ' done · <button type="button" class="link" data-act="guide-hide">Hide</button></span></div>' +
       '<div class="gbar"><i style="width:' + Math.round(100 * done / steps.length) + '%"></i></div><ol class="gsteps">' + steps.map(function (x) {
-        return '<li class="' + (x[2] ? "ok" : x === next ? "next" : "") + '"><span class="gdot" aria-hidden="true">' + (x[2] ? "✓" : "") + "</span><div><b>" + x[0] + "</b><span>" + x[1] + "</span></div>" + (x === next ? x[3] : "") + "</li>";
+        return '<li class="' + (x[2] ? "ok" : x === next ? "next" : "") + '"><span class="gdot" aria-hidden="true"><svg class="chevrons" viewBox="0 0 56 22"><path d="M0 2h9l10 9-10 9H0l10-9z"/><path d="M18 2h9l10 9-10 9h-9l10-9z"/><path d="M36 2h9l10 9-10 9h-9l10-9z"/></svg></span><div><b>' + x[0] + "</b><span>" + x[1] + "</span></div>" + (x === next ? x[3] : "") + "</li>";
       }).join("") + "</ol></section>";
   }
 
