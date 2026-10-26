@@ -59,7 +59,7 @@ button.small { padding: 4px 12px; font-size: .85rem; }
 input, select, textarea { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; width: 100%; min-width: 0; }
 textarea { resize: vertical; }
 label { display: grid; gap: 6px; font-size: .9rem; font-weight: 500; }
-label .hint { font-weight: 400; color: var(--muted); font-size: .85rem; }
+label .hint, .or .hint { font-weight: 400; color: var(--muted); font-size: .85rem; }
 
 /* Header */
 .top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); }
@@ -71,6 +71,7 @@ label .hint { font-weight: 400; color: var(--muted); font-size: .85rem; }
 .tabs a:hover { color: var(--ink); background: var(--soft-bg); }
 .tabs a[aria-current="page"] { color: var(--accent-ink); background: var(--tint); font-weight: 700; }
 #btnAdd { margin-left: auto; white-space: nowrap; }
+#btnAdd[hidden] + .acct { margin-left: auto; }
 
 main { padding-block: 28px 48px; display: grid; gap: 24px; }
 main > * { min-width: 0; }
@@ -93,17 +94,21 @@ main > * { min-width: 0; }
 .stat.hero b { color: var(--accent-ink); }
 
 /* Welcome */
-.welcome { display: grid; gap: 20px; padding-block: 12px; max-width: 760px; }
-.welcome h2 { font-size: 2.2rem; }
-.welcome .lead { color: var(--muted); font-size: 1.1rem; max-width: 56ch; }
-.how { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-.how div { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; font-size: .92rem; }
-.how b { display: block; margin-bottom: 2px; }
-.drop { position: relative; display: grid; gap: 6px; justify-items: center; text-align: center; border: 2px dashed var(--line); border-radius: 16px; padding: 32px 20px; background: var(--card); cursor: pointer; font-weight: 400; font-size: 1rem; }
+.start { display: grid; gap: 20px; justify-items: center; padding-block: 24px; }
+.start-card { width: 100%; max-width: 440px; display: grid; gap: 14px; padding: 28px; }
+.start-card h2 { font-size: 1.7rem; text-align: center; }
+.start-card > p.muted { text-align: center; margin-top: -6px; }
+.start #profileBox { width: 100%; max-width: 760px; }
+.start #profileBox:empty { display: none; }
+button.wide { width: 100%; justify-content: center; text-align: center; }
+.start-card .swap { text-align: center; margin: 0; }
+.start-card .or { display: grid; justify-items: center; gap: 2px; margin: 0; padding-top: 12px; border-top: 1px solid var(--line); }
+.start-card .or button.link { text-align: center; }
+.drop { position: relative; display: grid; gap: 8px; justify-items: center; text-align: center; border: 2px dashed var(--line); border-radius: 16px; padding: 24px 16px; background: var(--card); cursor: pointer; font-weight: 400; font-size: 1rem; }
 .drop:hover, .drop.over { border-color: var(--accent); background: var(--tint); }
 .drop strong { font-size: 1.1rem; }
 .drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-.drop .btnlike { margin-top: 8px; background: var(--accent); color: var(--on-accent); border-radius: 999px; padding: 9px 18px; font-weight: 700; }
+.drop .btnlike { background: var(--accent); color: var(--on-accent); border-radius: 999px; padding: 9px 18px; font-weight: 700; }
 .status:empty { display: none; }
 .status.err { color: var(--late); }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -159,8 +164,7 @@ details[open] summary { margin-bottom: 10px; }
 .rt-r > button { justify-self: end; white-space: nowrap; }
 .m-lbl { display: none; }
 .acct { width: 38px; height: 38px; padding: 0; border-radius: 50%; background: var(--tint); color: var(--accent-ink); border: 0; font-weight: 700; flex: none; }
-.auth .card { max-width: 440px; }
-.auth .seg { justify-self: start; }
+.acct.signin { width: auto; border-radius: 999px; padding: 0 14px; }
 #syncState { color: var(--muted); }
 .check { display: flex; gap: 10px; align-items: center; font-weight: 500; }
 .check input { width: 18px; height: 18px; accent-color: var(--accent); }
@@ -284,11 +288,10 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
 }
 @media (max-width: 600px) {
   h2 { font-size: 1.7rem; }
-  .welcome h2 { font-size: 1.9rem; }
   .top-in { flex-wrap: wrap; gap: 8px 12px; }
   .tabs { order: 3; width: 100%; overflow-x: auto; }
   .tabs a { padding: 6px 12px; }
-  .how, .form-grid, .controls { grid-template-columns: minmax(0, 1fr); }
+  .form-grid, .controls { grid-template-columns: minmax(0, 1fr); }
   .job { grid-template-columns: auto minmax(0, 1fr); }
   .job > select { grid-column: 2; justify-self: start; }
   .mini .job > .count { display: none; }
@@ -382,8 +385,9 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   var jobs = [], me = null, storageOK = true, version = 0;
   // ---------- Accounts (Supabase) ----------
   // Public project values; the anon key is meant to be shipped in the page. Row-level security keeps each person's row private.
-  var SB = window.NEXTMOVE_SUPABASE || { url: "", key: "" };
-  var AUTH = !!(SB.url && SB.key), SESSION_KEY = "nextmove.v3.session";
+  var SB = window.NEXTMOVE_SUPABASE || { url: "https://lkibysofamxxzadtjhvs.supabase.co", key: "sb_publishable_zmVYvcoEPkKzNd7lF4NcKg_pAaR1aRU" };
+  var AUTH = !!(SB.url && SB.key), SESSION_KEY = "nextmove.v3.session", GUEST_KEY = "nextmove.v3.guest";
+  var guest = false; // "Continue without an account": data stays in this browser only
   var session = null, sync = { timer: null, dirty: false, busy: false };
   function k(base) { return AUTH && session ? base + "." + session.user.id : base; }
   function sbFetch(path, opts) {
@@ -417,6 +421,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
       setSession(j);
     });
   }
+  function setGuest(on) { guest = on; try { if (on) localStorage.setItem(GUEST_KEY, "1"); else localStorage.removeItem(GUEST_KEY); } catch (e) {} }
   function signOut() {
     var old = session;
     clearTimeout(sync.timer);
@@ -462,12 +467,17 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   function writeLocal() { try { localStorage.setItem(k(KEY), JSON.stringify(jobs)); localStorage.setItem(k(PROFILE_KEY), JSON.stringify(me)); } catch (e) {} }
 
   function renderAuth() {
-    return '<section class="welcome auth"><h2>Your job search, in one place.</h2>' +
-      '<p class="lead">Sign in to NextMove. Your jobs and resume are saved to your account, so they\'re there on any device.</p>' +
-      '<form class="card" id="authForm" novalidate><div class="seg" role="group" aria-label="Sign in or create an account"><a href="#" data-auth="in"' + (ui.authMode !== "up" ? ' aria-current="page"' : "") + '>Sign in</a><a href="#" data-auth="up"' + (ui.authMode === "up" ? ' aria-current="page"' : "") + ">Create an account</a></div>" +
+    var up = ui.authMode === "up";
+    return '<section class="start"><form class="card start-card" id="authForm" novalidate>' +
+      '<h2>' + (up ? "Create your account" : "Welcome to NextMove") + '</h2>' +
+      '<p class="muted">' + (up ? "Your jobs and resume are saved to your account, so they're there on any device." : "Track every application and see how well your resume fits each job.") + '</p>' +
       '<label>Email<input id="au-email" type="email" autocomplete="email" required></label>' +
-      '<label>Password' + (ui.authMode === "up" ? ' <span class="hint">At least 6 characters.</span>' : "") + '<input id="au-pw" type="password" autocomplete="' + (ui.authMode === "up" ? "new-password" : "current-password") + '" required minlength="6"></label>' +
-      '<p class="err" id="au-err" role="alert" hidden></p><div class="actions"><button type="submit" class="primary" id="au-go">' + (ui.authMode === "up" ? "Create my account" : "Sign in") + "</button></div></form></section>";
+      '<label>Password' + (up ? ' <span class="hint">At least 6 characters.</span>' : "") + '<input id="au-pw" type="password" autocomplete="' + (up ? "new-password" : "current-password") + '" required minlength="6"></label>' +
+      '<p class="err" id="au-err" role="alert" hidden></p>' +
+      '<button type="submit" class="primary wide" id="au-go">' + (up ? "Create my account" : "Sign in") + '</button>' +
+      '<p class="swap">' + (up ? 'Already have an account? <a href="#" data-auth="in">Sign in</a>' : 'New here? <a href="#" data-auth="up">Create an account</a>') + '</p>' +
+      '<p class="or"><button type="button" class="link" data-act="guest">Continue without an account</button><span class="hint">Your data stays in this browser only.</span></p>' +
+      '</form></section>';
   }
   function wireAuth(root) {
     var f = $("#authForm", root);
@@ -479,6 +489,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
       if (pw.length < 6) return fail("Your password needs at least 6 characters.");
       er.hidden = true; btn.disabled = true; btn.textContent = ui.authMode === "up" ? "Creating your account…" : "Signing in…";
       signIn(email, pw, ui.authMode === "up").then(function () {
+        setGuest(false);
         jobs = []; me = null; load(); render(); pull();
       }).catch(function (err) {
         btn.disabled = false; btn.textContent = ui.authMode === "up" ? "Create my account" : "Sign in";
@@ -943,8 +954,10 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   function go(h) { if (location.hash === h) render(); else location.hash = h; }
 
   function render() {
-    var gate = AUTH && !session;
-    $("#btnAcct").hidden = !session; if (session) { $("#btnAcct").textContent = session.user.email.charAt(0).toUpperCase(); $("#btnAcct").title = "Signed in as " + session.user.email; $("#btnAcct").setAttribute("aria-label", "Account: " + session.user.email); }
+    var gate = AUTH && !session && !guest;
+    $("#btnAcct").hidden = !session && !(AUTH && guest); $("#btnAcct").classList.toggle("signin", !session);
+    if (!session) { $("#btnAcct").textContent = "Sign in"; $("#btnAcct").title = "Sign in to save your jobs to an account"; $("#btnAcct").setAttribute("aria-label", "Sign in"); }
+    if (session) { $("#btnAcct").textContent = session.user.email.charAt(0).toUpperCase(); $("#btnAcct").title = "Signed in as " + session.user.email; $("#btnAcct").setAttribute("aria-label", "Account: " + session.user.email); }
     $("#storeNote").textContent = session ? "Saved to your NextMove account. Your Claude API key stays only in this browser." : gate ? "Each account's jobs and resume are private to that account." : "Saved privately in this browser on this device. Your resume is never uploaded, except to Anthropic when you choose AI tailoring.";
     if (gate) { $("#btnAdd").hidden = true; $("#tabs").hidden = true; $("#btnSamples").hidden = true; setSync(""); $("#view").innerHTML = renderAuth(); wireAuth($("#view")); return; }
     var welcome = !me && !jobs.length && !ui.skippedWelcome, r = route();
@@ -963,16 +976,17 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
 
   // ---------- Welcome ----------
   function renderWelcome() {
-    return '<section class="welcome"><h2>Let\'s set up your job search.</h2>' +
-      '<p class="lead">Upload your resume. NextMove scores how qualified you are for each job from 1 to 100, helps you tailor your resume to each posting, and tells you what to do next.</p>' +
-      '<div class="how"><div><b>1. Your resume</b>We read your skills, experience, and education.</div><div><b>2. Save jobs</b>Paste a posting and we fill in the details and score it.</div><div><b>3. Tailor and apply</b>Rewrite your resume for each job, then track it on your dashboard.</div></div>' +
-      uploadBox() + '<div id="profileBox"></div>' +
-      '<p class="muted"><button type="button" class="link" data-act="sample-all">Try it with a sample resume and jobs</button> · <button type="button" class="link" data-act="skip">Skip for now</button></p>' +
-      (storageOK ? "" : '<p class="err">This browser is blocking storage, so nothing will be saved after you close the tab.</p>') + "</section>";
+    return '<section class="start"><div class="card start-card">' +
+      '<h2>Start with your resume</h2>' +
+      '<p class="muted">NextMove reads your skills and scores how well you fit each job you save.</p>' +
+      uploadBox() +
+      '<button type="button" class="wide" data-act="sample-all">Try a demo with a sample resume</button>' +
+      '<p class="or"><button type="button" class="link" data-act="skip">Skip for now</button></p>' +
+      (storageOK ? "" : '<p class="err">This browser is blocking storage, so nothing will be saved after you close the tab.</p>') +
+      '</div><div id="profileBox"></div></section>';
   }
   function uploadBox() {
-    return '<label class="drop" id="drop"><strong>Upload your resume</strong><span class="muted">PDF, Word (.docx), or .txt. It stays on this device.</span>' +
-      '<span class="btnlike">Choose file</span><input id="resumeFile" type="file" accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"></label>' +
+    return '<label class="drop" id="drop"><span class="btnlike">Upload my resume</span><span class="muted">PDF, Word, or .txt. Or drop the file here.</span><input id="resumeFile" type="file" accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"></label>' +
       '<p class="status" id="upStatus" aria-live="polite"></p>';
   }
   function wireUpload(root, isWelcome) {
@@ -1010,6 +1024,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
       '<label class="full">Skills <span class="hint">Add anything I missed, separated by commas.</span><textarea id="p-skills" rows="2">' + esc(skills.join(", ")) + "</textarea></label>" +
       '<details class="full"><summary>Resume text (what the score and AI read)</summary><textarea id="p-text" rows="10">' + esc(p.resumeText) + "</textarea></details></div>" +
       '<div class="actions"><button type="button" class="primary" id="p-save">' + (isWelcome ? "Looks good, take me to my dashboard" : "Save") + "</button></div></div>";
+    if (isWelcome) { var sc = $(".start-card", root); if (sc) sc.hidden = true; window.scrollTo(0, 0); }
     $("#p-save", root).addEventListener("click", function () {
       var y = $("#p-years", root).value.trim();
       me = { name: $("#p-name", root).value.trim(), locations: $("#p-loc", root).value.trim(), roles: $("#p-roles", root).value.trim(),
@@ -1431,7 +1446,8 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   document.addEventListener("click", function (e) {
     var t = e.target;
     var am = t.closest("[data-auth]"); if (am) { e.preventDefault(); ui.authMode = am.dataset.auth; render(); return; }
-    if (t.closest("#btnAcct")) { go("#resume"); return; }
+    if (t.closest("#btnAcct")) { if (session) go("#resume"); else { setGuest(false); ui.authMode = "in"; render(); } return; }
+    if (t.closest("[data-act='guest']")) { setGuest(true); ui.skippedWelcome = false; load(); render(); return; }
     if (t.closest("#btnAdd") || t.closest("[data-act='add']")) { openJob(null); return; }
     if (t.closest("#btnSamples") || t.closest("[data-act='samples']")) { toggleSamples(); return; }
     if (t.closest("[data-act='sample-all']")) { me = sampleProfile(); saveMe(); jobs = samples().concat(jobs); save(); go("#dashboard"); toast("Loaded a sample resume and 6 sample jobs."); return; }
@@ -1485,6 +1501,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
 
   // Boot: with accounts on, show the cached copy right away, then load the latest from the account.
   if (AUTH) { try { session = JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); } catch (e) { session = null; } }
+  if (AUTH && !session) { try { guest = localStorage.getItem(GUEST_KEY) === "1"; } catch (e) {} }
   load();
   render();
   if (session) pull();
