@@ -285,6 +285,8 @@ details.how-todos ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 
 .fit.mid { color: var(--warn); } .fit.low { color: var(--muted); }
 .jt-c { font-size: .92rem; display: grid; min-width: 0; overflow-wrap: anywhere; }
 .jt-c small { color: var(--muted); font-size: .82rem; }
+.jt-c small.mine, .jt-job .mine-s { color: var(--accent-ink); font-weight: 600; font-size: .82rem; }
+.jt-job .mine-s { display: none; }
 select.st { width: 100%; border-radius: 999px; padding: 6px 10px; font-size: .88rem; font-weight: 700; border: 0; background-color: var(--soft-bg); color: var(--ink); }
 select.st-saved { background-color: #e8eef7; color: #2c4a73; }
 select.st-applied { background-color: var(--warn-tint); color: var(--warn); }
@@ -393,6 +395,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   .controls.board-c { grid-template-columns: minmax(0, 1fr); }
   .jt-h .hide-s, .jt-r .hide-s { display: none; }
   .factors { grid-template-columns: minmax(0, 1fr); }
+  .jt-job .mine-s { display: block; }
   .jt-h { display: none; }
   .jt-r { grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; padding: 12px 4px; }
   .jt-r > :first-child { grid-row: span 3; align-self: start; }
@@ -902,7 +905,26 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     ];
     return rows.map(function (r) { var o = blank(); Object.keys(r).forEach(function (k) { o[k] = r[k]; }); o.sample = true; return o; });
   }
-  function sampleProfile() { var p = parseResume(SAMPLE_RESUME); p.resumeName = "Sample resume (Jordan Lee)"; p.skills = p.skills.join(", "); p.roles = "data analyst, business analyst"; p.sample = true; return p; }
+  function sampleProfile() { var p = parseResume(SAMPLE_RESUME); p.resumeName = "Sample resume (Jordan Lee)"; p.skills = p.skills.join(", "); p.roles = "data analyst, business analyst"; p.locations = "San Luis Obispo, Bay Area, Remote"; p.sample = true; return p; }
+
+  // ---------- Places you'd like to live ----------
+  // A few common regions expand to their cities; a state ("CA" or "California") matches any city in it.
+  var REGIONS = { "bay area": ["san francisco", "oakland", "san jose", "berkeley", "palo alto", "mountain view", "sunnyvale", "menlo park", "redwood city", "santa clara", "san mateo", "fremont", "emeryville"],
+    "sf": ["san francisco"], "la": ["los angeles", "santa monica", "pasadena", "burbank", "culver city", "long beach", "irvine"], "los angeles": ["los angeles", "santa monica", "pasadena", "burbank", "culver city", "long beach"],
+    "nyc": ["new york", "brooklyn", "manhattan"], "new york": ["new york", "brooklyn", "manhattan"], "dc": ["washington", "arlington", "alexandria"], "slo": ["san luis obispo"], "central coast": ["san luis obispo", "santa barbara", "paso robles", "santa maria", "monterey"],
+    "seattle": ["seattle", "bellevue", "redmond", "kirkland"], "san diego": ["san diego", "la jolla", "carlsbad"] };
+  var STATES = { california: "CA", oregon: "OR", washington: "WA", texas: "TX", "new york": "NY", colorado: "CO", arizona: "AZ", nevada: "NV", illinois: "IL", massachusetts: "MA", florida: "FL", georgia: "GA", utah: "UT", "north carolina": "NC" };
+  function myPlaces() { return me ? splitList(me.locations) : []; }
+  function inMyPlaces(o) {
+    var loc = (o.location || "").toLowerCase(), places = myPlaces();
+    return places.some(function (pl) {
+      var p = pl.toLowerCase().trim();
+      if (p === "remote") return o.arrangement === "Remote" || /remote/.test(loc);
+      var st = STATES[p] || (/^[a-z]{2}$/.test(p) && p !== "la" && p !== "sf" && p !== "dc" ? p.toUpperCase() : "");
+      if (st && new RegExp(",\\s*" + st + "\\b", "i").test(o.location || "")) return true;
+      return (REGIONS[p] || [p]).some(function (c) { return c && loc.indexOf(c) >= 0; });
+    });
+  }
 
   // ---------- To-dos ----------
   // Every reminder comes from a column of the Career Services spreadsheet that students had to track by hand.
@@ -1120,7 +1142,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
       (skills.length ? '<div class="chips">' + skills.map(function (s) { return '<span class="chip">' + esc(s) + "</span>"; }).join("") + "</div>" : '<p class="muted">I didn\'t spot any common analytics skills. Add yours below.</p>') +
       '<div class="form-grid">' +
       '<label>First name<input id="p-name" value="' + esc(p.name) + '"></label>' +
-      '<label>Where do you want to work?<input id="p-loc" value="' + esc(p.locations) + '" placeholder="e.g. San Francisco, Remote"></label>' +
+      '<label>Places you\'d like to live <span class="hint">Separate with commas. Cities, regions like Bay Area, states, or Remote.</span><input id="p-loc" value="' + esc(p.locations) + '" placeholder="e.g. San Luis Obispo, Bay Area, Seattle, Remote"></label>' +
       '<label>Years of work experience <span class="hint">Estimated from the dates on your resume.</span><input id="p-years" type="number" min="0" max="50" step="0.5" value="' + esc(p.years == null ? "" : p.years) + '"></label>' +
       '<label>Highest degree <span class="hint">In progress counts.</span><select id="p-degree">' + deg + "</select></label>" +
       '<label class="full">What roles are you looking for?<input id="p-roles" value="' + esc(p.roles) + '" placeholder="e.g. data analyst, business analyst"></label>' +
@@ -1317,19 +1339,22 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   }
   // Status tabs work in both views. "active" = everything not rejected or withdrawn.
   var FILTERS = [["active", "Active"], ["saved", "Saved"], ["applied", "Applied"], ["interviewing", "Interviewing"], ["offer", "Offer"], ["closed", "Closed"], ["all", "All"]];
-  function inFilter(o, f) { return f === "all" ? true : f === "active" || f === "open" ? !CLOSED[o.status] : f === "closed" ? !!CLOSED[o.status] : o.status === f; }
+  function inFilter(o, f) { return f === "places" ? !CLOSED[o.status] && inMyPlaces(o) : f === "all" ? true : f === "active" || f === "open" ? !CLOSED[o.status] : f === "closed" ? !!CLOSED[o.status] : o.status === f; }
   function renderJobsPage() {
     var board = ui.view === "board";
     if (ui.filter === "open") ui.filter = "active";
     var h = '<section class="hello"><h2>Your applications</h2><p>' + (board ? "Drag a job to a new column when its status changes (on a phone, use the menu on each card)." : "Click a column name to sort. Click a job to see your match, tailor your resume, and add notes.") + "</p></section>";
     h += '<section class="card jobs-card">';
-    if (jobs.length) h += '<nav class="ftabs" aria-label="Filter by status">' + FILTERS.map(function (f) {
+    var tabs = myPlaces().length ? FILTERS.concat([["places", "📍 My places"]]) : FILTERS;
+    if (ui.filter === "places" && !myPlaces().length) ui.filter = "active";
+    if (jobs.length) h += '<nav class="ftabs" aria-label="Filter by status">' + tabs.map(function (f) {
         var n = jobs.filter(function (o) { return inFilter(o, f[0]); }).length;
         return '<button type="button" data-ftab="' + f[0] + '"' + (ui.filter === f[0] ? ' aria-pressed="true"' : ' aria-pressed="false"') + ">" + f[1] + " <span>" + n + "</span></button>";
       }).join("") + "</nav>" +
       '<div class="jtools"><input id="q" type="search" aria-label="Search your jobs" placeholder="Search company, title, location, or notes" value="' + esc(ui.q) + '">' +
       '<div class="seg" role="group" aria-label="View"><a href="#jobs" data-view="list"' + (board ? "" : ' aria-current="page"') + '>Table</a><a href="#jobs" data-view="board"' + (board ? ' aria-current="page"' : "") + ">Board</a></div>" +
       '<select id="sort" class="show-s" aria-label="Sort">' + [["score", "Best match first"], ["deadline", "Deadline soonest"], ["next", "Next step soonest"], ["company", "Company A–Z"], ["status", "Status"], ["updated", "Recently updated"]].map(function (x) { return '<option value="' + x[0] + '"' + (ui.sort === x[0] ? " selected" : "") + ">" + x[1] + "</option>"; }).join("") + "</select></div>";
+    if (ui.filter === "places") h += '<p class="note">Your places: ' + esc(myPlaces().join(" · ")) + ' · <a href="#resume">Edit</a></p>';
     return h + '<p class="count" id="jobCount"></p><div class="jobs" id="jobs"></div></section>';
   }
   var SORTS = { score: function (o) { var r = scoreJob(o); return r ? r.score : -1; }, company: function (o) { return (o.company || "").toLowerCase(); },
@@ -1351,9 +1376,9 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
       list.map(function (o) {
         var r = scoreJob(o);
         return '<div class="jt-r" tabindex="0" data-go="#job/' + esc(o.id) + '">' + scoreDot(o) +
-          '<div class="jt-job"><b>' + esc(o.company || "Untitled") + "</b><span>" + esc(o.title) + (r ? ' · <em class="fit ' + band(r.score) + '">' + verdict(r.score) + "</em>" : "") + "</span></div>" +
+          '<div class="jt-job"><b>' + esc(o.company || "Untitled") + "</b><span>" + esc(o.title) + (r ? ' · <em class="fit ' + band(r.score) + '">' + verdict(r.score) + "</em>" : "") + "</span>" + (inMyPlaces(o) ? '<span class="mine-s">📍 One of your places</span>' : "") + "</div>" +
           '<div><select class="st st-' + esc(o.status) + '" aria-label="Status for ' + esc(o.company) + '" data-status="' + esc(o.id) + '">' + STATUSES.map(function (s) { return '<option value="' + s[0] + '"' + (s[0] === o.status ? " selected" : "") + ">" + s[1] + "</option>"; }).join("") + "</select></div>" +
-          '<span class="jt-c hide-s">' + (esc(o.location) || '<span class="muted">—</span>') + (o.arrangement && o.arrangement !== o.location ? '<small>' + esc(o.arrangement) + "</small>" : "") + "</span>" +
+          '<span class="jt-c hide-s">' + (esc(o.location) || '<span class="muted">—</span>') + (o.arrangement && o.arrangement !== o.location ? '<small>' + esc(o.arrangement) + "</small>" : "") + (inMyPlaces(o) ? '<small class="mine">📍 Your place</small>' : "") + "</span>" +
           '<span class="jt-c hide-s">' + (o.deadline ? fmt(o.deadline) + (o.status === "saved" ? "<small>" + when(o.deadline) + "</small>" : "") : '<span class="muted">—</span>') + "</span>" +
           '<span class="jt-c jt-next">' + nextText(o) + "</span></div>";
       }).join("") + "</div>";
@@ -1390,7 +1415,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     var addLink = function (lbl, f) { return '<button type="button" class="link" data-edit="' + esc(o.id) + '"' + (f ? ' data-focus="' + f + '"' : "") + ">" + lbl + "</button>"; };
     h += '<dl class="facts">' +
       fact("Match", r ? r.score + " / 100" : "–", r ? verdict(r.score) : "Needs your resume and the posting") +
-      fact("Location", esc(o.location) || addLink("Add", "f-location"), esc(o.arrangement)) +
+      fact("Location", esc(o.location) || addLink("Add", "f-location"), esc(o.arrangement) + (myPlaces().length ? (o.arrangement ? " · " : "") + (inMyPlaces(o) ? "📍 One of your places" : "Not in your places") : "")) +
       fact(o.status === "saved" ? "Apply by" : "Applied", o.status === "saved" ? (o.deadline ? fmt(o.deadline) : "No deadline") : (o.appliedDate ? fmt(o.appliedDate) : "–"),
         o.status === "saved" ? (o.deadline ? when(o.deadline) : "") : (o.deadline ? "Closed " + fmt(o.deadline) : "")) +
       fact("Next step", nextText(o)) +
