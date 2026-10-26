@@ -59,7 +59,7 @@ button.small { padding: 4px 12px; font-size: .85rem; }
 input, select, textarea { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; width: 100%; min-width: 0; }
 textarea { resize: vertical; }
 label { display: grid; gap: 6px; font-size: .9rem; font-weight: 500; }
-label .hint { font-weight: 400; color: var(--muted); font-size: .85rem; }
+label .hint, .or .hint { font-weight: 400; color: var(--muted); font-size: .85rem; }
 
 /* Header */
 .top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); }
@@ -71,6 +71,7 @@ label .hint { font-weight: 400; color: var(--muted); font-size: .85rem; }
 .tabs a:hover { color: var(--ink); background: var(--soft-bg); }
 .tabs a[aria-current="page"] { color: var(--accent-ink); background: var(--tint); font-weight: 700; }
 #btnAdd { margin-left: auto; white-space: nowrap; }
+#btnAdd[hidden] + .acct { margin-left: auto; }
 
 main { padding-block: 28px 48px; display: grid; gap: 24px; }
 main > * { min-width: 0; }
@@ -79,6 +80,31 @@ main > * { min-width: 0; }
 
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 22px; display: grid; gap: 14px; min-width: 0; align-content: start; }
 .card-h { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.home { display: grid; gap: 20px; max-width: 760px; width: 100%; margin-inline: auto; }
+.hero { display: grid; gap: 26px; padding: 34px 36px; border-radius: 24px; color: #fff;
+  background: radial-gradient(circle at 100% 0%, rgba(255,255,255,.12), transparent 45%), linear-gradient(135deg, #1d4b36 0%, #2f6e4e 60%, #3f8a62 100%); box-shadow: var(--shadow); }
+.hero-main { display: grid; gap: 10px; justify-items: start; min-width: 0; }
+.hero .eyebrow { margin: 0; text-transform: uppercase; letter-spacing: .08em; font-size: .8rem; font-weight: 700; color: #cfe8da; }
+.hero h2 { font-size: 2.3rem; line-height: 1.1; letter-spacing: -0.02em; color: #fff; overflow-wrap: anywhere; }
+.hero-sub { margin: 0; color: #e2f0e8; font-size: 1.05rem; }
+.hero .when, .hero .when.soon, .hero .when.late { color: #fff; background: rgba(255,255,255,.16); padding: 1px 8px; border-radius: 999px; font-weight: 700; }
+.hero-btn { margin-top: 6px; background: #fff; color: #1d4b36; border: 0; border-radius: 999px; padding: 12px 22px; font-weight: 700; font-size: 1rem; }
+.hero-btn:hover { background: #e9f5ee; }
+.hero-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.hero-stats a { display: grid; align-content: start; text-decoration: none; color: #fff; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.14); border-radius: 16px; padding: 12px 18px; }
+.hero-stats a:hover { background: rgba(255,255,255,.18); }
+.hero-stats b { font-size: 2rem; line-height: 1; letter-spacing: -0.02em; min-width: 2.2ch; }
+.hero-stats span { font-weight: 600; }
+.hero-stats small { color: #cfe8da; font-size: .85rem; }
+.upnext .see-all { display: inline-block; margin-top: 10px; font-weight: 700; color: var(--accent-ink); }
+.mini { display: grid; gap: 6px; }
+.mini-r { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; text-align: left; background: none; border: 0; border-radius: 12px; padding: 8px; font-weight: 400; }
+.mini-r:hover { background: var(--soft-bg); }
+.mini-r span { display: grid; min-width: 0; }
+.mini-r small { color: var(--muted); font-size: .88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+button.link.more { justify-self: start; margin-top: 8px; font-weight: 700; }
+.bcol button.link.more { justify-self: center; margin: 4px 0; }
+.jobs > button.link.more { margin: 12px auto 0; display: block; }
 .grid2 { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 24px; align-items: start; }
 .grid2 > * { min-width: 0; }
 .narrow { max-width: 760px; }
@@ -93,17 +119,21 @@ main > * { min-width: 0; }
 .stat.hero b { color: var(--accent-ink); }
 
 /* Welcome */
-.welcome { display: grid; gap: 20px; padding-block: 12px; max-width: 760px; }
-.welcome h2 { font-size: 2.2rem; }
-.welcome .lead { color: var(--muted); font-size: 1.1rem; max-width: 56ch; }
-.how { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-.how div { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; font-size: .92rem; }
-.how b { display: block; margin-bottom: 2px; }
-.drop { position: relative; display: grid; gap: 6px; justify-items: center; text-align: center; border: 2px dashed var(--line); border-radius: 16px; padding: 32px 20px; background: var(--card); cursor: pointer; font-weight: 400; font-size: 1rem; }
+.start { display: grid; gap: 20px; justify-items: center; padding-block: 24px; }
+.start-card { width: 100%; max-width: 440px; display: grid; gap: 14px; padding: 28px; }
+.start-card h2 { font-size: 1.7rem; text-align: center; }
+.start-card > p.muted { text-align: center; margin-top: -6px; }
+.start #profileBox { width: 100%; max-width: 760px; }
+.start #profileBox:empty { display: none; }
+button.wide { width: 100%; justify-content: center; text-align: center; }
+.start-card .swap { text-align: center; margin: 0; }
+.start-card .or { display: grid; justify-items: center; gap: 2px; margin: 0; padding-top: 12px; border-top: 1px solid var(--line); }
+.start-card .or button.link { text-align: center; }
+.drop { position: relative; display: grid; gap: 8px; justify-items: center; text-align: center; border: 2px dashed var(--line); border-radius: 16px; padding: 24px 16px; background: var(--card); cursor: pointer; font-weight: 400; font-size: 1rem; }
 .drop:hover, .drop.over { border-color: var(--accent); background: var(--tint); }
 .drop strong { font-size: 1.1rem; }
 .drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-.drop .btnlike { margin-top: 8px; background: var(--accent); color: var(--on-accent); border-radius: 999px; padding: 9px 18px; font-weight: 700; }
+.drop .btnlike { background: var(--accent); color: var(--on-accent); border-radius: 999px; padding: 9px 18px; font-weight: 700; }
 .status:empty { display: none; }
 .status.err { color: var(--late); }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -122,6 +152,16 @@ details[open] summary { margin-bottom: 10px; }
 .task:first-child { border-top: 0; padding-top: 2px; }
 .task .what { font-weight: 500; }
 .task .who { color: var(--muted); font-size: .9rem; overflow-wrap: anywhere; }
+.task .why { color: var(--muted); font-size: .82rem; font-style: italic; }
+.hero-why { display: block; margin-top: 6px; font-size: .9rem; color: #cfe8da; }
+details.how-todos { font-size: .9rem; color: var(--muted); margin-bottom: 6px; }
+details.how-todos summary { cursor: pointer; font-weight: 700; color: var(--accent-ink); }
+details.how-todos ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 3px; }
+.fromlink { display: grid; gap: 6px; background: var(--tint); border-radius: 14px; padding: 14px; }
+.fromlink .row { display: flex; gap: 8px; }
+.fromlink .row input { flex: 1; min-width: 0; }
+.fromlink .row button { white-space: nowrap; }
+.or-line { text-align: center; color: var(--muted); font-size: .85rem; margin: 2px 0; }
 .done { width: 22px; height: 22px; padding: 0; border-radius: 50%; border: 2px solid var(--accent); background: transparent; }
 .done:hover { background: var(--tint); }
 .when { font-size: .85rem; color: var(--muted); white-space: nowrap; }
@@ -131,6 +171,22 @@ details[open] summary { margin-bottom: 10px; }
 
 /* Pipeline */
 .pipe { display: grid; gap: 10px; }
+.analysis { gap: 14px; }
+.lead-stat { margin: 0; font-size: 1.05rem; } .lead-stat b { font-size: 1.6rem; color: var(--accent-ink); margin-right: 4px; }
+.factors { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.factor { border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 8px; }
+.factor-h { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.tagg { font-size: .75rem; font-weight: 700; border-radius: 999px; padding: 2px 9px; background: var(--soft-bg); color: var(--muted); white-space: nowrap; }
+.tagg.up { background: var(--tint); color: var(--accent-ink); }
+.cmp { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) 42px; column-gap: 10px; align-items: center; font-size: .9rem; }
+.cmp small { grid-column: 1; color: var(--muted); font-size: .8rem; margin-top: -2px; }
+.cmp .bar { height: 10px; border-radius: 999px; background: var(--soft-bg); overflow: hidden; }
+.cmp .bar i { display: block; height: 100%; border-radius: 999px; background: var(--accent); }
+.cmp b { text-align: right; }
+.tips { background: var(--tint); border-radius: 14px; padding: 14px 16px; }
+.tips h4 { margin: 0 0 6px; }
+.tips ol { margin: 0; padding-left: 20px; display: grid; gap: 8px; }
+.tips li span { display: block; color: var(--muted); font-size: .88rem; }
 .pipe button { display: grid; grid-template-columns: 96px minmax(0, 1fr) 28px; gap: 10px; align-items: center; border: 0; padding: 2px 0; border-radius: 6px; background: none; text-align: left; font-weight: 400; }
 .pipe button:hover .bar i { filter: brightness(1.1); }
 .pipe .bar { height: 10px; border-radius: 999px; background: var(--soft-bg); overflow: hidden; }
@@ -161,6 +217,9 @@ details[open] summary { margin-bottom: 10px; }
 .rt-c .when { font-size: .9rem; }
 .rt-r > button { justify-self: end; white-space: nowrap; }
 .m-lbl { display: none; }
+.acct { width: 38px; height: 38px; padding: 0; border-radius: 50%; background: var(--tint); color: var(--accent-ink); border: 0; font-weight: 700; flex: none; }
+.acct.signin { width: auto; border-radius: 999px; padding: 0 14px; }
+#syncState { color: var(--muted); }
 .check { display: flex; gap: 10px; align-items: center; font-weight: 500; }
 .check input { width: 18px; height: 18px; accent-color: var(--accent); }
 
@@ -225,6 +284,43 @@ label.needs-review::after { content: "Needs review"; color: var(--warn); font-si
 /* Job rows */
 .controls { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
 .jobs { display: grid; gap: 10px; }
+.jobs-card { gap: 14px; }
+.ftabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.ftabs button { border-radius: 999px; padding: 7px 14px; font-weight: 600; background: var(--soft-bg); border: 1px solid transparent; color: var(--ink); }
+.ftabs button span { color: var(--muted); font-weight: 500; margin-left: 2px; }
+.ftabs button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
+.ftabs button[aria-pressed="true"] span { color: inherit; opacity: .85; }
+.jtools { display: flex; gap: 10px; align-items: center; }
+.jtools input { flex: 1; min-width: 0; }
+.jobs-card > .count { margin: 0; }
+.show-s { display: none; }
+.jt { display: grid; }
+.jt-h, .jt-r { display: grid; grid-template-columns: 64px minmax(0, 2.2fr) 140px minmax(0, 1.1fr) 110px minmax(0, 1.5fr); gap: 14px; align-items: center; }
+.jt-h { padding: 0 10px 8px; border-bottom: 1px solid var(--line); }
+.jt-h .th { background: none; border: 0; padding: 4px 0; text-align: left; font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 700; border-radius: 4px; }
+.jt-h .th:hover, .jt-h .th.on { color: var(--accent-ink); }
+.jt-r { padding: 12px 10px; border-bottom: 1px solid var(--line); cursor: pointer; border-radius: 10px; }
+.jt-r:hover { background: var(--soft-bg); }
+.jt-job { display: grid; min-width: 0; }
+.jt-job b { font-size: 1.02rem; overflow-wrap: anywhere; }
+.jt-job span { color: var(--muted); font-size: .9rem; overflow-wrap: anywhere; }
+.fit { font-style: normal; font-weight: 600; color: var(--accent-ink); }
+.fit.mid { color: var(--warn); } .fit.low { color: var(--muted); }
+.jt-c { font-size: .92rem; display: grid; min-width: 0; overflow-wrap: anywhere; }
+.jt-c small { color: var(--muted); font-size: .82rem; }
+.jt-c small.mine, .jt-job .mine-s { color: var(--accent-ink); font-weight: 600; font-size: .82rem; }
+.jt-job .mine-s { display: none; }
+select.st { width: 100%; border-radius: 999px; padding: 6px 10px; font-size: .88rem; font-weight: 700; border: 0; background-color: var(--soft-bg); color: var(--ink); }
+select.st-saved { background-color: #e8eef7; color: #2c4a73; }
+select.st-applied { background-color: var(--warn-tint); color: var(--warn); }
+select.st-interviewing { background-color: #ece6f6; color: #5b3f8c; }
+select.st-offer { background-color: var(--tint); color: var(--accent-ink); }
+select.st-rejected, select.st-withdrawn { background-color: var(--soft-bg); color: var(--muted); }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 0; }
+.facts div { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; display: grid; gap: 2px; min-width: 0; }
+.facts dt { font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 700; }
+.facts dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.facts dd small { display: block; font-weight: 400; color: var(--muted); font-size: .85rem; }
 .job { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px 16px; align-items: center; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); cursor: pointer; }
 .job:hover { box-shadow: var(--shadow); }
 .job .co { font-weight: 700; font-size: 1.05rem; overflow-wrap: anywhere; }
@@ -301,15 +397,18 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
 @media (max-width: 860px) {
   .gsteps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .grid2 { grid-template-columns: minmax(0, 1fr); }
+  .hero { padding: 24px 20px; gap: 20px; border-radius: 20px; }
+  .hero-stats { gap: 6px; } .hero-stats a { padding: 10px 12px; } .hero-stats b { font-size: 1.6rem; } .hero-stats span { font-size: .85rem; } .hero-stats small { display: none; }
+  .hero h2 { font-size: 1.8rem; }
   .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 600px) {
   h2 { font-size: 1.7rem; }
-  .welcome h2 { font-size: 1.9rem; }
   .top-in { flex-wrap: wrap; gap: 8px 12px; }
   .tabs { order: 3; width: 100%; overflow-x: auto; }
-  .tabs a { padding: 6px 12px; }
-  .how, .form-grid, .controls { grid-template-columns: minmax(0, 1fr); }
+  .tabs { justify-content: space-between; gap: 0; }
+  .tabs a { padding: 6px 9px; font-size: .95rem; }
+  .form-grid, .controls { grid-template-columns: minmax(0, 1fr); }
   .job { grid-template-columns: auto minmax(0, 1fr); }
   .job > select { grid-column: 2; justify-self: start; }
   .mini .job > .count { display: none; }
@@ -319,6 +418,16 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   .bcol { scroll-snap-align: start; }
   .bc-move { display: block; width: 100%; padding: 6px 10px; font-size: .85rem; border-radius: 8px; }
   .controls.board-c { grid-template-columns: minmax(0, 1fr); }
+  .jt-h .hide-s, .jt-r .hide-s { display: none; }
+  .factors { grid-template-columns: minmax(0, 1fr); }
+  .jt-job .mine-s { display: block; }
+  .jt-h { display: none; }
+  .jt-r { grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; padding: 12px 4px; }
+  .jt-r > :first-child { grid-row: span 3; align-self: start; }
+  .jt-r select.st { width: auto; }
+  .jtools { flex-wrap: wrap; }
+  .jtools input { flex: 1 1 100%; }
+  .jtools .show-s { display: block; width: 100%; }
   .boost { grid-template-columns: 48px minmax(0, 1fr); }
   .boost > button { grid-column: 2; justify-self: start; }
   .m-lbl { display: inline; }
@@ -549,9 +658,11 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     <nav class="tabs" id="tabs" aria-label="Main" hidden>
       <a href="#dashboard" data-tab="dashboard">Dashboard</a>
       <a href="#jobs" data-tab="jobs">Jobs</a>
+      <a href="#progress" data-tab="progress">Progress</a>
       <a href="#resume" data-tab="resume">My resume</a>
     </nav>
     <button id="btnAdd" class="primary" type="button" hidden>+ Add a job</button>
+    <button id="btnAcct" class="acct" type="button" hidden></button>
   </div>
 </header>
 
@@ -608,10 +719,130 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
 
   // ---------- Storage ----------
   var jobs = [], me = null, storageOK = true, version = 0;
+  // ---------- Accounts (Supabase) ----------
+  // Public project values; the anon key is meant to be shipped in the page. Row-level security keeps each person's row private.
+  var SB = window.NEXTMOVE_SUPABASE || { url: "https://lkibysofamxxzadtjhvs.supabase.co", key: "sb_publishable_zmVYvcoEPkKzNd7lF4NcKg_pAaR1aRU" };
+  var AUTH = !!(SB.url && SB.key), SESSION_KEY = "nextmove.v3.session", GUEST_KEY = "nextmove.v3.guest";
+  var guest = false; // "Continue without an account": data stays in this browser only
+  var session = null, sync = { timer: null, dirty: false, busy: false };
+  function k(base) { return AUTH && session ? base + "." + session.user.id : base; }
+  function sbFetch(path, opts) {
+    opts = opts || {};
+    var h = { apikey: SB.key, "content-type": "application/json" };
+    Object.keys(opts.headers || {}).forEach(function (x) { h[x] = opts.headers[x]; });
+    if (session && !opts.noAuth) h.Authorization = "Bearer " + session.access_token;
+    return fetch(SB.url.replace(/\/$/, "") + path, { method: opts.method || "GET", headers: h, body: opts.body ? JSON.stringify(opts.body) : undefined }).then(function (res) {
+      return res.text().then(function (t) {
+        var j = null; try { j = t ? JSON.parse(t) : null; } catch (e) {}
+        if (!res.ok) { var err = new Error((j && (j.msg || j.error_description || j.message || j.error)) || "Error " + res.status); err.status = res.status; throw err; }
+        return j;
+      });
+    });
+  }
+  function setSession(j) {
+    if (!j || !j.access_token) throw new Error("Sign-in didn't return a session.");
+    session = { access_token: j.access_token, refresh_token: j.refresh_token, expires_at: Date.now() + (j.expires_in || 3600) * 1000,
+      user: { id: (j.user || session.user).id, email: (j.user || session.user).email } };
+    try { localStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch (e) {}
+  }
+  function refreshSession() { return sbFetch("/auth/v1/token?grant_type=refresh_token", { method: "POST", body: { refresh_token: session.refresh_token }, noAuth: true }).then(setSession); }
+  function withAuth(fn) {
+    var fresh = session.expires_at - Date.now() < 60000 ? refreshSession() : Promise.resolve();
+    return fresh.then(fn).catch(function (err) { if (err.status === 401) return refreshSession().then(fn); throw err; });
+  }
+  function signIn(email, password, create) {
+    var path = create ? "/auth/v1/signup" : "/auth/v1/token?grant_type=password";
+    return sbFetch(path, { method: "POST", body: { email: email, password: password }, noAuth: true }).then(function (j) {
+      if (create && !j.access_token) throw new Error("Account created, but this project asks people to confirm their email first. Check your inbox, then sign in.");
+      setSession(j);
+    });
+  }
+  function setGuest(on) { guest = on; try { if (on) localStorage.setItem(GUEST_KEY, "1"); else localStorage.removeItem(GUEST_KEY); } catch (e) {} }
+  function signOut() {
+    var old = session;
+    clearTimeout(sync.timer);
+    if (sync.dirty) pushNow();
+    if (old) { sbFetch("/auth/v1/logout", { method: "POST" }).catch(function () {}); try { localStorage.removeItem(k(KEY)); localStorage.removeItem(k(PROFILE_KEY)); localStorage.removeItem(SESSION_KEY); } catch (e) {} }
+    session = null; jobs = []; me = null; ui.skippedWelcome = false; version++;
+    if (location.hash) history.replaceState(null, "", location.pathname + location.search);
+    render();
+  }
+  function setSync(text) { var el = $("#syncState"); if (el) el.textContent = text; }
+  function schedulePush() { sync.dirty = true; setSync("Saving…"); clearTimeout(sync.timer); sync.timer = setTimeout(pushNow, 700); }
+  function pushNow() {
+    if (!session) return Promise.resolve();
+    sync.dirty = false;
+    var body = { user_id: session.user.id, jobs: jobs, profile: me, updated_at: new Date().toISOString() };
+    return withAuth(function () { return sbFetch("/rest/v1/user_data?on_conflict=user_id", { method: "POST", headers: { Prefer: "resolution=merge-duplicates,return=minimal" }, body: body }); })
+      .then(function () { if (!sync.dirty) setSync("Saved to your account."); })
+      .catch(function () { sync.dirty = true; setSync("Couldn't reach your account. Your changes are kept on this device and will sync when you're back online."); clearTimeout(sync.timer); sync.timer = setTimeout(pushNow, 15000); });
+  }
+  function pull(quiet) {
+    if (!session || sync.busy) return;
+    sync.busy = true; if (!quiet) setSync("Loading your jobs…");
+    withAuth(function () { return sbFetch("/rest/v1/user_data?select=jobs,profile&user_id=eq." + encodeURIComponent(session.user.id)); }).then(function (rows) {
+      sync.busy = false;
+      if (sync.dirty) return; // a local change is about to be saved; don't overwrite it
+      if (rows && rows.length) {
+        jobs = Array.isArray(rows[0].jobs) ? rows[0].jobs : []; me = rows[0].profile || null;
+        writeLocal(); version++; render(); setSync("Saved to your account."); return;
+      }
+      // New account: bring over anything saved in this browser before accounts existed.
+      var anonJobs = [], anonMe = null;
+      try { anonJobs = JSON.parse(localStorage.getItem(KEY) || "[]") || []; anonMe = JSON.parse(localStorage.getItem(PROFILE_KEY) || "null"); } catch (e) {}
+      if (anonJobs.length || anonMe) { jobs = anonJobs; me = anonMe; writeLocal(); version++; render(); }
+      pushNow().then(function () {
+        if (anonJobs.length || anonMe) { try { localStorage.removeItem(KEY); localStorage.removeItem(PROFILE_KEY); } catch (e) {} toast("Moved what was saved in this browser into your account."); }
+      });
+    }).catch(function (err) {
+      sync.busy = false;
+      if (err.status === 400 || err.status === 401) { signOut(); toast("Please sign in again."); return; }
+      setSync(err.status === 404 ? "Your account storage isn't set up yet (the user_data table is missing)." : "Couldn't reach your account. Showing what's saved on this device.");
+    });
+  }
+  function writeLocal() { try { localStorage.setItem(k(KEY), JSON.stringify(jobs)); localStorage.setItem(k(PROFILE_KEY), JSON.stringify(me)); } catch (e) {} }
+
+  function renderAuth() {
+    var up = ui.authMode === "up";
+    return '<section class="start"><form class="card start-card" id="authForm" novalidate>' +
+      '<h2>' + (up ? "Create your account" : "Welcome to NextMove") + '</h2>' +
+      '<p class="muted">' + (up ? "Your jobs and resume are saved to your account, so they're there on any device." : "Track every application and see how well your resume fits each job.") + '</p>' +
+      '<label>Email<input id="au-email" type="email" autocomplete="email" required></label>' +
+      '<label>Password' + (up ? ' <span class="hint">At least 6 characters.</span>' : "") + '<input id="au-pw" type="password" autocomplete="' + (up ? "new-password" : "current-password") + '" required minlength="6"></label>' +
+      '<p class="err" id="au-err" role="alert" hidden></p>' +
+      '<button type="submit" class="primary wide" id="au-go">' + (up ? "Create my account" : "Sign in") + '</button>' +
+      '<p class="swap">' + (up ? 'Already have an account? <a href="#" data-auth="in">Sign in</a>' : 'New here? <a href="#" data-auth="up">Create an account</a>') + '</p>' +
+      '<p class="or"><button type="button" class="link" data-act="guest">Continue without an account</button><span class="hint">Your data stays in this browser only.</span></p>' +
+      '</form></section>';
+  }
+  function wireAuth(root) {
+    var f = $("#authForm", root);
+    f.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var email = $("#au-email").value.trim(), pw = $("#au-pw").value, er = $("#au-err"), btn = $("#au-go");
+      var fail = function (m) { er.textContent = m; er.hidden = false; };
+      if (!/^\S+@\S+\.\S+$/.test(email)) return fail("Enter your email address.");
+      if (pw.length < 6) return fail("Your password needs at least 6 characters.");
+      er.hidden = true; btn.disabled = true; btn.textContent = ui.authMode === "up" ? "Creating your account…" : "Signing in…";
+      signIn(email, pw, ui.authMode === "up").then(function () {
+        setGuest(false);
+        jobs = []; me = null; load(); render(); pull();
+      }).catch(function (err) {
+        btn.disabled = false; btn.textContent = ui.authMode === "up" ? "Create my account" : "Sign in";
+        var m = err.message || "";
+        fail(/invalid login|invalid_grant|credentials/i.test(m) ? "That email and password don't match. Try again, or create an account." :
+          /already registered|already exists/i.test(m) ? "There's already an account with that email. Sign in instead." :
+          /fetch|network|load failed/i.test(m) ? "Couldn't reach the sign-in service. Check your connection and try again." : m);
+      });
+    });
+    setTimeout(function () { var i = $("#au-email"); if (i) i.focus(); }, 30);
+  }
+
   function load() {
     try {
-      jobs = JSON.parse(localStorage.getItem(KEY) || "null");
-      me = JSON.parse(localStorage.getItem(PROFILE_KEY) || "null");
+      jobs = JSON.parse(localStorage.getItem(k(KEY)) || "null");
+      me = JSON.parse(localStorage.getItem(k(PROFILE_KEY)) || "null");
+      if (jobs === null && AUTH) jobs = [];
       if (jobs === null) { // carry over data from the previous version, if any
         jobs = JSON.parse(localStorage.getItem("nextmove.v2.jobs") || "[]");
         me = me || JSON.parse(localStorage.getItem("nextmove.v2.me") || "null");
@@ -619,8 +850,8 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     } catch (e) { storageOK = false; jobs = []; me = null; }
     if (!Array.isArray(jobs)) jobs = [];
   }
-  function save() { version++; try { localStorage.setItem(KEY, JSON.stringify(jobs)); storageOK = true; } catch (e) { storageOK = false; } }
-  function saveMe() { version++; try { if (me) localStorage.setItem(PROFILE_KEY, JSON.stringify(me)); else localStorage.removeItem(PROFILE_KEY); } catch (e) { storageOK = false; } }
+  function save() { version++; try { localStorage.setItem(k(KEY), JSON.stringify(jobs)); storageOK = true; } catch (e) { storageOK = false; } if (session) schedulePush(); }
+  function saveMe() { version++; try { if (me) localStorage.setItem(k(PROFILE_KEY), JSON.stringify(me)); else localStorage.removeItem(k(PROFILE_KEY)); } catch (e) { storageOK = false; } if (session) schedulePush(); }
   function getKey() { try { return localStorage.getItem(AI_KEY) || ""; } catch (e) { return ""; } }
   function setKey(k) { try { if (k) localStorage.setItem(AI_KEY, k); else localStorage.removeItem(AI_KEY); } catch (e) {} }
   function blank() {
@@ -1053,7 +1284,26 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     ];
     return rows.map(function (r) { var o = blank(); Object.keys(r).forEach(function (k) { o[k] = r[k]; }); o.sample = true; return o; });
   }
-  function sampleProfile() { var p = parseResume(SAMPLE_RESUME); p.resumeName = "Sample resume (Jordan Lee)"; p.skills = p.skills.join(", "); p.roles = "data analyst, business analyst"; p.sample = true; return p; }
+  function sampleProfile() { var p = parseResume(SAMPLE_RESUME); p.resumeName = "Sample resume (Jordan Lee)"; p.skills = p.skills.join(", "); p.roles = "data analyst, business analyst"; p.locations = "San Luis Obispo, Bay Area, Remote"; p.sample = true; return p; }
+
+  // ---------- Places you'd like to live ----------
+  // A few common regions expand to their cities; a state ("CA" or "California") matches any city in it.
+  var REGIONS = { "bay area": ["san francisco", "oakland", "san jose", "berkeley", "palo alto", "mountain view", "sunnyvale", "menlo park", "redwood city", "santa clara", "san mateo", "fremont", "emeryville"],
+    "sf": ["san francisco"], "la": ["los angeles", "santa monica", "pasadena", "burbank", "culver city", "long beach", "irvine"], "los angeles": ["los angeles", "santa monica", "pasadena", "burbank", "culver city", "long beach"],
+    "nyc": ["new york", "brooklyn", "manhattan"], "new york": ["new york", "brooklyn", "manhattan"], "dc": ["washington", "arlington", "alexandria"], "slo": ["san luis obispo"], "central coast": ["san luis obispo", "santa barbara", "paso robles", "santa maria", "monterey"],
+    "seattle": ["seattle", "bellevue", "redmond", "kirkland"], "san diego": ["san diego", "la jolla", "carlsbad"] };
+  var STATES = { california: "CA", oregon: "OR", washington: "WA", texas: "TX", "new york": "NY", colorado: "CO", arizona: "AZ", nevada: "NV", illinois: "IL", massachusetts: "MA", florida: "FL", georgia: "GA", utah: "UT", "north carolina": "NC" };
+  function myPlaces() { return me ? splitList(me.locations) : []; }
+  function inMyPlaces(o) {
+    var loc = (o.location || "").toLowerCase(), places = myPlaces();
+    return places.some(function (pl) {
+      var p = pl.toLowerCase().trim();
+      if (p === "remote") return o.arrangement === "Remote" || /remote/.test(loc);
+      var st = STATES[p] || (/^[a-z]{2}$/.test(p) && p !== "la" && p !== "sf" && p !== "dc" ? p.toUpperCase() : "");
+      if (st && new RegExp(",\\s*" + st + "\\b", "i").test(o.location || "")) return true;
+      return (REGIONS[p] || [p]).some(function (c) { return c && loc.indexOf(c) >= 0; });
+    });
+  }
 
   // ---------- To-dos ----------
   // Every reminder comes from a column of the Career Services spreadsheet that students had to track by hand.
@@ -1067,8 +1317,8 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     var t = today(), out = [];
     jobs.forEach(function (o) {
       if (CLOSED[o.status] || o.status === "offer" && !o.nextAction) return;
-      var add = function (kind, text, due, go) { out.push({ act: kind, kind: KINDS[kind], text: text, due: due, o: o, go: go }); };
-      if (o.nextAction) add("step", o.nextAction, o.nextDue);
+      var add = function (kind, text, due, go, why) { out.push({ act: kind, kind: KINDS[kind], text: text, due: due, o: o, go: go, why: why }); };
+      if (o.nextAction) add("step", o.nextAction, o.nextDue, "", "You added this as your next step.");
       if (o.status === "saved") {
         var r = scoreJob(o), open = o.deadline && o.deadline >= t;
         if (o.deadline && !open) return;
@@ -1076,12 +1326,13 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
         var left = [];
         if (r && r.score < 90 && !o.tailored) left.push("tailor your resume");
         if (!o.contact) left.push("find a contact");
-        if (!o.deadline) add("apply", left.length ? "Apply. First: " + left.join(", ") : "Apply when you're ready", "", left[0] === "tailor your resume" ? "#job/" + o.id + "/tailor" : "");
-        if (open) add("apply", left.length ? "Apply. First: " + left.join(", ") : "Apply before the posting closes", o.deadline, left[0] === "tailor your resume" ? "#job/" + o.id + "/tailor" : "");
+        var whyA = "You saved this job" + (o.deadline ? " and it closes " + fmt(o.deadline) : " and it has no deadline") + "." + (left.length ? " Tailoring and a contact raise your odds." : "");
+        if (!o.deadline) add("apply", left.length ? "Apply. First: " + left.join(", ") : "Apply when you're ready", "", left[0] === "tailor your resume" ? "#job/" + o.id + "/tailor" : "", whyA);
+        if (open) add("apply", left.length ? "Apply. First: " + left.join(", ") : "Apply before the posting closes", o.deadline, left[0] === "tailor your resume" ? "#job/" + o.id + "/tailor" : "", whyA);
       }
-      if (o.status === "applied" && o.appliedDate) add("followup", "No reply yet? Send a short follow-up", followUpDue(o));
-      if (o.interviewDate && o.interviewDate >= t) add("interview", "Interview. Review the posting and your tailored resume", o.interviewDate);
-      if (o.interviewDate && o.interviewDate < t && !o.thankYouSent) add("thanks", "Send a thank-you note to your interviewers", addDays(o.interviewDate, 1));
+      if (o.status === "applied" && o.appliedDate) add("followup", "No reply yet? Send a short follow-up", followUpDue(o), "", "You applied " + fmt(o.appliedDate) + ". Career Services suggests following up two weeks after the posting closes.");
+      if (o.interviewDate && o.interviewDate >= t) add("interview", "Interview. Review the posting and your tailored resume", o.interviewDate, "", "You entered this interview date.");
+      if (o.interviewDate && o.interviewDate < t && !o.thankYouSent) add("thanks", "Send a thank-you note to your interviewers", addDays(o.interviewDate, 1), "", "Your interview was " + fmt(o.interviewDate) + ". A thank-you note within a day stands out.");
     });
     out.sort(function (a, b) { if (!a.due !== !b.due) return a.due ? -1 : 1; return a.due < b.due ? -1 : a.due > b.due ? 1 : 0; });
     return out;
@@ -1098,13 +1349,13 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     if (act === "thanks") { o.thankYouSent = true; o.updatedAt = today(); save(); render(); toast("Thank-you note logged.", "Undo", undo); return; }
     if (act === "followup") { o.followUpDate = today(); save(); render(); toast("Follow-up logged. I'll check back in two weeks.", "Undo", undo); }
   }
-  function tasksHTML(steps) {
+  function tasksHTML(steps, compact) {
     return '<div class="tasks">' + steps.map(function (s) {
       var circle = s.act === "interview" ? '<span class="done cal" aria-hidden="true"></span>' :
         '<button type="button" class="done" data-done="' + s.act + '" data-id="' + esc(s.o.id) + '" aria-label="Done: ' + esc(s.text) + '"></button>';
-      return '<div class="task">' + circle + '<div><span class="tag">' + esc(s.kind) + '</span> <button type="button" class="link what" data-go="' + esc(s.go || "#job/" + s.o.id) + '">' + esc(s.text) + '</button>' +
-        '<div class="who">' + esc(s.o.company) + " · " + esc(s.o.title) + "</div>" +
-        (s.act === "followup" || s.act === "thanks" ? '<button type="button" class="small draft" data-email="' + s.act + '" data-id="' + esc(s.o.id) + '">Draft the email</button>' : "") + "</div>" + when(s.due) + "</div>";
+      return '<div class="task">' + circle + '<div>' + (compact ? "" : '<span class="tag">' + esc(s.kind) + '</span> ') + '<button type="button" class="link what" data-go="' + esc(s.go || "#job/" + s.o.id) + '">' + esc(s.text) + '</button>' +
+        '<div class="who">' + esc(s.o.company) + " · " + esc(s.o.title) + "</div>" + (compact || !s.why ? "" : '<div class="why">Why: ' + esc(s.why) + "</div>") +
+        (!compact && (s.act === "followup" || s.act === "thanks") ? '<button type="button" class="small draft" data-email="' + s.act + '" data-id="' + esc(s.o.id) + '">Draft the email</button>' : "") + "</div>" + when(s.due) + "</div>";
     }).join("") + "</div>";
   }
 
@@ -1187,25 +1438,33 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
   var COLS = [["saved", "Saved"], ["applied", "Applied"], ["interviewing", "Interviewing"], ["offer", "Offer"], ["closed", "Closed"]];
   function boardHTML(list) {
     return '<div class="board">' + COLS.map(function (c) {
-      var items = list.filter(function (o) { return c[0] === "closed" ? CLOSED[o.status] : o.status === c[0]; });
-      return '<section class="bcol' + (c[0] === "closed" ? " closed" : "") + '" data-col="' + c[0] + '" aria-label="' + c[1] + '"><h4>' + c[1] + ' <span>' + items.length + "</span></h4>" +
+      var all = list.filter(function (o) { return c[0] === "closed" ? CLOSED[o.status] : o.status === c[0]; }), cap = 8, open = ui.more["col-" + c[0]];
+      var items = open ? all : all.slice(0, cap);
+      return '<section class="bcol' + (c[0] === "closed" ? " closed" : "") + '" data-col="' + c[0] + '" aria-label="' + c[1] + '"><h4>' + c[1] + ' <span>' + all.length + "</span></h4>" +
         items.map(function (o) {
           var meta = o.interviewDate && o.interviewDate >= today() ? "Interview " + when(o.interviewDate) : o.nextAction ? esc(o.nextAction) + " " + when(o.nextDue)
             : o.status === "saved" && o.deadline ? "Closes " + when(o.deadline) : o.status === "applied" && o.appliedDate ? "Follow up " + when(followUpDue(o)) : c[0] === "closed" ? esc(statusLabel(o.status)) : "";
           return '<article class="bcard" draggable="true" tabindex="0" data-id="' + esc(o.id) + '" data-go="#job/' + esc(o.id) + '"><div class="bc-top"><div class="company-line">' + companyMark(o, "small") + '<b>' + esc(o.company) + "</b></div>" + scoreDot(o) + '</div><span class="bc-t">' + esc(o.title) + "</span>" +
             (meta ? '<div class="bc-meta">' + meta + "</div>" : "") +
             '<select class="bc-move" aria-label="Move ' + esc(o.company) + '" data-status="' + esc(o.id) + '">' + STATUSES.map(function (s) { return '<option value="' + s[0] + '"' + (s[0] === o.status ? " selected" : "") + ">" + s[1] + "</option>"; }).join("") + "</select></article>";
-        }).join("") + (items.length ? "" : '<p class="bempty">' + (c[0] === "saved" ? "Jobs you save land here." : "Drag a job here.") + "</p>") + "</section>";
+        }).join("") + (all.length > cap ? '<button type="button" class="link more" data-more="col-' + c[0] + '">' + (open ? "Show fewer" : "Show " + (all.length - cap) + " more") + "</button>" : "") + (items.length ? "" : '<p class="bempty">' + (c[0] === "saved" ? "Jobs you save land here." : "Drag a job here.") + "</p>") + "</section>";
     }).join("") + "</div>";
   }
 
   // ---------- Routing ----------
-  var ui = { q: "", filter: "open", sort: "score", view: "board", showAll: false, skippedWelcome: false, busy: {} };
+  var ui = { q: "", filter: "active", sort: "score", dir: 0, view: "list", showAll: false, skippedWelcome: false, busy: {}, more: {} };
   function route() { var p = (location.hash || "#dashboard").slice(1).split("/"); return { tab: p[0] || "dashboard", id: p[1], sub: p[2] }; }
   function go(h) { if (location.hash === h) render(); else location.hash = h; }
 
   function render() {
+    var gate = AUTH && !session && !guest;
+    $("#btnAcct").hidden = !session && !(AUTH && guest); $("#btnAcct").classList.toggle("signin", !session);
+    if (!session) { $("#btnAcct").textContent = "Sign in"; $("#btnAcct").title = "Sign in to save your jobs to an account"; $("#btnAcct").setAttribute("aria-label", "Sign in"); }
+    if (session) { $("#btnAcct").textContent = session.user.email.charAt(0).toUpperCase(); $("#btnAcct").title = "Signed in as " + session.user.email; $("#btnAcct").setAttribute("aria-label", "Account: " + session.user.email); }
+    $("#storeNote").textContent = session ? "Saved to your NextMove account. Your Claude API key stays only in this browser." : gate ? "Each account's jobs and resume are private to that account." : "Saved privately in this browser on this device. Your resume is never uploaded, except to Anthropic when you choose AI tailoring.";
+    if (gate) { $("#btnAdd").hidden = true; $("#tabs").hidden = true; $("#btnSamples").hidden = true; setSync(""); $("#view").innerHTML = renderAuth(); wireAuth($("#view")); return; }
     var welcome = !me && !jobs.length && !ui.skippedWelcome, r = route();
+    if (r.tab === "job" && !byId(r.id)) r = { tab: "dashboard" }; // a deleted or unknown job
     $("#btnAdd").hidden = welcome; $("#tabs").hidden = welcome;
     $all("#tabs a").forEach(function (a) { var on = a.dataset.tab === r.tab || (r.tab === "job" && a.dataset.tab === "jobs"); if (on) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
     var hasSamples = jobs.some(function (o) { return o.sample; });
@@ -1215,6 +1474,7 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     if (r.tab === "jobs") { view.innerHTML = renderJobsPage(); renderJobList(); }
     else if (r.tab === "resume") { view.innerHTML = renderResumePage(); wireResumePage(view); }
     else if (r.tab === "job" && byId(r.id)) { view.innerHTML = renderJobPage(byId(r.id), r.sub); wireJobPage(byId(r.id)); }
+    else if (r.tab === "progress") { view.innerHTML = renderProgress(); }
     else { view.innerHTML = renderDashboard(); wireDashboard(); }
   }
 
@@ -1228,8 +1488,7 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
       (storageOK ? "" : '<p class="err">This browser is blocking storage, so nothing will be saved after you close the tab.</p>') + "</section>";
   }
   function uploadBox() {
-    return '<label class="drop" id="drop"><strong>Upload your resume</strong><span class="muted">PDF, Word (.docx), or .txt. It stays on this device.</span>' +
-      '<span class="btnlike">Choose file</span><input id="resumeFile" type="file" accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"></label>' +
+    return '<label class="drop" id="drop"><span class="btnlike">Upload my resume</span><span class="muted">PDF, Word, or .txt. Or drop the file here.</span><input id="resumeFile" type="file" accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"></label>' +
       '<p class="status" id="upStatus" aria-live="polite"></p>';
   }
   function wireUpload(root, isWelcome) {
@@ -1260,13 +1519,14 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
       (skills.length ? '<div class="chips">' + skills.map(function (s) { return '<span class="chip">' + esc(s) + "</span>"; }).join("") + "</div>" : '<p class="muted">I didn\'t spot any common analytics skills. Add yours below.</p>') +
       '<div class="form-grid">' +
       '<label>First name<input id="p-name" value="' + esc(p.name) + '"></label>' +
-      '<label>Where do you want to work?<input id="p-loc" value="' + esc(p.locations) + '" placeholder="e.g. San Francisco, Remote"></label>' +
+      '<label>Places you\'d like to live <span class="hint">Separate with commas. Cities, regions like Bay Area, states, or Remote.</span><input id="p-loc" value="' + esc(p.locations) + '" placeholder="e.g. San Luis Obispo, Bay Area, Seattle, Remote"></label>' +
       '<label>Years of work experience <span class="hint">Estimated from the dates on your resume.</span><input id="p-years" type="number" min="0" max="50" step="0.5" value="' + esc(p.years == null ? "" : p.years) + '"></label>' +
       '<label>Highest degree <span class="hint">In progress counts.</span><select id="p-degree">' + deg + "</select></label>" +
       '<label class="full">What roles are you looking for?<input id="p-roles" value="' + esc(p.roles) + '" placeholder="e.g. data analyst, business analyst"></label>' +
       '<label class="full">Skills <span class="hint">Add anything I missed, separated by commas.</span><textarea id="p-skills" rows="2">' + esc(skills.join(", ")) + "</textarea></label>" +
       '<details class="full"><summary>Resume text (what the score and AI read)</summary><textarea id="p-text" rows="10">' + esc(p.resumeText) + "</textarea></details></div>" +
       '<div class="actions"><button type="button" class="primary" id="p-save">' + (isWelcome ? "Looks good, take me to my dashboard" : "Save") + "</button></div></div>";
+    if (isWelcome) { var sc = $(".start-card", root); if (sc) sc.hidden = true; window.scrollTo(0, 0); }
     $("#p-save", root).addEventListener("click", function () {
       var y = $("#p-years", root).value.trim();
       me = { name: $("#p-name", root).value.trim(), locations: $("#p-loc", root).value.trim(), roles: $("#p-roles", root).value.trim(),
@@ -1284,11 +1544,22 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     ["Cal Poly Career Connections", "https://careerconnections.calpoly.edu/", "find a contact"],
     ["Interview Guide", "https://cdn.portfolium.com/ugcs3%2Fentry_attachment%2F8E714A7C-E13E-5340-80D6-96DF6433DFF0-InterviewingBooklet923.pdf", "prepare for interviews"],
     ["Meet with a career counselor", "https://careerservices.calpoly.edu/explore-services/career-counseling", "get advice"]];
-  function renderDashboard() {
-    var steps = buildSteps(), t = today(), week = addDays(t, 7);
-    var groups = [["Overdue", steps.filter(function (s) { return s.due && s.due < t; })], ["Today", steps.filter(function (s) { return s.due === t; })],
+  function stepGroups(steps) {
+    var t = today(), week = addDays(t, 7);
+    return [["Overdue", steps.filter(function (s) { return s.due && s.due < t; })], ["Today", steps.filter(function (s) { return s.due === t; })],
       ["Next 7 days", steps.filter(function (s) { return s.due > t && s.due <= week; })], ["Later", steps.filter(function (s) { return !s.due || s.due > week; })]];
-    var nextIv = jobs.filter(function (o) { return o.interviewDate && o.interviewDate >= t && !CLOSED[o.status]; }).sort(function (a, b) { return a.interviewDate < b.interviewDate ? -1 : 1; })[0];
+  }
+  function funnel() {
+    var applied = jobs.filter(function (o) { return o.status !== "saved" && (o.appliedDate || o.status !== "withdrawn"); }).length;
+    var iv = jobs.filter(function (o) { return o.status === "interviewing" || o.status === "offer" || o.interviewDate; }).length;
+    var offers = jobs.filter(function (o) { return o.status === "offer"; }).length;
+    return { applied: applied, iv: iv, offers: offers };
+  }
+  function readyList() {
+    var t = today();
+    return jobs.filter(function (o) { return o.status === "saved" && (!o.deadline || o.deadline >= t); })
+      .map(function (o) { return { o: o, r: scoreJob(o) }; }).sort(function (a, b) { return ((b.r || {}).score || -1) - ((a.r || {}).score || -1); });
+  }
 
     var bits = [];
     if (groups[0][1].length) bits.push(groups[0][1].length + " overdue");
@@ -1302,22 +1573,86 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
 
     h += guideHTML();
 
-    // This week
-    h += '<div class="grid2"><section class="card"><div class="card-h"><h3>This week</h3>' + (steps.length ? '<span class="count">Tap the circle when it\'s done</span>' : "") + "</div>";
-    if (!steps.length) h += '<p class="empty">' + (jobs.length ? "Nothing to do right now. Deadlines, follow-ups, interviews, and thank-you notes will show up here." : "Deadlines, follow-ups, interviews, and thank-you notes will show up here once you add jobs.") + "</p>";
+    // Up next: just three, the rest live on Progress.
+    var rest = steps.slice(1, 4);
+    if (jobs.length) h += '<section class="card upnext"><div class="card-h"><h3>After that</h3></div>' +
+      (rest.length ? tasksHTML(rest, true) : '<p class="empty">Nothing else right now.</p>') +
+      '<a class="see-all" href="#progress">' + (steps.length > 4 ? "See all " + steps.length + " to-dos and your pipeline" : "See your pipeline and best matches") + " →</a></section>";
+    return '<div class="home">' + h + "</div>";
+  }
+
+  // ---------- What's working: compares applications that got an interview with ones that didn't ----------
+  function analysisHTML() {
+    var t = today();
+    var sent = jobs.filter(function (o) { return o.status !== "saved" && (o.appliedDate || o.status !== "withdrawn"); });
+    var heard = function (o) { return o.status === "interviewing" || o.status === "offer" || !!o.interviewDate; };
+    var h = '<section class="card analysis"><div class="card-h"><h3>What\'s working</h3><span class="count">Compares applications that led to an interview with ones that didn\'t</span></div>';
+    if (sent.length < 3) return h + '<p class="empty">Once you\'ve applied to 3 or more jobs, this shows what the ones that led to interviews have in common, and what to change.</p></section>';
+    var wins = sent.filter(heard).length, rate = function (list) { return list.length ? Math.round(100 * list.filter(heard).length / list.length) : null; };
+    var overall = rate(sent);
+    // Each factor splits your applications into two groups and compares their interview rates.
+    var F = [
+      { name: "Had a network contact", yes: "With a contact", no: "Without one", c: ["with a contact", "without one"], test: function (o) { return !!o.contact; }, tip: "Find a contact (alum, recruiter, club) before you apply. Career Connections can help." },
+      { name: "Tailored your resume", yes: "Tailored", no: "Not tailored", c: ["where you tailored your resume", "where you didn't"], test: function (o) { return !!(o.tailored || o.tailoring); }, tip: "Tailor your resume for every application. It takes a few minutes on each job's Tailor tab." },
+      { name: "Strong match (75+)", yes: "Score 75 or higher", no: "Below 75", c: ["scoring 75+", "for lower scores"], test: function (o) { var r = scoreJob(o); return !!r && r.score >= 75; }, tip: "Spend your time on jobs that score 75 or higher, or close the skill gaps first." },
+      { name: "Applied early", yes: "A week or more before it closed", no: "In the last week, or no deadline", c: ["sent a week or more early", "for later ones"], test: function (o) { return !!(o.deadline && o.appliedDate && diffDays(o.deadline, o.appliedDate) >= 7); }, tip: "Apply at least a week before the deadline. Many teams review applications as they come in." }];
+    var rows = [], tips = [];
+    F.forEach(function (f) {
+      var a = sent.filter(f.test), b = sent.filter(function (o) { return !f.test(o); });
+      if (!a.length || !b.length) return;
+      var ra = rate(a), rb = rate(b), gap = ra - rb;
+      rows.push({ f: f, a: a, b: b, ra: ra, rb: rb, gap: gap });
+      if (gap >= 15) tips.push({ gap: gap, text: f.tip, why: "applications " + f.c[0] + " got an interview " + ra + "% of the time, vs " + rb + "% " + f.c[1] });
+    });
+    rows.sort(function (x, y) { return Math.abs(y.gap) - Math.abs(x.gap); });
+    var bar = function (label, list, pct) { return '<div class="cmp"><span>' + label + '</span><span class="bar"><i style="width:' + Math.max(pct ? 4 : 0, pct) + '%"></i></span><b>' + pct + '%</b><small>' + list.filter(heard).length + " of " + list.length + "</small></div>"; };
+    h += '<p class="lead-stat"><b>' + overall + "%</b> of your applications led to an interview (" + wins + " of " + sent.length + ").</p>";
+    h += '<div class="factors">' + rows.map(function (r) {
+      var verdictTxt = r.gap >= 15 ? '<span class="tagg up">Helps</span>' : r.gap <= -15 ? '<span class="tagg">No clear help yet</span>' : '<span class="tagg">About the same</span>';
+      return '<div class="factor"><div class="factor-h"><b>' + r.f.name + "</b>" + verdictTxt + "</div>" + bar(r.f.yes, r.a, r.ra) + bar(r.f.no, r.b, r.rb) + "</div>";
+    }).join("") + "</div>";
+    // Skills that keep showing up in postings where you didn't hear back
+    var miss = {}; sent.filter(function (o) { return !heard(o); }).forEach(function (o) { var r = scoreJob(o); if (r) r.missReq.concat(r.missPref).forEach(function (k) { miss[k] = (miss[k] || 0) + 1; }); });
+    var gaps = Object.keys(miss).filter(function (k) { return miss[k] >= 2; }).sort(function (a, b) { return miss[b] - miss[a]; }).slice(0, 4);
+    if (gaps.length) tips.push({ gap: 0, text: "Build or show these skills: " + gaps.join(", ") + ".", why: "postings where you didn't hear back asked for them and your resume doesn't show them (" + gaps.map(function (k) { return k + " in " + miss[k]; }).join(", ") + ")" });
+    var stale = sent.filter(function (o) { return o.status === "applied" && o.appliedDate && diffDays(t, o.appliedDate) >= 21; }).length;
+    if (stale) tips.push({ gap: 0, text: "Follow up on " + plural(stale, "application") + " with no reply after 3+ weeks.", why: "a short follow-up email often gets a stalled application looked at" });
+    tips.sort(function (x, y) { return y.gap - x.gap; });
+    h += '<div class="tips"><h4>What to try next</h4>' + (tips.length ? "<ol>" + tips.slice(0, 4).map(function (x) { return "<li><b>" + esc(x.text) + "</b><span>Why: " + esc(x.why) + ".</span></li>"; }).join("") + "</ol>"
+      : '<p class="muted">No clear pattern yet. Keep tracking contacts and tailoring, and this will sharpen.</p>') + "</div>";
+    return h + '<p class="note">Rule-based, not AI. Based on ' + plural(sent.length, "application") + ", so treat small differences with caution; patterns get more reliable as you apply to more jobs.</p></section>";
+  }
+
+  // ---------- Progress: the in-depth view ----------
+  function renderProgress() {
+    var steps = buildSteps(), groups = stepGroups(steps), f = funnel(), ready = readyList(), scored = ready.filter(function (x) { return x.r; });
+    var all = jobs.map(scoreJob).filter(Boolean), avg = all.length ? Math.round(all.reduce(function (a, r) { return a + r.score; }, 0) / all.length) : null;
+    var h = '<section class="hello"><h2>Progress</h2><p>Everything in one place: every to-do, how your applications are moving, and which saved jobs fit you best.</p></section>';
+    h += '<div class="stats">' +
+      '<div class="stat"><b>' + jobs.length + "</b><span>jobs tracked</span></div>" +
+      '<div class="stat"><b>' + f.applied + "</b><span>applications sent</span></div>" +
+      '<div class="stat"><b>' + (f.applied ? Math.round(100 * f.iv / f.applied) + "%" : "–") + "</b><span>got an interview</span><small>" + f.iv + " of " + f.applied + "</small></div>" +
+      '<div class="stat"><b>' + (avg == null ? "–" : avg) + "</b><span>average match score</span></div></div>";
+    h += analysisHTML();
+
+    // All to-dos, grouped. Long groups fold so 100 jobs stay readable.
+    h += '<div class="grid2"><section class="card"><div class="card-h"><h3>All to-dos</h3><span class="count">' + plural(steps.length, "item") + " · tap the circle when it's done</span></div>";
+    h += '<details class="how-todos"><summary>How are these made?</summary><ul>' +
+      "<li><b>Saved job:</b> Apply by the closing date. If you haven't tailored your resume or found a contact, it says so.</li>" +
+      "<li><b>Applied:</b> Follow up two weeks after the posting closes (from the Career Services guide).</li>" +
+      "<li><b>Interview date:</b> Interview on the day, then a thank-you note the next day.</li>" +
+      "<li><b>Your next step:</b> anything you type in a job's \"Your next step\" shows up on its date.</li></ul></details>";
+    if (!steps.length) h += '<p class="empty">Deadlines, follow-ups, interviews, and thank-you notes will show up here.</p>';
     groups.forEach(function (g, i) {
       if (!g[1].length) return;
-      if (i === 3 && !ui.showAll) { h += '<div><button type="button" class="link" data-act="all-steps">Show ' + plural(g[1].length, "later item") + "</button></div>"; return; }
-      h += '<div class="group"><div class="section-label' + (i === 0 ? " late" : "") + '">' + g[0] + " · " + g[1].length + "</div>" + tasksHTML(g[1]) + "</div>";
+      var open = ui.more["g" + i], cap = 8, list = open ? g[1] : g[1].slice(0, cap);
+      h += '<div class="group"><div class="section-label' + (i === 0 ? " late" : "") + '">' + g[0] + " · " + g[1].length + "</div>" + tasksHTML(list) +
+        (g[1].length > cap ? '<button type="button" class="link more" data-more="g' + i + '">' + (open ? "Show fewer" : "Show " + (g[1].length - cap) + " more") + "</button>" : "") + "</div>";
     });
-    if (ui.showAll && groups[3][1].length) h += '<div><button type="button" class="link" data-act="all-steps">Hide later items</button></div>';
     h += "</section>";
 
-    // Pipeline: how many jobs reached each stage
-    var applied = jobs.filter(function (o) { return o.status !== "saved" && (o.appliedDate || o.status !== "withdrawn"); }).length;
-    var iv = jobs.filter(function (o) { return o.status === "interviewing" || o.status === "offer" || o.interviewDate; }).length;
-    var offers = jobs.filter(function (o) { return o.status === "offer"; }).length;
-    var stages = [["Tracked", jobs.length, "", "all"], ["Applied", applied, jobs.length, "applied"], ["Interviewing", iv, applied, "interviewing"], ["Offer", offers, iv, "offer"]];
+    // Pipeline
+    var stages = [["Tracked", jobs.length, "", "all"], ["Applied", f.applied, jobs.length, "applied"], ["Interviewing", f.iv, f.applied, "interviewing"], ["Offer", f.offers, f.iv, "offer"]];
     var cnt = function (st) { return jobs.filter(function (o) { return o.status === st; }).length; };
     h += '<div class="side-col"><section class="card quick"><h3>Add a job from a link</h3><label for="qaUrl" class="muted" style="font-weight:400">Paste a public job-posting link. I\'ll retrieve the posting and fill in editable details for you.</label>' +
       '<div class="url-import"><input id="qaUrl" type="url" inputmode="url" placeholder="https://company.com/jobs/…"><button type="button" class="primary" id="qaGo">Import details</button></div>' +
@@ -1330,17 +1665,13 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
         return '<button type="button" data-filter="' + s[3] + '" aria-label="' + s[0] + ": " + s[1] + '"><span>' + s[0] + '</span><span class="bar"><i style="width:' + (s[1] ? Math.max(4, 100 * s[1] / Math.max(1, jobs.length)) : 0) + '%"></i></span><span class="n">' + s[1] + "</span>" +
           '<span class="conv">' + (pct == null || !s[1] ? "" : pct + "%") + "</span></button>";
       }).join("") + "</div>" +
-      '<p class="note">Percent = share of the stage above that moved on.</p>' +
+      '<p class="note">Percent = share of the stage above that moved on. Click a stage to see those jobs.</p>' +
       '<dl class="kv small"><dt>Waiting to apply</dt><dd>' + cnt("saved") + "</dd><dt>Waiting to hear back</dt><dd>" + cnt("applied") + "</dd><dt>Closed</dt><dd>" +
-      cnt("rejected") + " rejected, " + cnt("withdrawn") + " withdrawn</dd></dl></section>") +
+      cnt("rejected") + " rejected, " + cnt("withdrawn") + " withdrawn</dd></dl></section>" +
       '<section class="card"><h3>Help from Career Services</h3><ul class="links">' + HELP.map(function (l) { return '<li><a href="' + l[1] + '" target="_blank" rel="noopener">' + l[0] + "</a> <span class=\"muted\">" + l[2] + "</span></li>"; }).join("") + "</ul></section></div></div>";
 
-    // Ready to apply
-    var ready = jobs.filter(function (o) { return o.status === "saved" && (!o.deadline || o.deadline >= t); })
-      .map(function (o) { return { o: o, r: scoreJob(o) }; }).sort(function (a, b) { return ((b.r || {}).score || -1) - ((a.r || {}).score || -1); });
-    var scored = ready.filter(function (x) { return x.r; });
-    if (!jobs.length) return h;
-    h += '<section class="card"><div class="card-h"><h3>Ready to apply</h3><span class="count">' + (scored.length ? "Ranked by match · average " + Math.round(scored.reduce(function (a, x) { return a + x.r.score; }, 0) / scored.length) : "") + "</span></div>";
+    // Ready to apply, ranked
+    h += '<section class="card"><div class="card-h"><h3>Ready to apply</h3><span class="count">' + (scored.length ? ready.length + " saved · ranked by match · average " + Math.round(scored.reduce(function (a, x) { return a + x.r.score; }, 0) / scored.length) : "") + "</span></div>";
     if (!ready.length) h += '<p class="empty">Jobs you save but haven\'t applied to will show up here, best match first.</p>';
     else h += '<div class="rt"><div class="rt-h"><span>Match</span><span>Job</span><span>Closes</span><span>Contact</span><span></span></div>' + ready.slice(0, 6).map(function (x) {
       var o = x.o, btn = !o.tailored && x.r ? '<button type="button" class="small" data-go="#job/' + esc(o.id) + '/tailor">Tailor</button>' : '<button type="button" class="small primary" data-done="apply" data-id="' + esc(o.id) + '">Mark applied</button>';
@@ -1380,8 +1711,10 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     return '<article class="job" tabindex="0" data-go="#job/' + esc(o.id) + '">' + scoreDot(o) + '<div><div class="company-line">' + companyMark(o) + '<div class="co">' + esc(o.company) + "</div></div>" +
       '<div class="ti">' + esc(o.title) + (o.location ? " · " + esc(o.location) : "") + (o.arrangement && o.arrangement !== o.location ? " · " + esc(o.arrangement) : "") + '</div><div class="nx">' + next + "</div></div>" + right + "</article>";
   }
+  // Status tabs work in both views. "active" = everything not rejected or withdrawn.
+  var FILTERS = [["active", "Active"], ["saved", "Saved"], ["applied", "Applied"], ["interviewing", "Interviewing"], ["offer", "Offer"], ["closed", "Closed"], ["all", "All"]];
+  function inFilter(o, f) { return f === "places" ? !CLOSED[o.status] && inMyPlaces(o) : f === "all" ? true : f === "active" || f === "open" ? !CLOSED[o.status] : f === "closed" ? !!CLOSED[o.status] : o.status === f; }
   function renderJobsPage() {
-    var so = function (v, l, cur) { return '<option value="' + v + '"' + (v === cur ? " selected" : "") + ">" + l + "</option>"; };
     var board = ui.view === "board";
     var h = '<section class="hello" data-eyebrow="Your search"><h2>Jobs</h2><p>' + (board ? "Drag a job to a new column when its status changes (on a phone, use the menu on each card). The number is your match score out of 100." : me ? "The circle is your match score out of 100. Click a job to see why and tailor your resume." : "Add your resume on My resume to score each job.") + "</p></section>";
     h += '<section class="card"><div class="card-h"><div class="seg" role="group" aria-label="View"><a href="#jobs" data-view="board"' + (board ? ' aria-current="page"' : "") + '>Board</a><a href="#jobs" data-view="list"' + (board ? "" : ' aria-current="page"') + ">List</a></div><span class=\"count\" id=\"jobCount\"></span></div>";
@@ -1396,23 +1729,18 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
       box.innerHTML = '<p class="empty">No jobs yet.</p><div class="actions"><button type="button" class="primary" data-act="add">+ Add your first job</button><button type="button" class="link" data-act="samples">or try sample jobs</button></div>';
       $("#jobCount").textContent = ""; return;
     }
-    var q = ui.q.trim().toLowerCase();
-    var board = ui.view === "board";
+    var q = ui.q.trim().toLowerCase(), board = ui.view === "board";
     var list = jobs.filter(function (o) {
-      if (board) return !q || [o.company, o.title, o.location, o.arrangement, o.notes].join(" ").toLowerCase().indexOf(q) >= 0;
-      if (ui.filter === "open" && CLOSED[o.status]) return false;
-      if (ui.filter !== "open" && ui.filter !== "all" && o.status !== ui.filter) return false;
+      if (!inFilter(o, ui.filter)) return false;
       return !q || [o.company, o.title, o.location, o.arrangement, o.notes].join(" ").toLowerCase().indexOf(q) >= 0;
     });
-    list.sort(function (a, b) {
-      if (ui.sort === "company") return (a.company || "").localeCompare(b.company || "");
-      if (ui.sort === "updated") return (b.updatedAt || "").localeCompare(a.updatedAt || "");
-      if (ui.sort === "score") { var d = ((scoreJob(b) || {}).score || -1) - ((scoreJob(a) || {}).score || -1); if (d) return d; }
-      return (a.deadline || "9999").localeCompare(b.deadline || "9999");
-    });
-    $("#jobCount").textContent = list.length === jobs.length ? jobs.length + " total" : list.length + " of " + jobs.length;
+    var key = SORTS[ui.sort] || SORTS.score, dir = ui.dir || (ui.sort === "score" || ui.sort === "updated" ? -1 : 1);
+    list.sort(function (a, b) { var x = key(a), y = key(b); return (x < y ? -1 : x > y ? 1 : 0) * dir || (a.company || "").localeCompare(b.company || ""); });
+    $("#jobCount").textContent = "Showing " + list.length + " of " + jobs.length;
     if (board) { box.innerHTML = boardHTML(list); return; }
-    box.innerHTML = list.map(function (o) { return jobRow(o); }).join("") || '<p class="empty">No jobs match. Try a different search or filter.</p>';
+    if (!list.length) { box.innerHTML = '<p class="empty">No jobs match. Try a different search or tab.</p>'; return; }
+    var cap = 25, shown = ui.more.list ? list : list.slice(0, cap);
+    box.innerHTML = tableHTML(shown) + (list.length > cap ? '<button type="button" class="link more" data-more="list">' + (ui.more.list ? "Show fewer" : "Show all " + list.length) + "</button>" : "");
   }
 
   // ---------- Job page ----------
@@ -1547,20 +1875,48 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
   }
   function aiError(err) { return err && err.message && !/fetch|network|load failed/i.test(err.message) ? err.message : "Couldn't reach Anthropic. Check your connection. Previews can block this; it works on the live site."; }
   // One request to Claude from the browser with the user's own key; resolves to the reply text.
-  function callClaude(system, user) {
+  function callClaude(system, user, tools, history, round) {
+    var messages = history || [{ role: "user", content: user }], body = { model: MODEL, max_tokens: 16000, thinking: { type: "adaptive" }, system: system, messages: messages };
+    if (tools) body.tools = tools;
     return fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "x-api-key": getKey(), "anthropic-version": "2023-06-01", "content-type": "application/json", "anthropic-dangerous-direct-browser-access": "true" },
-      body: JSON.stringify({ model: MODEL, max_tokens: 16000, thinking: { type: "adaptive" }, system: system, messages: [{ role: "user", content: user }] })
+      body: JSON.stringify(body)
     }).then(function (res) {
       return res.json().catch(function () { return {}; }).then(function (j) {
         if (res.status === 401) throw new Error("Anthropic didn't accept that API key. Check it on My resume.");
         if (res.status === 429) throw new Error("Anthropic says you've hit a rate limit. Wait a minute and try again.");
         if (!res.ok) throw new Error("Anthropic returned an error" + (j.error && j.error.message ? ": " + j.error.message : " (" + res.status + ")."));
         if (j.stop_reason === "refusal") throw new Error("Claude declined this one. Try editing the text and run it again.");
+        // Server tools (web fetch) can pause a long turn; send it back as-is to let it finish.
+        if (j.stop_reason === "pause_turn" && (round || 0) < 3) return callClaude(system, user, tools, messages.concat([{ role: "assistant", content: j.content }]), (round || 0) + 1);
         return (j.content || []).filter(function (b) { return b.type === "text"; }).map(function (b) { return b.text; }).join("");
       });
     });
+  }
+  var LINK_SYSTEM = "You read job postings for a job tracker. Use web_fetch to open the URL you are given, then reply with only a JSON object, no other text: " +
+    '{"company": "", "title": "", "location": "City, ST or empty", "arrangement": "On-site, Hybrid, Remote, or empty", "deadline": "YYYY-MM-DD or empty", "description": "the full posting text: about the role, responsibilities, required and preferred qualifications, copied as closely as possible"}. ' +
+    'Use only what the page says; never guess. If the page needs a login, is blocked, or is not a job posting, reply {"error": "a short reason"}.';
+  function fillFromLink(btn, desc) {
+    var url = $("#f-url").value.trim(), msg = $("#linkMsg"), label = btn.innerHTML;
+    var say = function (t, bad) { msg.textContent = t; msg.className = "note" + (bad ? " err" : ""); };
+    if (!/^https?:\/\/\S+\.\S+/.test(url)) return say("Paste the full link, starting with https://", true);
+    if (/linkedin\.com|joinhandshake\.com|handshake\.com|indeed\.com/i.test(url)) return say("That site needs a login, so Claude can't open it. Open the posting, copy the text, and paste it below.", true);
+    if (!getKey()) return say("Filling from a link uses Claude. Add your Anthropic API key on My resume, or paste the posting text below.", true);
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Reading the page…'; say("This takes about 20–40 seconds.");
+    callClaude(LINK_SYSTEM, "Job posting URL: " + url, [{ type: "web_fetch_20260209", name: "web_fetch", max_uses: 3 }]).then(function (text) {
+      if (!$("#jobForm")) return;
+      var m = text.match(/\{[\s\S]*\}/), j = null; try { j = m && JSON.parse(m[0]); } catch (e) {}
+      if (!j) throw new Error("Claude couldn't read that page. Paste the posting text below instead.");
+      if (j.error) throw new Error("Claude couldn't read that page (" + j.error + "). Paste the posting text below instead.");
+      var n = 0, set = function (k, v) { var el = $("#f-" + k); if (el && v && !el.value) { el.value = v; n++; } };
+      set("company", j.company); set("title", j.title); set("location", j.location); set("link", url);
+      if (/^(On-site|Hybrid|Remote)$/.test(j.arrangement || "")) set("arrangement", j.arrangement);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(j.deadline || "")) set("deadline", j.deadline);
+      if (j.description && !desc.value.trim()) { desc.value = j.description; desc.dispatchEvent(new Event("input")); n++; }
+      btn.disabled = false; btn.innerHTML = label;
+      say(n ? "Filled in by Claude (AI) from the link. Check the details, then click Add job." : "Claude opened the page but found nothing new to fill in.");
+    }).catch(function (err) { if (!$("#jobForm")) return; btn.disabled = false; btn.innerHTML = label; say(aiError(err), true); });
   }
   function wireJobPage(o) {
     var b = $("#btnAI"); if (b) b.addEventListener("click", function () { runAI(o); });
@@ -1580,6 +1936,7 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     return h + "</div>";
   }
   function wireResumePage(root) {
+    var so = $("#btnSignOut"); if (so) so.addEventListener("click", function () { signOut(); toast("Signed out."); });
     wireUpload(root, false);
     if (me) showProfile(root, me, false);
     var s = $("#keySave");
@@ -1724,10 +2081,14 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
   }
   document.addEventListener("click", function (e) {
     var t = e.target;
+    var am = t.closest("[data-auth]"); if (am) { e.preventDefault(); ui.authMode = am.dataset.auth; render(); return; }
+    if (t.closest("#btnAcct")) { if (session) go("#resume"); else { setGuest(false); ui.authMode = "in"; render(); } return; }
+    if (t.closest("[data-act='guest']")) { setGuest(true); ui.skippedWelcome = false; load(); render(); return; }
     if (t.closest("#btnAdd") || t.closest("[data-act='add']")) { openJob(null); return; }
     if (t.closest("#btnSamples") || t.closest("[data-act='samples']")) { toggleSamples(); return; }
     if (t.closest("[data-act='sample-all']")) { me = sampleProfile(); saveMe(); jobs = samples().concat(jobs); save(); go("#dashboard"); toast("Loaded a sample resume and 6 sample jobs."); return; }
     if (t.closest("[data-act='skip']")) { ui.skippedWelcome = true; go("#dashboard"); return; }
+    var mo = t.closest("[data-more]"); if (mo) { ui.more[mo.dataset.more] = !ui.more[mo.dataset.more]; if (route().tab === "jobs") renderJobList(); else render(); return; }
     if (t.closest("[data-act='all-steps']")) { ui.showAll = !ui.showAll; render(); return; }
     var em = t.closest("[data-email]"); if (em) { openEmail(em.dataset.id, em.dataset.email); return; }
     var vw = t.closest("[data-view]"); if (vw) { e.preventDefault(); ui.view = vw.dataset.view; render(); return; }
@@ -1741,11 +2102,14 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     var d = t.closest("[data-done]"); if (d) { completeStep(d.dataset.done, d.dataset.id); return; }
     var ed = t.closest("[data-edit]"); if (ed) { openJob(ed.dataset.edit, ed.dataset.focus); return; }
     var f = t.closest("[data-filter]"); if (f) { ui.filter = f.dataset.filter; ui.view = "list"; go("#jobs"); return; }
+    var ft = t.closest("[data-ftab]"); if (ft) { ui.filter = ft.dataset.ftab; ui.more.list = false; render(); return; }
+    var sb = t.closest("[data-sortby]"); if (sb) { var k2 = sb.dataset.sortby, cur = ui.dir || (ui.sort === "score" || ui.sort === "updated" ? -1 : 1);
+      ui.dir = ui.sort === k2 ? -cur : (k2 === "score" ? -1 : 1); ui.sort = k2; renderJobList(); return; }
     if (t.closest("select") || t.closest("a") || t.closest(".modal")) return;
     var g = t.closest("[data-go]"); if (g) go(g.dataset.go);
   });
   document.addEventListener("keydown", function (e) {
-    if (e.key === "Enter" && e.target.classList && e.target.classList.contains("job")) go(e.target.dataset.go);
+    if (e.key === "Enter" && e.target.classList && (e.target.classList.contains("job") || e.target.classList.contains("bcard") || e.target.classList.contains("rt-r"))) go(e.target.dataset.go);
   });
   document.addEventListener("change", function (e) {
     var t = e.target;
@@ -1754,7 +2118,7 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
       return;
     }
     if (t.id === "filter") { ui.filter = t.value; renderJobList(); }
-    if (t.id === "sort") { ui.sort = t.value; renderJobList(); }
+    if (t.id === "sort") { ui.sort = t.value; ui.dir = 0; renderJobList(); }
   });
   document.addEventListener("input", function (e) { if (e.target.id === "q") { ui.q = e.target.value; renderJobList(); } });
   // Board drag and drop
@@ -1775,8 +2139,14 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
   });
   window.addEventListener("hashchange", function () { closeModal(); render(); window.scrollTo(0, 0); });
 
+  // Boot: with accounts on, show the cached copy right away, then load the latest from the account.
+  if (AUTH) { try { session = JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); } catch (e) { session = null; } }
+  if (AUTH && !session) { try { guest = localStorage.getItem(GUEST_KEY) === "1"; } catch (e) {} }
   load();
   render();
+  if (session) pull();
+  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible" && session && !sync.dirty) pull(true); });
+  window.addEventListener("pagehide", function () { if (sync.dirty) pushNow(); });
 })();
 </script>
 </body>

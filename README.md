@@ -2,7 +2,7 @@
 
 A job and internship tracker for MSBA students. Upload your resume, save jobs, and NextMove scores how qualified you are for each one from 1 to 100, helps you tailor your resume to each posting, and shows everything on one dashboard.
 
-**Live app:** https://weekender-trips.com/job-tracker/ (served by GitHub Pages). Anyone can use it with no sign-up. Each person's data, including their resume, stays private in their own browser.
+**Live app:** https://carlywaldeck.github.io/job-tracker/. Create an account to keep your jobs and resume on any device, or continue without an account to keep everything in this browser only.
 
 ## How it works
 
@@ -19,8 +19,8 @@ A job and internship tracker for MSBA students. Upload your resume, save jobs, a
 | Add and edit opportunities (company, title, link, location/work arrangement, deadline, notes) | **+ Add a job**, or **Edit** on any job |
 | Track status: Saved, Applied, Interviewing, Offer, Rejected, Withdrawn | Drag cards on the Jobs board, or use the status dropdown in the list view and on each job page |
 | Next action + due date | "Your next step" and "Do it by" in the job form. They show up in the dashboard's To do list. |
-| Search, sort, filter | Jobs tab: search and sort on the board; the list view adds a status filter. Sort options: (highest score, deadline, company, recently updated). Clicking a pipeline bar filters too. |
-| Keep your work | Saved automatically in the browser's `localStorage`. The footer says where the data lives. |
+| Search, sort, filter | Jobs page: search box, status tabs with counts, and click any column header to sort (match, company, status, location, deadline, next step). Clicking a pipeline bar on Progress filters too. |
+| Keep your work | Saved to your account (Supabase) when signed in, or to the browser's `localStorage` without an account. The footer says where the data lives. |
 
 ## Our improvements
 
@@ -36,6 +36,7 @@ A job and internship tracker for MSBA students. Upload your resume, save jobs, a
    - **This week:** to-dos grouped into Overdue, Today, Next 7 days, and Later. Each one is tagged Apply, Follow up (two weeks after the posting closes), Interview, Thank-you note (the day after an interview), or Your step.
    - **Pipeline:** how many jobs reached Applied, Interviewing, and Offer, and what share moved on from each stage.
    - **Ready to apply:** saved jobs ranked by match score, with the closing date, network contact, and one button (Tailor or Mark applied).
+   - **Why:** every to-do says why it's there (for example "You applied Oct 10. Career Services suggests following up two weeks after the posting closes"). Progress has a "How are these made?" explainer.
    - **Email drafts:** follow-up and thank-you to-dos have a "Draft the email" button. It fills in the job, date, contact, and your matching skills. With an API key, Claude personalizes it (labeled as AI). "Open in email app" and "I sent it" log it.
    - **Help from Career Services:** the same Resume Guide, Career Connections, Interview Guide, and counseling links the spreadsheet has.
 
