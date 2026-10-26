@@ -129,6 +129,15 @@ button.wide { width: 100%; justify-content: center; text-align: center; }
 .start-card .swap { text-align: center; margin: 0; }
 .start-card .or { display: grid; justify-items: center; gap: 2px; margin: 0; padding-top: 12px; border-top: 1px solid var(--line); }
 .start-card .or button.link { text-align: center; }
+.welcome { width: min(900px, 100%); margin-inline: auto; display: grid; gap: 24px; padding-block: 42px; }
+.welcome h2 { max-width: 14ch; }
+.welcome .lead { max-width: 720px; color: var(--muted); font-size: 1.05rem; line-height: 1.55; }
+.welcome-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-block: 1px solid var(--line); }
+.welcome-step { display: grid; align-content: start; gap: 8px; padding: 22px 22px 22px 0; }
+.welcome-step + .welcome-step { border-left: 1px solid var(--line); padding-left: 22px; }
+.welcome-step b { font-size: 1rem; }
+.welcome-step span { color: var(--muted); line-height: 1.45; }
+.welcome-actions { display: flex; justify-content: flex-end; }
 .drop { position: relative; display: grid; gap: 8px; justify-items: center; text-align: center; border: 2px dashed var(--line); border-radius: 16px; padding: 24px 16px; background: var(--card); cursor: pointer; font-weight: 400; font-size: 1rem; }
 .drop:hover, .drop.over { border-color: var(--accent); background: var(--tint); }
 .drop strong { font-size: 1.1rem; }
@@ -641,6 +650,10 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
   .gsteps li, .gsteps li + li, .gsteps li:nth-child(3) { border-left: 0; border-top: 1px solid var(--line); padding: 16px 0; }
   .gsteps li:first-child { border-top: 0; }
   .card { padding: 24px 0; }
+  .welcome { padding-block: 28px; }
+  .welcome-steps { grid-template-columns: 1fr; }
+  .welcome-step, .welcome-step + .welcome-step { border-left: 0; border-top: 1px solid var(--line); padding: 18px 0; }
+  .welcome-step:first-child { border-top: 0; }
   .quick { padding: 22px 18px; }
   .modal { border-radius: 9px; }
   .modal-h { padding: 22px 20px 6px; }
@@ -669,7 +682,8 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
 <main class="wrap" id="view"></main>
 
 <footer><div class="wrap">
-  <span>Saved privately in this browser. Job links go to Jina AI Reader when you import; company names may be used to find a public logo; your resume goes to Anthropic only when you choose AI tailoring.</span>
+  <span id="storeNote">Saved privately in this browser. Job links go to Jina AI Reader when you import; company names may be used to find a public logo; your resume goes to Anthropic only when you choose AI tailoring.</span>
+  <span id="syncState" aria-live="polite"></span>
   <button type="button" class="link" id="btnSamples" hidden></button>
 </div></footer>
 </div>
@@ -719,139 +733,32 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
 
   // ---------- Storage ----------
   var jobs = [], me = null, storageOK = true, version = 0;
-  // ---------- Accounts (Supabase) ----------
-  // Public project values; the anon key is meant to be shipped in the page. Row-level security keeps each person's row private.
-  var SB = window.NEXTMOVE_SUPABASE || { url: "https://lkibysofamxxzadtjhvs.supabase.co", key: "sb_publishable_zmVYvcoEPkKzNd7lF4NcKg_pAaR1aRU" };
-  var AUTH = !!(SB.url && SB.key), SESSION_KEY = "nextmove.v3.session", GUEST_KEY = "nextmove.v3.guest";
-  var guest = false; // "Continue without an account": data stays in this browser only
-  var session = null, sync = { timer: null, dirty: false, busy: false };
-  function k(base) { return AUTH && session ? base + "." + session.user.id : base; }
-  function sbFetch(path, opts) {
-    opts = opts || {};
-    var h = { apikey: SB.key, "content-type": "application/json" };
-    Object.keys(opts.headers || {}).forEach(function (x) { h[x] = opts.headers[x]; });
-    if (session && !opts.noAuth) h.Authorization = "Bearer " + session.access_token;
-    return fetch(SB.url.replace(/\/$/, "") + path, { method: opts.method || "GET", headers: h, body: opts.body ? JSON.stringify(opts.body) : undefined }).then(function (res) {
-      return res.text().then(function (t) {
-        var j = null; try { j = t ? JSON.parse(t) : null; } catch (e) {}
-        if (!res.ok) { var err = new Error((j && (j.msg || j.error_description || j.message || j.error)) || "Error " + res.status); err.status = res.status; throw err; }
-        return j;
-      });
-    });
-  }
-  function setSession(j) {
-    if (!j || !j.access_token) throw new Error("Sign-in didn't return a session.");
-    session = { access_token: j.access_token, refresh_token: j.refresh_token, expires_at: Date.now() + (j.expires_in || 3600) * 1000,
-      user: { id: (j.user || session.user).id, email: (j.user || session.user).email } };
-    try { localStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch (e) {}
-  }
-  function refreshSession() { return sbFetch("/auth/v1/token?grant_type=refresh_token", { method: "POST", body: { refresh_token: session.refresh_token }, noAuth: true }).then(setSession); }
-  function withAuth(fn) {
-    var fresh = session.expires_at - Date.now() < 60000 ? refreshSession() : Promise.resolve();
-    return fresh.then(fn).catch(function (err) { if (err.status === 401) return refreshSession().then(fn); throw err; });
-  }
-  function signIn(email, password, create) {
-    var path = create ? "/auth/v1/signup" : "/auth/v1/token?grant_type=password";
-    return sbFetch(path, { method: "POST", body: { email: email, password: password }, noAuth: true }).then(function (j) {
-      if (create && !j.access_token) throw new Error("Account created, but this project asks people to confirm their email first. Check your inbox, then sign in.");
-      setSession(j);
-    });
-  }
-  function setGuest(on) { guest = on; try { if (on) localStorage.setItem(GUEST_KEY, "1"); else localStorage.removeItem(GUEST_KEY); } catch (e) {} }
-  function signOut() {
-    var old = session;
-    clearTimeout(sync.timer);
-    if (sync.dirty) pushNow();
-    if (old) { sbFetch("/auth/v1/logout", { method: "POST" }).catch(function () {}); try { localStorage.removeItem(k(KEY)); localStorage.removeItem(k(PROFILE_KEY)); localStorage.removeItem(SESSION_KEY); } catch (e) {} }
-    session = null; jobs = []; me = null; ui.skippedWelcome = false; version++;
-    if (location.hash) history.replaceState(null, "", location.pathname + location.search);
-    render();
-  }
-  function setSync(text) { var el = $("#syncState"); if (el) el.textContent = text; }
-  function schedulePush() { sync.dirty = true; setSync("Saving…"); clearTimeout(sync.timer); sync.timer = setTimeout(pushNow, 700); }
-  function pushNow() {
-    if (!session) return Promise.resolve();
-    sync.dirty = false;
-    var body = { user_id: session.user.id, jobs: jobs, profile: me, updated_at: new Date().toISOString() };
-    return withAuth(function () { return sbFetch("/rest/v1/user_data?on_conflict=user_id", { method: "POST", headers: { Prefer: "resolution=merge-duplicates,return=minimal" }, body: body }); })
-      .then(function () { if (!sync.dirty) setSync("Saved to your account."); })
-      .catch(function () { sync.dirty = true; setSync("Couldn't reach your account. Your changes are kept on this device and will sync when you're back online."); clearTimeout(sync.timer); sync.timer = setTimeout(pushNow, 15000); });
-  }
-  function pull(quiet) {
-    if (!session || sync.busy) return;
-    sync.busy = true; if (!quiet) setSync("Loading your jobs…");
-    withAuth(function () { return sbFetch("/rest/v1/user_data?select=jobs,profile&user_id=eq." + encodeURIComponent(session.user.id)); }).then(function (rows) {
-      sync.busy = false;
-      if (sync.dirty) return; // a local change is about to be saved; don't overwrite it
-      if (rows && rows.length) {
-        jobs = Array.isArray(rows[0].jobs) ? rows[0].jobs : []; me = rows[0].profile || null;
-        writeLocal(); version++; render(); setSync("Saved to your account."); return;
-      }
-      // New account: bring over anything saved in this browser before accounts existed.
-      var anonJobs = [], anonMe = null;
-      try { anonJobs = JSON.parse(localStorage.getItem(KEY) || "[]") || []; anonMe = JSON.parse(localStorage.getItem(PROFILE_KEY) || "null"); } catch (e) {}
-      if (anonJobs.length || anonMe) { jobs = anonJobs; me = anonMe; writeLocal(); version++; render(); }
-      pushNow().then(function () {
-        if (anonJobs.length || anonMe) { try { localStorage.removeItem(KEY); localStorage.removeItem(PROFILE_KEY); } catch (e) {} toast("Moved what was saved in this browser into your account."); }
-      });
-    }).catch(function (err) {
-      sync.busy = false;
-      if (err.status === 400 || err.status === 401) { signOut(); toast("Please sign in again."); return; }
-      setSync(err.status === 404 ? "Your account storage isn't set up yet (the user_data table is missing)." : "Couldn't reach your account. Showing what's saved on this device.");
-    });
-  }
-  function writeLocal() { try { localStorage.setItem(k(KEY), JSON.stringify(jobs)); localStorage.setItem(k(PROFILE_KEY), JSON.stringify(me)); } catch (e) {} }
-
-  function renderAuth() {
-    var up = ui.authMode === "up";
-    return '<section class="start"><form class="card start-card" id="authForm" novalidate>' +
-      '<h2>' + (up ? "Create your account" : "Welcome to NextMove") + '</h2>' +
-      '<p class="muted">' + (up ? "Your jobs and resume are saved to your account, so they're there on any device." : "Track every application and see how well your resume fits each job.") + '</p>' +
-      '<label>Email<input id="au-email" type="email" autocomplete="email" required></label>' +
-      '<label>Password' + (up ? ' <span class="hint">At least 6 characters.</span>' : "") + '<input id="au-pw" type="password" autocomplete="' + (up ? "new-password" : "current-password") + '" required minlength="6"></label>' +
-      '<p class="err" id="au-err" role="alert" hidden></p>' +
-      '<button type="submit" class="primary wide" id="au-go">' + (up ? "Create my account" : "Sign in") + '</button>' +
-      '<p class="swap">' + (up ? 'Already have an account? <a href="#" data-auth="in">Sign in</a>' : 'New here? <a href="#" data-auth="up">Create an account</a>') + '</p>' +
-      '<p class="or"><button type="button" class="link" data-act="guest">Continue without an account</button><span class="hint">Your data stays in this browser only.</span></p>' +
-      '</form></section>';
-  }
-  function wireAuth(root) {
-    var f = $("#authForm", root);
-    f.addEventListener("submit", function (e) {
-      e.preventDefault();
-      var email = $("#au-email").value.trim(), pw = $("#au-pw").value, er = $("#au-err"), btn = $("#au-go");
-      var fail = function (m) { er.textContent = m; er.hidden = false; };
-      if (!/^\S+@\S+\.\S+$/.test(email)) return fail("Enter your email address.");
-      if (pw.length < 6) return fail("Your password needs at least 6 characters.");
-      er.hidden = true; btn.disabled = true; btn.textContent = ui.authMode === "up" ? "Creating your account…" : "Signing in…";
-      signIn(email, pw, ui.authMode === "up").then(function () {
-        setGuest(false);
-        jobs = []; me = null; load(); render(); pull();
-      }).catch(function (err) {
-        btn.disabled = false; btn.textContent = ui.authMode === "up" ? "Create my account" : "Sign in";
-        var m = err.message || "";
-        fail(/invalid login|invalid_grant|credentials/i.test(m) ? "That email and password don't match. Try again, or create an account." :
-          /already registered|already exists/i.test(m) ? "There's already an account with that email. Sign in instead." :
-          /fetch|network|load failed/i.test(m) ? "Couldn't reach the sign-in service. Check your connection and try again." : m);
-      });
-    });
-    setTimeout(function () { var i = $("#au-email"); if (i) i.focus(); }, 30);
-  }
+  // Jobs and profile data stay only in this browser.
+  function k(base) { return base; }
 
   function load() {
     try {
       jobs = JSON.parse(localStorage.getItem(k(KEY)) || "null");
       me = JSON.parse(localStorage.getItem(k(PROFILE_KEY)) || "null");
-      if (jobs === null && AUTH) jobs = [];
       if (jobs === null) { // carry over data from the previous version, if any
         jobs = JSON.parse(localStorage.getItem("nextmove.v2.jobs") || "[]");
         me = me || JSON.parse(localStorage.getItem("nextmove.v2.me") || "null");
       }
     } catch (e) { storageOK = false; jobs = []; me = null; }
     if (!Array.isArray(jobs)) jobs = [];
+    // Remove untouched demo records created by older versions of the app.
+    var hadSamples = jobs.some(function (o) { return o && o.sample; });
+    if (hadSamples) jobs = jobs.filter(function (o) { return !o.sample; });
+    if (me && me.sample) { me = null; hadSamples = true; }
+    if (hadSamples) {
+      try {
+        localStorage.setItem(KEY, JSON.stringify(jobs));
+        if (me) localStorage.setItem(PROFILE_KEY, JSON.stringify(me)); else localStorage.removeItem(PROFILE_KEY);
+      } catch (e) { storageOK = false; }
+    }
   }
-  function save() { version++; try { localStorage.setItem(k(KEY), JSON.stringify(jobs)); storageOK = true; } catch (e) { storageOK = false; } if (session) schedulePush(); }
-  function saveMe() { version++; try { if (me) localStorage.setItem(k(PROFILE_KEY), JSON.stringify(me)); else localStorage.removeItem(k(PROFILE_KEY)); } catch (e) { storageOK = false; } if (session) schedulePush(); }
+  function save() { version++; try { localStorage.setItem(k(KEY), JSON.stringify(jobs)); storageOK = true; } catch (e) { storageOK = false; } }
+  function saveMe() { version++; try { if (me) localStorage.setItem(k(PROFILE_KEY), JSON.stringify(me)); else localStorage.removeItem(k(PROFILE_KEY)); } catch (e) { storageOK = false; } }
   function getKey() { try { return localStorage.getItem(AI_KEY) || ""; } catch (e) { return ""; } }
   function setKey(k) { try { if (k) localStorage.setItem(AI_KEY, k); else localStorage.removeItem(AI_KEY); } catch (e) {} }
   function blank() {
@@ -1254,38 +1161,6 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     return '<span class="score ' + band(r.score) + '" title="Qualification score: ' + r.score + ' out of 100">' + r.score + "</span>";
   }
 
-  // ---------- Sample data (dates relative to today) ----------
-  var SAMPLE_RESUME = "Jordan Lee\nSan Luis Obispo, CA · jordan.lee@example.com\n\nSUMMARY\nMSBA candidate with three years of analytics experience in financial services. I turn messy data into dashboards and forecasts that managers use.\n\n" +
-    "EDUCATION\nCal Poly, Orfalea College of Business: M.S. Business Analytics (MSBA), expected June 2027\nUC Davis: B.A. Economics, 2017 – 2021\n\n" +
-    "EXPERIENCE\nData Analyst, Central Coast Credit Union | Jul 2023 – Aug 2026\n- Built Tableau dashboards tracking loan performance for 12 branch managers, cutting weekly reporting time by 6 hours\n" +
-    "- Wrote SQL queries in Snowflake to segment 40,000 members for marketing campaigns\n- Forecast deposit growth with regression models in Excel and R, landing within 3% of actuals\n- Presented monthly findings to leadership in PowerPoint\n\n" +
-    "Business Analyst Intern, Mission Foods | Jun 2022 – Sep 2022\n- Cleaned and joined sales data from 30 stores using Excel and Python (pandas)\n- Automated a weekly inventory report with VBA, saving the team 3 hours a week\n\n" +
-    "PROJECTS\n- Customer churn model (Python, scikit-learn), MSBA capstone, 81% recall\n\nSKILLS\nSQL, Python, R, Tableau, Excel, Snowflake, statistics, regression, forecasting, PowerPoint, data visualization";
-  function samples() {
-    var t = today();
-    var rows = [
-      { company: "Harborview Health", title: "Business Analytics Intern", location: "San Luis Obispo, CA", arrangement: "Hybrid", deadline: addDays(t, 4), status: "saved",
-        contact: "Priya Shah, MSBA '24 (LinkedIn)", nextAction: "Ask Priya about the team", nextDue: addDays(t, 1), link: "https://example.com/jobs/harborview",
-        description: "Business Analytics Intern at Harborview Health. Hybrid, San Luis Obispo, CA.\nYou will build Tableau dashboards for hospital operations, write SQL against our data warehouse, and support forecasting of patient flow.\nRequirements: currently pursuing a master's degree in business analytics or a related field. SQL, Excel, Tableau, statistics.\nNice to have: Python, time series." },
-      { company: "Sierra Analytics Group", title: "Junior Data Scientist", location: "Remote", arrangement: "Remote", deadline: addDays(t, 9), status: "saved", tailored: true,
-        description: "Junior Data Scientist. Remote.\nBuild machine learning models in Python (pandas, scikit-learn), design and analyze A/B testing for product teams, and present results to stakeholders.\nRequirements: Master's degree in a quantitative field, 2+ years of experience in data science. Python, SQL, machine learning, statistics.\nPreferred: AWS, Spark, deep learning." },
-      { company: "Pacific Grid Energy", title: "Pricing Analyst", location: "Oakland, CA", arrangement: "On-site", deadline: addDays(t, -12), status: "applied", appliedDate: addDays(t, -16), contact: "Career fair: Dana Ortiz, recruiter",
-        description: "Pricing Analyst. On-site in Oakland, CA.\nUse Excel, SQL, regression and forecasting for rate design, and present recommendations to leadership with PowerPoint.\nRequirements: Bachelor's degree, 3+ years of experience in analytics or finance.\nNice to have: SAS, financial modeling." },
-      { company: "Brightline Media", title: "Data Analyst, Audience Insights", location: "Los Angeles, CA", arrangement: "Hybrid", deadline: addDays(t, -8), status: "applied", appliedDate: addDays(t, -6),
-        nextAction: "Connect with the hiring manager on LinkedIn", nextDue: t,
-        description: "Data Analyst, Audience Insights. Hybrid, Los Angeles, CA.\nAnalyze viewership with SQL and Python, build Looker dashboards, and use Google Analytics to understand audiences. Strong storytelling and PowerPoint skills.\nRequirements: Bachelor's degree, 1+ years of experience.\nPreferred: dbt, BigQuery." },
-      { company: "Lumen Bank", title: "Risk Analytics Intern", location: "Charlotte, NC", arrangement: "On-site", deadline: addDays(t, -30), status: "interviewing", appliedDate: addDays(t, -33),
-        interviewDate: addDays(t, -1), contact: "Cal Poly Career Connections mentor", nextAction: "Prepare for the final round", nextDue: addDays(t, 5),
-        description: "Risk Analytics Intern. On-site in Charlotte, NC.\nBuild credit risk models with regression in R or SAS, write SQL, and document model results for reviewers.\nRequirements: pursuing a master's degree. SQL, statistics, regression.\nPreferred: Tableau." },
-      { company: "Golden State Grocers", title: "Marketing Analytics Intern", location: "Sacramento, CA", arrangement: "Hybrid", deadline: addDays(t, 6), status: "saved",
-        description: "Marketing Analytics Intern. Hybrid, Sacramento, CA.\nMeasure campaign results with SQL and Excel, build Tableau reports, and run A/B testing on email offers.\nRequirements: Bachelor's degree. SQL, Excel, Tableau, A/B testing.\nPreferred: Google Analytics, Python." },
-      { company: "Coastline Foods", title: "Supply Chain Data Analyst", location: "Fresno, CA", arrangement: "On-site", deadline: addDays(t, -35), status: "rejected", appliedDate: addDays(t, -38),
-        description: "Supply Chain Data Analyst. On-site in Fresno, CA.\nRequirements: Bachelor's degree, 2+ years of experience in supply chain analytics. SQL, Excel, optimization, Alteryx, supply chain.\nPreferred: SAP, Power BI." }
-    ];
-    return rows.map(function (r) { var o = blank(); Object.keys(r).forEach(function (k) { o[k] = r[k]; }); o.sample = true; return o; });
-  }
-  function sampleProfile() { var p = parseResume(SAMPLE_RESUME); p.resumeName = "Sample resume (Jordan Lee)"; p.skills = p.skills.join(", "); p.roles = "data analyst, business analyst"; p.locations = "San Luis Obispo, Bay Area, Remote"; p.sample = true; return p; }
-
   // ---------- Places you'd like to live ----------
   // A few common regions expand to their cities; a state ("CA" or "California") matches any city in it.
   var REGIONS = { "bay area": ["san francisco", "oakland", "san jose", "berkeley", "palo alto", "mountain view", "sunnyvale", "menlo park", "redwood city", "santa clara", "san mateo", "fremont", "emeryville"],
@@ -1457,18 +1332,13 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
   function go(h) { if (location.hash === h) render(); else location.hash = h; }
 
   function render() {
-    var gate = AUTH && !session && !guest;
-    $("#btnAcct").hidden = !session && !(AUTH && guest); $("#btnAcct").classList.toggle("signin", !session);
-    if (!session) { $("#btnAcct").textContent = "Sign in"; $("#btnAcct").title = "Sign in to save your jobs to an account"; $("#btnAcct").setAttribute("aria-label", "Sign in"); }
-    if (session) { $("#btnAcct").textContent = session.user.email.charAt(0).toUpperCase(); $("#btnAcct").title = "Signed in as " + session.user.email; $("#btnAcct").setAttribute("aria-label", "Account: " + session.user.email); }
-    $("#storeNote").textContent = session ? "Saved to your NextMove account. Your Claude API key stays only in this browser." : gate ? "Each account's jobs and resume are private to that account." : "Saved privately in this browser on this device. Your resume is never uploaded, except to Anthropic when you choose AI tailoring.";
-    if (gate) { $("#btnAdd").hidden = true; $("#tabs").hidden = true; $("#btnSamples").hidden = true; setSync(""); $("#view").innerHTML = renderAuth(); wireAuth($("#view")); return; }
+    $("#btnAcct").hidden = true;
+    $("#storeNote").textContent = "Saved privately in this browser on this device. Your resume is never uploaded, except to Anthropic when you choose AI tailoring.";
     var welcome = !me && !jobs.length && !ui.skippedWelcome, r = route();
     if (r.tab === "job" && !byId(r.id)) r = { tab: "dashboard" }; // a deleted or unknown job
     $("#btnAdd").hidden = welcome; $("#tabs").hidden = welcome;
     $all("#tabs a").forEach(function (a) { var on = a.dataset.tab === r.tab || (r.tab === "job" && a.dataset.tab === "jobs"); if (on) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
-    var hasSamples = jobs.some(function (o) { return o.sample; });
-    var bs = $("#btnSamples"); bs.hidden = welcome; bs.textContent = hasSamples ? "Remove sample jobs" : "Try sample jobs";
+    $("#btnSamples").hidden = true;
     var view = $("#view");
     if (welcome) { view.innerHTML = renderWelcome(); wireUpload(view, true); return; }
     if (r.tab === "jobs") { view.innerHTML = renderJobsPage(); renderJobList(); }
@@ -1482,9 +1352,11 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
   function renderWelcome() {
     return '<section class="welcome"><h2>Let\'s set up your job search.</h2>' +
       '<p class="lead">Upload your resume. NextMove scores how qualified you are for each job from 1 to 100, helps you tailor your resume to each posting, and tells you what to do next.</p>' +
-      '<div class="how"><div><b>1. Your resume</b>We read your skills, experience, and education.</div><div><b>2. Save jobs</b>Paste a public job link and review the details we find.</div><div><b>3. Tailor and apply</b>Rewrite your resume for each job, then track it on your dashboard.</div></div>' +
+      '<div class="welcome-steps"><div class="welcome-step"><b>1. Add your resume</b><span>We read your skills, experience, and education in this browser.</span></div>' +
+      '<div class="welcome-step"><b>2. Save real jobs</b><span>Paste a public job link and review the details before saving.</span></div>' +
+      '<div class="welcome-step"><b>3. Tailor and track</b><span>Compare your fit, prepare your resume, and follow each application.</span></div></div>' +
       uploadBox() + '<div id="profileBox"></div>' +
-      '<p class="muted"><button type="button" class="link" data-act="sample-all">Try it with a sample resume and jobs</button> · <button type="button" class="link" data-act="skip">Skip for now</button></p>' +
+      '<div class="welcome-actions"><button type="button" class="link" data-act="skip">Skip resume for now</button></div>' +
       (storageOK ? "" : '<p class="err">This browser is blocking storage, so nothing will be saved after you close the tab.</p>') + "</section>";
   }
   function uploadBox() {
@@ -1561,15 +1433,27 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
       .map(function (o) { return { o: o, r: scoreJob(o) }; }).sort(function (a, b) { return ((b.r || {}).score || -1) - ((a.r || {}).score || -1); });
   }
 
-    var bits = [];
-    if (groups[0][1].length) bits.push(groups[0][1].length + " overdue");
-    if (groups[1][1].length) bits.push(groups[1][1].length + " due today");
-    if (groups[2][1].length) bits.push(groups[2][1].length + (groups[1][1].length ? " more" : "") + " this week");
-    if (nextIv) bits.push("next interview " + (nextIv.interviewDate === t ? "today" : fmt(nextIv.interviewDate)) + " with " + nextIv.company);
-    var h = '<section class="hello" data-eyebrow="Your workspace"><h2>' + esc(me && me.name ? "Hi " + me.name : "Hi there") + "</h2><p>" +
-      esc(!jobs.length ? "Add a job you're interested in to get started." : bits.length ? bits.join(" · ").replace(/^./, function (c) { return c.toUpperCase(); }) + "." : "You're all caught up.") + "</p>";
-    if (!me) h += '<p><button type="button" class="link" data-go="#resume">Add your resume</button> to get a 1–100 match score for every job.</p>';
-    h += "</section>";
+  // ---------- Home: one next move, three numbers, the top to-dos ----------
+  function renderDashboard() {
+    var steps = buildSteps(), t = today(), week = addDays(t, 7), f = funnel();
+    var dueWeek = steps.filter(function (s) { return s.due && s.due <= week; }).length, late = steps.filter(function (s) { return s.due && s.due < t; }).length;
+    var top = steps[0], h = "";
+    var hi = esc(me && me.name ? "Hi " + me.name : "Hi there");
+
+    // The banner: the single most useful thing to do now.
+    var move;
+    if (top) move = { title: top.text, sub: esc(top.o.company) + " · " + esc(top.o.title) + (top.due ? " · " + when(top.due) : "") + (top.why ? '<span class="hero-why">Why: ' + esc(top.why) + "</span>" : ""),
+      btn: top.act === "followup" || top.act === "thanks" ? '<button type="button" class="hero-btn" data-email="' + top.act + '" data-id="' + esc(top.o.id) + '">Draft the email</button>'
+        : '<button type="button" class="hero-btn" data-go="' + esc(top.go || "#job/" + top.o.id) + '">Let\'s do it</button>' };
+    else if (!me) move = { title: "Add your resume", sub: "It powers your 1–100 match score for every job.", btn: '<button type="button" class="hero-btn" data-go="#resume">Add my resume</button>' };
+    else if (!jobs.length) move = { title: "Save your first job", sub: "Paste a posting and I'll score how well you fit.", btn: '<button type="button" class="hero-btn" data-act="focus-qa">Add a job</button>' };
+    else move = { title: "You're all caught up", sub: "Save a few more jobs to keep things moving.", btn: '<button type="button" class="hero-btn" data-act="focus-qa">Add a job</button>' };
+    h += '<section class="hero"><div class="hero-main"><p class="eyebrow">' + hi + ", your next move</p><h2>" + esc(move.title) + '</h2><p class="hero-sub">' + move.sub + "</p>" + move.btn + "</div>" + (!jobs.length ? "" :
+      '<div class="hero-stats">' +
+      '<a href="#progress"><b>' + dueWeek + "</b><span>due this week</span>" + (late ? "<small>" + late + " overdue</small>" : "") + "</a>" +
+      '<a href="#jobs"><b>' + f.applied + "</b><span>applications sent</span><small>" + plural(jobs.length, "job") + " tracked</small></a>" +
+      '<a href="#progress"><b>' + (f.applied ? Math.round(100 * f.iv / f.applied) + "%" : "–") + "</b><span>got an interview</span><small>" + plural(f.offers, "offer") + "</small></a></div>") +
+      "</section>";
 
     h += guideHTML();
 
@@ -1667,7 +1551,7 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
       }).join("") + "</div>" +
       '<p class="note">Percent = share of the stage above that moved on. Click a stage to see those jobs.</p>' +
       '<dl class="kv small"><dt>Waiting to apply</dt><dd>' + cnt("saved") + "</dd><dt>Waiting to hear back</dt><dd>" + cnt("applied") + "</dd><dt>Closed</dt><dd>" +
-      cnt("rejected") + " rejected, " + cnt("withdrawn") + " withdrawn</dd></dl></section>" +
+      cnt("rejected") + " rejected, " + cnt("withdrawn") + " withdrawn</dd></dl></section>") +
       '<section class="card"><h3>Help from Career Services</h3><ul class="links">' + HELP.map(function (l) { return '<li><a href="' + l[1] + '" target="_blank" rel="noopener">' + l[0] + "</a> <span class=\"muted\">" + l[2] + "</span></li>"; }).join("") + "</ul></section></div></div>";
 
     // Ready to apply, ranked
@@ -1716,17 +1600,51 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
   function inFilter(o, f) { return f === "places" ? !CLOSED[o.status] && inMyPlaces(o) : f === "all" ? true : f === "active" || f === "open" ? !CLOSED[o.status] : f === "closed" ? !!CLOSED[o.status] : o.status === f; }
   function renderJobsPage() {
     var board = ui.view === "board";
-    var h = '<section class="hello" data-eyebrow="Your search"><h2>Jobs</h2><p>' + (board ? "Drag a job to a new column when its status changes (on a phone, use the menu on each card). The number is your match score out of 100." : me ? "The circle is your match score out of 100. Click a job to see why and tailor your resume." : "Add your resume on My resume to score each job.") + "</p></section>";
-    h += '<section class="card"><div class="card-h"><div class="seg" role="group" aria-label="View"><a href="#jobs" data-view="board"' + (board ? ' aria-current="page"' : "") + '>Board</a><a href="#jobs" data-view="list"' + (board ? "" : ' aria-current="page"') + ">List</a></div><span class=\"count\" id=\"jobCount\"></span></div>";
-    if (jobs.length) h += '<div class="controls' + (board ? " board-c" : "") + '"><input id="q" type="search" aria-label="Search your jobs" placeholder="Search company, title, location, or notes" value="' + esc(ui.q) + '">' +
-      (board ? "" : '<select id="filter" aria-label="Show">' + so("open", "Open jobs", ui.filter) + STATUSES.map(function (s) { return so(s[0], s[1], ui.filter); }).join("") + so("all", "All jobs", ui.filter) + "</select>") +
-      '<select id="sort" aria-label="Sort">' + so("score", "Highest score first", ui.sort) + so("deadline", "Deadline soonest", ui.sort) + so("company", "Company A–Z", ui.sort) + so("updated", "Recently updated", ui.sort) + "</select></div>";
-    return h + '<div class="jobs" id="jobs"></div></section>';
+    if (ui.filter === "open") ui.filter = "active";
+    var h = '<section class="hello"><h2>Your applications</h2><p>' + (board ? "Drag a job to a new column when its status changes (on a phone, use the menu on each card)." : "Click a column name to sort. Click a job to see your match, tailor your resume, and add notes.") + "</p></section>";
+    h += '<section class="card jobs-card">';
+    var tabs = myPlaces().length ? FILTERS.concat([["places", "📍 My places"]]) : FILTERS;
+    if (ui.filter === "places" && !myPlaces().length) ui.filter = "active";
+    if (jobs.length) h += '<nav class="ftabs" aria-label="Filter by status">' + tabs.map(function (f) {
+        var n = jobs.filter(function (o) { return inFilter(o, f[0]); }).length;
+        return '<button type="button" data-ftab="' + f[0] + '"' + (ui.filter === f[0] ? ' aria-pressed="true"' : ' aria-pressed="false"') + ">" + f[1] + " <span>" + n + "</span></button>";
+      }).join("") + "</nav>" +
+      '<div class="jtools"><input id="q" type="search" aria-label="Search your jobs" placeholder="Search company, title, location, or notes" value="' + esc(ui.q) + '">' +
+      '<div class="seg" role="group" aria-label="View"><a href="#jobs" data-view="list"' + (board ? "" : ' aria-current="page"') + '>Table</a><a href="#jobs" data-view="board"' + (board ? ' aria-current="page"' : "") + ">Board</a></div>" +
+      '<select id="sort" class="show-s" aria-label="Sort">' + [["score", "Best match first"], ["deadline", "Deadline soonest"], ["next", "Next step soonest"], ["company", "Company A–Z"], ["status", "Status"], ["updated", "Recently updated"]].map(function (x) { return '<option value="' + x[0] + '"' + (ui.sort === x[0] ? " selected" : "") + ">" + x[1] + "</option>"; }).join("") + "</select></div>";
+    if (ui.filter === "places") h += '<p class="note">Your places: ' + esc(myPlaces().join(" · ")) + ' · <a href="#resume">Edit</a></p>';
+    return h + '<p class="count" id="jobCount"></p><div class="jobs" id="jobs"></div></section>';
+  }
+  var SORTS = { score: function (o) { var r = scoreJob(o); return r ? r.score : -1; }, company: function (o) { return (o.company || "").toLowerCase(); },
+    status: function (o) { for (var i = 0; i < STATUSES.length; i++) if (STATUSES[i][0] === o.status) return i; return 9; },
+    location: function (o) { return (o.location || o.arrangement || "~").toLowerCase(); }, deadline: function (o) { return o.deadline || "9999"; },
+    next: function (o) { return nextDate(o) || "9999"; }, updated: function (o) { return o.updatedAt || ""; } };
+  function nextDate(o) { return o.interviewDate && o.interviewDate >= today() ? o.interviewDate : o.nextAction ? o.nextDue : o.status === "applied" && o.appliedDate ? followUpDue(o) : o.status === "saved" ? o.deadline : ""; }
+  function nextText(o) {
+    if (o.interviewDate && o.interviewDate >= today()) return "Interview " + when(o.interviewDate);
+    if (o.nextAction) return esc(o.nextAction) + " " + when(o.nextDue);
+    if (o.status === "saved") return o.deadline && o.deadline < today() ? '<span class="muted">Posting closed</span>' : "Apply " + (o.deadline ? when(o.deadline) : "");
+    if (o.status === "applied" && o.appliedDate) return "Follow up " + when(followUpDue(o));
+    if (o.interviewDate && !o.thankYouSent) return "Send a thank-you note";
+    return '<span class="muted">—</span>';
+  }
+  function tableHTML(list) {
+    var col = function (k, l, cls) { var on = ui.sort === k; return '<button type="button" class="th' + (cls ? " " + cls : "") + (on ? " on" : "") + '" data-sortby="' + k + '" aria-label="Sort by ' + l + '">' + l + (on ? (ui.dir < 0 ? " ↓" : " ↑") : "") + "</button>"; };
+    return '<div class="jt"><div class="jt-h">' + col("score", "Match") + col("company", "Company & role") + col("status", "Status") + col("location", "Location", "hide-s") + col("deadline", "Deadline", "hide-s") + col("next", "Next step") + "</div>" +
+      list.map(function (o) {
+        var r = scoreJob(o);
+        return '<div class="jt-r" tabindex="0" data-go="#job/' + esc(o.id) + '">' + scoreDot(o) +
+          '<div class="jt-job"><b>' + esc(o.company || "Untitled") + "</b><span>" + esc(o.title) + (r ? ' · <em class="fit ' + band(r.score) + '">' + verdict(r.score) + "</em>" : "") + "</span>" + (inMyPlaces(o) ? '<span class="mine-s">📍 One of your places</span>' : "") + "</div>" +
+          '<div><select class="st st-' + esc(o.status) + '" aria-label="Status for ' + esc(o.company) + '" data-status="' + esc(o.id) + '">' + STATUSES.map(function (s) { return '<option value="' + s[0] + '"' + (s[0] === o.status ? " selected" : "") + ">" + s[1] + "</option>"; }).join("") + "</select></div>" +
+          '<span class="jt-c hide-s">' + (esc(o.location) || '<span class="muted">—</span>') + (o.arrangement && o.arrangement !== o.location ? "<small>" + esc(o.arrangement) + "</small>" : "") + (inMyPlaces(o) ? '<small class="mine">📍 Your place</small>' : "") + "</span>" +
+          '<span class="jt-c hide-s">' + (o.deadline ? fmt(o.deadline) + (o.status === "saved" ? "<small>" + when(o.deadline) + "</small>" : "") : '<span class="muted">—</span>') + "</span>" +
+          '<span class="jt-c jt-next">' + nextText(o) + "</span></div>";
+      }).join("") + "</div>";
   }
   function renderJobList() {
     var box = $("#jobs"); if (!box) return;
     if (!jobs.length) {
-      box.innerHTML = '<p class="empty">No jobs yet.</p><div class="actions"><button type="button" class="primary" data-act="add">+ Add your first job</button><button type="button" class="link" data-act="samples">or try sample jobs</button></div>';
+      box.innerHTML = '<p class="empty">No jobs yet.</p><div class="actions"><button type="button" class="primary" data-act="add">+ Add your first job</button></div>';
       $("#jobCount").textContent = ""; return;
     }
     var q = ui.q.trim().toLowerCase(), board = ui.view === "board";
@@ -1936,7 +1854,6 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     return h + "</div>";
   }
   function wireResumePage(root) {
-    var so = $("#btnSignOut"); if (so) so.addEventListener("click", function () { signOut(); toast("Signed out."); });
     wireUpload(root, false);
     if (me) showProfile(root, me, false);
     var s = $("#keySave");
@@ -2072,21 +1989,9 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
   }
 
   // ---------- Events ----------
-  function toggleSamples() {
-    if (jobs.some(function (o) { return o.sample; })) {
-      var removed = jobs.filter(function (o) { return o.sample; });
-      jobs = jobs.filter(function (o) { return !o.sample; }); save(); go("#dashboard");
-      toast("Sample jobs removed.", "Undo", function () { jobs = removed.concat(jobs); save(); render(); });
-    } else { ui.skippedWelcome = true; jobs = samples().concat(jobs); save(); render(); toast("Added 6 sample jobs. Remove them any time at the bottom of the page."); }
-  }
   document.addEventListener("click", function (e) {
     var t = e.target;
-    var am = t.closest("[data-auth]"); if (am) { e.preventDefault(); ui.authMode = am.dataset.auth; render(); return; }
-    if (t.closest("#btnAcct")) { if (session) go("#resume"); else { setGuest(false); ui.authMode = "in"; render(); } return; }
-    if (t.closest("[data-act='guest']")) { setGuest(true); ui.skippedWelcome = false; load(); render(); return; }
     if (t.closest("#btnAdd") || t.closest("[data-act='add']")) { openJob(null); return; }
-    if (t.closest("#btnSamples") || t.closest("[data-act='samples']")) { toggleSamples(); return; }
-    if (t.closest("[data-act='sample-all']")) { me = sampleProfile(); saveMe(); jobs = samples().concat(jobs); save(); go("#dashboard"); toast("Loaded a sample resume and 6 sample jobs."); return; }
     if (t.closest("[data-act='skip']")) { ui.skippedWelcome = true; go("#dashboard"); return; }
     var mo = t.closest("[data-more]"); if (mo) { ui.more[mo.dataset.more] = !ui.more[mo.dataset.more]; if (route().tab === "jobs") renderJobList(); else render(); return; }
     if (t.closest("[data-act='all-steps']")) { ui.showAll = !ui.showAll; render(); return; }
@@ -2139,14 +2044,9 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
   });
   window.addEventListener("hashchange", function () { closeModal(); render(); window.scrollTo(0, 0); });
 
-  // Boot: with accounts on, show the cached copy right away, then load the latest from the account.
-  if (AUTH) { try { session = JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); } catch (e) { session = null; } }
-  if (AUTH && !session) { try { guest = localStorage.getItem(GUEST_KEY) === "1"; } catch (e) {} }
+  // Boot from this browser's local data.
   load();
   render();
-  if (session) pull();
-  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible" && session && !sync.dirty) pull(true); });
-  window.addEventListener("pagehide", function () { if (sync.dirty) pushNow(); });
 })();
 </script>
 </body>
