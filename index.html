@@ -245,6 +245,41 @@ details.how-todos ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 
 /* Job rows */
 .controls { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
 .jobs { display: grid; gap: 10px; }
+.jobs-card { gap: 14px; }
+.ftabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.ftabs button { border-radius: 999px; padding: 7px 14px; font-weight: 600; background: var(--soft-bg); border: 1px solid transparent; color: var(--ink); }
+.ftabs button span { color: var(--muted); font-weight: 500; margin-left: 2px; }
+.ftabs button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
+.ftabs button[aria-pressed="true"] span { color: inherit; opacity: .85; }
+.jtools { display: flex; gap: 10px; align-items: center; }
+.jtools input { flex: 1; min-width: 0; }
+.jobs-card > .count { margin: 0; }
+.show-s { display: none; }
+.jt { display: grid; }
+.jt-h, .jt-r { display: grid; grid-template-columns: 64px minmax(0, 2.2fr) 140px minmax(0, 1.1fr) 110px minmax(0, 1.5fr); gap: 14px; align-items: center; }
+.jt-h { padding: 0 10px 8px; border-bottom: 1px solid var(--line); }
+.jt-h .th { background: none; border: 0; padding: 4px 0; text-align: left; font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 700; border-radius: 4px; }
+.jt-h .th:hover, .jt-h .th.on { color: var(--accent-ink); }
+.jt-r { padding: 12px 10px; border-bottom: 1px solid var(--line); cursor: pointer; border-radius: 10px; }
+.jt-r:hover { background: var(--soft-bg); }
+.jt-job { display: grid; min-width: 0; }
+.jt-job b { font-size: 1.02rem; overflow-wrap: anywhere; }
+.jt-job span { color: var(--muted); font-size: .9rem; overflow-wrap: anywhere; }
+.fit { font-style: normal; font-weight: 600; color: var(--accent-ink); }
+.fit.mid { color: var(--warn); } .fit.low { color: var(--muted); }
+.jt-c { font-size: .92rem; display: grid; min-width: 0; overflow-wrap: anywhere; }
+.jt-c small { color: var(--muted); font-size: .82rem; }
+select.st { width: 100%; border-radius: 999px; padding: 6px 10px; font-size: .88rem; font-weight: 700; border: 0; background-color: var(--soft-bg); color: var(--ink); }
+select.st-saved { background-color: #e8eef7; color: #2c4a73; }
+select.st-applied { background-color: var(--warn-tint); color: var(--warn); }
+select.st-interviewing { background-color: #ece6f6; color: #5b3f8c; }
+select.st-offer { background-color: var(--tint); color: var(--accent-ink); }
+select.st-rejected, select.st-withdrawn { background-color: var(--soft-bg); color: var(--muted); }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 0; }
+.facts div { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; display: grid; gap: 2px; min-width: 0; }
+.facts dt { font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 700; }
+.facts dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.facts dd small { display: block; font-weight: 400; color: var(--muted); font-size: .85rem; }
 .job { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px 16px; align-items: center; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); cursor: pointer; }
 .job:hover { box-shadow: var(--shadow); }
 .job .co { font-weight: 700; font-size: 1.05rem; overflow-wrap: anywhere; }
@@ -340,6 +375,14 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   .bcol { scroll-snap-align: start; }
   .bc-move { display: block; width: 100%; padding: 6px 10px; font-size: .85rem; border-radius: 8px; }
   .controls.board-c { grid-template-columns: minmax(0, 1fr); }
+  .jt-h .hide-s, .jt-r .hide-s { display: none; }
+  .jt-h { display: none; }
+  .jt-r { grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; padding: 12px 4px; }
+  .jt-r > :first-child { grid-row: span 3; align-self: start; }
+  .jt-r select.st { width: auto; }
+  .jtools { flex-wrap: wrap; }
+  .jtools input { flex: 1 1 100%; }
+  .jtools .show-s { display: block; width: 100%; }
   .boost { grid-template-columns: 48px minmax(0, 1fr); }
   .boost > button { grid-column: 2; justify-self: start; }
   .m-lbl { display: inline; }
@@ -991,7 +1034,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   }
 
   // ---------- Routing ----------
-  var ui = { q: "", filter: "open", sort: "score", view: "board", showAll: false, skippedWelcome: false, busy: {}, more: {} };
+  var ui = { q: "", filter: "active", sort: "score", dir: 0, view: "list", showAll: false, skippedWelcome: false, busy: {}, more: {} };
   function route() { var p = (location.hash || "#dashboard").slice(1).split("/"); return { tab: p[0] || "dashboard", id: p[1], sub: p[2] }; }
   function go(h) { if (location.hash === h) render(); else location.hash = h; }
 
@@ -1212,16 +1255,48 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     return '<article class="job" tabindex="0" data-go="#job/' + esc(o.id) + '">' + scoreDot(o) + '<div><div class="co">' + esc(o.company) + "</div>" +
       '<div class="ti">' + esc(o.title) + (o.location ? " · " + esc(o.location) : "") + (o.arrangement && o.arrangement !== o.location ? " · " + esc(o.arrangement) : "") + '</div><div class="nx">' + next + "</div></div>" + right + "</article>";
   }
+  // Status tabs work in both views. "active" = everything not rejected or withdrawn.
+  var FILTERS = [["active", "Active"], ["saved", "Saved"], ["applied", "Applied"], ["interviewing", "Interviewing"], ["offer", "Offer"], ["closed", "Closed"], ["all", "All"]];
+  function inFilter(o, f) { return f === "all" ? true : f === "active" || f === "open" ? !CLOSED[o.status] : f === "closed" ? !!CLOSED[o.status] : o.status === f; }
   function renderJobsPage() {
-    var so = function (v, l, cur) { return '<option value="' + v + '"' + (v === cur ? " selected" : "") + ">" + l + "</option>"; };
     var board = ui.view === "board";
-    var h = '<section class="hello"><h2>Jobs</h2><p>' + (board ? "Drag a job to a new column when its status changes (on a phone, use the menu on each card). The number is your match score out of 100." : me ? "The circle is your match score out of 100. Click a job to see why and tailor your resume." : "Add your resume on My resume to score each job.") + "</p></section>";
-    h += '<section class="card"><div class="card-h"><div class="seg" role="group" aria-label="View"><a href="#jobs" data-view="board"' + (board ? ' aria-current="page"' : "") + '>Board</a><a href="#jobs" data-view="list"' + (board ? "" : ' aria-current="page"') + ">List</a></div><span class=\"count\" id=\"jobCount\"></span></div>";
-    if (jobs.length) h += '<div class="controls' + (board ? " board-c" : "") + '"><input id="q" type="search" aria-label="Search your jobs" placeholder="Search company, title, location, or notes" value="' + esc(ui.q) + '">' +
-      (board ? "" : '<select id="filter" aria-label="Show">' + so("open", "Open jobs (" + jobs.filter(function (o) { return !CLOSED[o.status]; }).length + ")", ui.filter) +
-        STATUSES.map(function (s) { return so(s[0], s[1] + " (" + jobs.filter(function (o) { return o.status === s[0]; }).length + ")", ui.filter); }).join("") + so("all", "All jobs (" + jobs.length + ")", ui.filter) + "</select>") +
-      '<select id="sort" aria-label="Sort">' + so("score", "Highest score first", ui.sort) + so("deadline", "Deadline soonest", ui.sort) + so("company", "Company A–Z", ui.sort) + so("updated", "Recently updated", ui.sort) + "</select></div>";
-    return h + '<div class="jobs" id="jobs"></div></section>';
+    if (ui.filter === "open") ui.filter = "active";
+    var h = '<section class="hello"><h2>Your applications</h2><p>' + (board ? "Drag a job to a new column when its status changes (on a phone, use the menu on each card)." : "Click a column name to sort. Click a job to see your match, tailor your resume, and add notes.") + "</p></section>";
+    h += '<section class="card jobs-card">';
+    if (jobs.length) h += '<nav class="ftabs" aria-label="Filter by status">' + FILTERS.map(function (f) {
+        var n = jobs.filter(function (o) { return inFilter(o, f[0]); }).length;
+        return '<button type="button" data-ftab="' + f[0] + '"' + (ui.filter === f[0] ? ' aria-pressed="true"' : ' aria-pressed="false"') + ">" + f[1] + " <span>" + n + "</span></button>";
+      }).join("") + "</nav>" +
+      '<div class="jtools"><input id="q" type="search" aria-label="Search your jobs" placeholder="Search company, title, location, or notes" value="' + esc(ui.q) + '">' +
+      '<div class="seg" role="group" aria-label="View"><a href="#jobs" data-view="list"' + (board ? "" : ' aria-current="page"') + '>Table</a><a href="#jobs" data-view="board"' + (board ? ' aria-current="page"' : "") + ">Board</a></div>" +
+      '<select id="sort" class="show-s" aria-label="Sort">' + [["score", "Best match first"], ["deadline", "Deadline soonest"], ["next", "Next step soonest"], ["company", "Company A–Z"], ["status", "Status"], ["updated", "Recently updated"]].map(function (x) { return '<option value="' + x[0] + '"' + (ui.sort === x[0] ? " selected" : "") + ">" + x[1] + "</option>"; }).join("") + "</select></div>";
+    return h + '<p class="count" id="jobCount"></p><div class="jobs" id="jobs"></div></section>';
+  }
+  var SORTS = { score: function (o) { var r = scoreJob(o); return r ? r.score : -1; }, company: function (o) { return (o.company || "").toLowerCase(); },
+    status: function (o) { for (var i = 0; i < STATUSES.length; i++) if (STATUSES[i][0] === o.status) return i; return 9; },
+    location: function (o) { return (o.location || o.arrangement || "~").toLowerCase(); }, deadline: function (o) { return o.deadline || "9999"; },
+    next: function (o) { return nextDate(o) || "9999"; }, updated: function (o) { return o.updatedAt || ""; } };
+  function nextDate(o) { return o.interviewDate && o.interviewDate >= today() ? o.interviewDate : o.nextAction ? o.nextDue : o.status === "applied" && o.appliedDate ? followUpDue(o) : o.status === "saved" ? o.deadline : ""; }
+  function nextText(o) {
+    if (o.interviewDate && o.interviewDate >= today()) return "Interview " + when(o.interviewDate);
+    if (o.nextAction) return esc(o.nextAction) + " " + when(o.nextDue);
+    if (o.status === "saved") return o.deadline && o.deadline < today() ? '<span class="muted">Posting closed</span>' : "Apply " + (o.deadline ? when(o.deadline) : "");
+    if (o.status === "applied" && o.appliedDate) return "Follow up " + when(followUpDue(o));
+    if (o.interviewDate && !o.thankYouSent) return "Send a thank-you note";
+    return '<span class="muted">—</span>';
+  }
+  function tableHTML(list) {
+    var col = function (k, l, cls) { var on = ui.sort === k; return '<button type="button" class="th' + (cls ? " " + cls : "") + (on ? " on" : "") + '" data-sortby="' + k + '" aria-label="Sort by ' + l + '">' + l + (on ? (ui.dir < 0 ? " ↓" : " ↑") : "") + "</button>"; };
+    return '<div class="jt"><div class="jt-h">' + col("score", "Match") + col("company", "Company & role") + col("status", "Status") + col("location", "Location", "hide-s") + col("deadline", "Deadline", "hide-s") + col("next", "Next step") + "</div>" +
+      list.map(function (o) {
+        var r = scoreJob(o);
+        return '<div class="jt-r" tabindex="0" data-go="#job/' + esc(o.id) + '">' + scoreDot(o) +
+          '<div class="jt-job"><b>' + esc(o.company || "Untitled") + "</b><span>" + esc(o.title) + (r ? ' · <em class="fit ' + band(r.score) + '">' + verdict(r.score) + "</em>" : "") + "</span></div>" +
+          '<div><select class="st st-' + esc(o.status) + '" aria-label="Status for ' + esc(o.company) + '" data-status="' + esc(o.id) + '">' + STATUSES.map(function (s) { return '<option value="' + s[0] + '"' + (s[0] === o.status ? " selected" : "") + ">" + s[1] + "</option>"; }).join("") + "</select></div>" +
+          '<span class="jt-c hide-s">' + (esc(o.location) || '<span class="muted">—</span>') + (o.arrangement && o.arrangement !== o.location ? '<small>' + esc(o.arrangement) + "</small>" : "") + "</span>" +
+          '<span class="jt-c hide-s">' + (o.deadline ? fmt(o.deadline) + (o.status === "saved" ? "<small>" + when(o.deadline) + "</small>" : "") : '<span class="muted">—</span>') + "</span>" +
+          '<span class="jt-c jt-next">' + nextText(o) + "</span></div>";
+      }).join("") + "</div>";
   }
   function renderJobList() {
     var box = $("#jobs"); if (!box) return;
@@ -1229,25 +1304,18 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
       box.innerHTML = '<p class="empty">No jobs yet.</p><div class="actions"><button type="button" class="primary" data-act="add">+ Add your first job</button><button type="button" class="link" data-act="samples">or try sample jobs</button></div>';
       $("#jobCount").textContent = ""; return;
     }
-    var q = ui.q.trim().toLowerCase();
-    var board = ui.view === "board";
+    var q = ui.q.trim().toLowerCase(), board = ui.view === "board";
     var list = jobs.filter(function (o) {
-      if (board) return !q || [o.company, o.title, o.location, o.arrangement, o.notes].join(" ").toLowerCase().indexOf(q) >= 0;
-      if (ui.filter === "open" && CLOSED[o.status]) return false;
-      if (ui.filter !== "open" && ui.filter !== "all" && o.status !== ui.filter) return false;
+      if (!inFilter(o, ui.filter)) return false;
       return !q || [o.company, o.title, o.location, o.arrangement, o.notes].join(" ").toLowerCase().indexOf(q) >= 0;
     });
-    list.sort(function (a, b) {
-      if (ui.sort === "company") return (a.company || "").localeCompare(b.company || "");
-      if (ui.sort === "updated") return (b.updatedAt || "").localeCompare(a.updatedAt || "");
-      if (ui.sort === "score") { var d = ((scoreJob(b) || {}).score || -1) - ((scoreJob(a) || {}).score || -1); if (d) return d; }
-      return (a.deadline || "9999").localeCompare(b.deadline || "9999");
-    });
-    $("#jobCount").textContent = list.length === jobs.length ? jobs.length + " total" : list.length + " of " + jobs.length;
+    var key = SORTS[ui.sort] || SORTS.score, dir = ui.dir || (ui.sort === "score" || ui.sort === "updated" ? -1 : 1);
+    list.sort(function (a, b) { var x = key(a), y = key(b); return (x < y ? -1 : x > y ? 1 : 0) * dir || (a.company || "").localeCompare(b.company || ""); });
+    $("#jobCount").textContent = "Showing " + list.length + " of " + jobs.length;
     if (board) { box.innerHTML = boardHTML(list); return; }
+    if (!list.length) { box.innerHTML = '<p class="empty">No jobs match. Try a different search or tab.</p>'; return; }
     var cap = 25, shown = ui.more.list ? list : list.slice(0, cap);
-    box.innerHTML = (shown.map(function (o) { return jobRow(o); }).join("") || '<p class="empty">No jobs match. Try a different search or filter.</p>') +
-      (list.length > cap ? '<button type="button" class="link more" data-more="list">' + (ui.more.list ? "Show fewer" : "Show all " + list.length) + "</button>" : "");
+    box.innerHTML = tableHTML(shown) + (list.length > cap ? '<button type="button" class="link more" data-more="list">' + (ui.more.list ? "Show fewer" : "Show all " + list.length) + "</button>" : "");
   }
 
   // ---------- Job page ----------
@@ -1256,9 +1324,18 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     sub = sub === "tailor" || sub === "details" ? sub : r ? "score" : "details";
     var opts = STATUSES.map(function (s) { return '<option value="' + s[0] + '"' + (s[0] === o.status ? " selected" : "") + ">" + s[1] + "</option>"; }).join("");
     var h = '<div><a class="back" href="#jobs">← All jobs</a></div>' +
-      '<section class="job-head"><div><h2>' + esc(o.company) + '</h2><p class="sub">' + esc(o.title) + (o.location ? " · " + esc(o.location) : "") + (o.arrangement ? " · " + esc(o.arrangement) : "") +
-      (o.deadline ? " · Closes " + fmt(o.deadline) : "") + "</p></div>" +
-      '<div class="right"><select aria-label="Status" data-status="' + esc(o.id) + '">' + opts + '</select><button type="button" data-edit="' + esc(o.id) + '">Edit</button></div></section>';
+      '<section class="job-head"><div><h2>' + esc(o.company) + '</h2><p class="sub">' + esc(o.title) + "</p></div>" +
+      '<div class="right"><select class="st st-' + esc(o.status) + '" aria-label="Status" data-status="' + esc(o.id) + '">' + opts + '</select><button type="button" data-edit="' + esc(o.id) + '">Edit</button></div></section>';
+    var fact = function (k, v, sm) { return "<div><dt>" + k + "</dt><dd>" + v + (sm ? "<small>" + sm + "</small>" : "") + "</dd></div>"; };
+    var addLink = function (lbl, f) { return '<button type="button" class="link" data-edit="' + esc(o.id) + '"' + (f ? ' data-focus="' + f + '"' : "") + ">" + lbl + "</button>"; };
+    h += '<dl class="facts">' +
+      fact("Match", r ? r.score + " / 100" : "–", r ? verdict(r.score) : "Needs your resume and the posting") +
+      fact("Location", esc(o.location) || addLink("Add", "f-location"), esc(o.arrangement)) +
+      fact(o.status === "saved" ? "Apply by" : "Applied", o.status === "saved" ? (o.deadline ? fmt(o.deadline) : "No deadline") : (o.appliedDate ? fmt(o.appliedDate) : "–"),
+        o.status === "saved" ? (o.deadline ? when(o.deadline) : "") : (o.deadline ? "Closed " + fmt(o.deadline) : "")) +
+      fact("Next step", nextText(o)) +
+      fact("Contact", o.contact ? esc(o.contact) : addLink("Add a contact", "f-contact")) +
+      fact("Posting", o.link ? '<a href="' + esc(o.link) + '" target="_blank" rel="noopener">Open ↗</a>' : addLink("Add the link", "f-link")) + "</dl>";
     var tab = function (k, l) { return '<a href="#job/' + esc(o.id) + "/" + k + '"' + (k === sub ? ' aria-current="page"' : "") + ">" + l + "</a>"; };
     h += '<nav class="seg" aria-label="Job sections">' + tab("score", "Match score") + tab("tailor", "Tailor my resume") + tab("details", "Details & notes") + "</nav>";
     if (sub === "score") h += scoreTab(o, r);
@@ -1583,6 +1660,9 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     var d = t.closest("[data-done]"); if (d) { completeStep(d.dataset.done, d.dataset.id); return; }
     var ed = t.closest("[data-edit]"); if (ed) { openJob(ed.dataset.edit, ed.dataset.focus); return; }
     var f = t.closest("[data-filter]"); if (f) { ui.filter = f.dataset.filter; ui.view = "list"; go("#jobs"); return; }
+    var ft = t.closest("[data-ftab]"); if (ft) { ui.filter = ft.dataset.ftab; ui.more.list = false; render(); return; }
+    var sb = t.closest("[data-sortby]"); if (sb) { var k2 = sb.dataset.sortby, cur = ui.dir || (ui.sort === "score" || ui.sort === "updated" ? -1 : 1);
+      ui.dir = ui.sort === k2 ? -cur : (k2 === "score" ? -1 : 1); ui.sort = k2; renderJobList(); return; }
     if (t.closest("select") || t.closest("a") || t.closest(".modal")) return;
     var g = t.closest("[data-go]"); if (g) go(g.dataset.go);
   });
@@ -1596,7 +1676,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
       return;
     }
     if (t.id === "filter") { ui.filter = t.value; renderJobList(); }
-    if (t.id === "sort") { ui.sort = t.value; renderJobList(); }
+    if (t.id === "sort") { ui.sort = t.value; ui.dir = 0; renderJobList(); }
   });
   document.addEventListener("input", function (e) { if (e.target.id === "q") { ui.q = e.target.value; renderJobList(); } });
   // Board drag and drop
