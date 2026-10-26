@@ -7,7 +7,7 @@ A job and internship tracker for MSBA students. Upload your resume, save jobs, a
 ## How it works
 
 1. **Start with your resume.** Upload a PDF, Word, or .txt file, or try the sample resume. NextMove reads your skills, years of experience, and degree in the browser. You check them and save.
-2. **Add a job.** Click **+ Add a job** and paste the posting. NextMove fills in the company, title, location, work arrangement, deadline, and link as soon as you paste, then takes you to your score.
+2. **Add a job.** Click **+ Add a job** and paste the link: Claude opens the page (Anthropic's web fetch tool, labeled AI) and fills in everything. Works on company career sites (Greenhouse, Lever, Workday), not LinkedIn or Handshake, which need a login. Or paste the posting text. NextMove fills in the company, title, location, work arrangement, deadline, and link as soon as you paste, then takes you to your score.
 3. **Use the dashboard.** It's deliberately short: a banner with your single next move and one button, three numbers (due this week, applications sent, interview rate), and the three to-dos after that.
 4. **Go deeper on Progress.** Every to-do grouped by Overdue / Today / Next 7 days / Later, the pipeline with conversion rates, all saved jobs ranked by match, and Career Services links. Long lists fold behind "Show more", so it stays readable with 100+ jobs.
 5. **Track jobs on the board.** Drag a job between Saved, Applied, Interviewing, Offer, and Closed. A list view has filters and sorting.
@@ -37,6 +37,7 @@ A job and internship tracker for MSBA students. Upload your resume, save jobs, a
    - **This week:** to-dos grouped into Overdue, Today, Next 7 days, and Later. Each one is tagged Apply, Follow up (two weeks after the posting closes), Interview, Thank-you note (the day after an interview), or Your step.
    - **Pipeline:** how many jobs reached Applied, Interviewing, and Offer, and what share moved on from each stage.
    - **Ready to apply:** saved jobs ranked by match score, with the closing date, network contact, and one button (Tailor or Mark applied).
+   - **Why:** every to-do says why it's there (for example "You applied Oct 10. Career Services suggests following up two weeks after the posting closes"). Progress has a "How are these made?" explainer.
    - **Email drafts:** follow-up and thank-you to-dos have a "Draft the email" button. It fills in the job, date, contact, and your matching skills. With an API key, Claude personalizes it (labeled as AI). "Open in email app" and "I sent it" log it.
    - **Help from Career Services:** the same Resume Guide, Career Connections, Interview Guide, and counseling links the spreadsheet has.
 

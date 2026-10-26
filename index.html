@@ -152,6 +152,16 @@ details[open] summary { margin-bottom: 10px; }
 .task:first-child { border-top: 0; padding-top: 2px; }
 .task .what { font-weight: 500; }
 .task .who { color: var(--muted); font-size: .9rem; overflow-wrap: anywhere; }
+.task .why { color: var(--muted); font-size: .82rem; font-style: italic; }
+.hero-why { display: block; margin-top: 6px; font-size: .9rem; color: #cfe8da; }
+details.how-todos { font-size: .9rem; color: var(--muted); margin-bottom: 6px; }
+details.how-todos summary { cursor: pointer; font-weight: 700; color: var(--accent-ink); }
+details.how-todos ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 3px; }
+.fromlink { display: grid; gap: 6px; background: var(--tint); border-radius: 14px; padding: 14px; }
+.fromlink .row { display: flex; gap: 8px; }
+.fromlink .row input { flex: 1; min-width: 0; }
+.fromlink .row button { white-space: nowrap; }
+.or-line { text-align: center; color: var(--muted); font-size: .85rem; margin: 2px 0; }
 .done { width: 22px; height: 22px; padding: 0; border-radius: 50%; border: 2px solid var(--accent); background: transparent; }
 .done:hover { background: var(--tint); }
 .when { font-size: .85rem; color: var(--muted); white-space: nowrap; }
@@ -846,8 +856,8 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     var t = today(), out = [];
     jobs.forEach(function (o) {
       if (CLOSED[o.status] || o.status === "offer" && !o.nextAction) return;
-      var add = function (kind, text, due, go) { out.push({ act: kind, kind: KINDS[kind], text: text, due: due, o: o, go: go }); };
-      if (o.nextAction) add("step", o.nextAction, o.nextDue);
+      var add = function (kind, text, due, go, why) { out.push({ act: kind, kind: KINDS[kind], text: text, due: due, o: o, go: go, why: why }); };
+      if (o.nextAction) add("step", o.nextAction, o.nextDue, "", "You added this as your next step.");
       if (o.status === "saved") {
         var r = scoreJob(o), open = o.deadline && o.deadline >= t;
         if (o.deadline && !open) return;
@@ -855,12 +865,13 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
         var left = [];
         if (r && r.score < 90 && !o.tailored) left.push("tailor your resume");
         if (!o.contact) left.push("find a contact");
-        if (!o.deadline) add("apply", left.length ? "Apply. First: " + left.join(", ") : "Apply when you're ready", "", left[0] === "tailor your resume" ? "#job/" + o.id + "/tailor" : "");
-        if (open) add("apply", left.length ? "Apply. First: " + left.join(", ") : "Apply before the posting closes", o.deadline, left[0] === "tailor your resume" ? "#job/" + o.id + "/tailor" : "");
+        var whyA = "You saved this job" + (o.deadline ? " and it closes " + fmt(o.deadline) : " and it has no deadline") + "." + (left.length ? " Tailoring and a contact raise your odds." : "");
+        if (!o.deadline) add("apply", left.length ? "Apply. First: " + left.join(", ") : "Apply when you're ready", "", left[0] === "tailor your resume" ? "#job/" + o.id + "/tailor" : "", whyA);
+        if (open) add("apply", left.length ? "Apply. First: " + left.join(", ") : "Apply before the posting closes", o.deadline, left[0] === "tailor your resume" ? "#job/" + o.id + "/tailor" : "", whyA);
       }
-      if (o.status === "applied" && o.appliedDate) add("followup", "No reply yet? Send a short follow-up", followUpDue(o));
-      if (o.interviewDate && o.interviewDate >= t) add("interview", "Interview. Review the posting and your tailored resume", o.interviewDate);
-      if (o.interviewDate && o.interviewDate < t && !o.thankYouSent) add("thanks", "Send a thank-you note to your interviewers", addDays(o.interviewDate, 1));
+      if (o.status === "applied" && o.appliedDate) add("followup", "No reply yet? Send a short follow-up", followUpDue(o), "", "You applied " + fmt(o.appliedDate) + ". Career Services suggests following up two weeks after the posting closes.");
+      if (o.interviewDate && o.interviewDate >= t) add("interview", "Interview. Review the posting and your tailored resume", o.interviewDate, "", "You entered this interview date.");
+      if (o.interviewDate && o.interviewDate < t && !o.thankYouSent) add("thanks", "Send a thank-you note to your interviewers", addDays(o.interviewDate, 1), "", "Your interview was " + fmt(o.interviewDate) + ". A thank-you note within a day stands out.");
     });
     out.sort(function (a, b) { if (!a.due !== !b.due) return a.due ? -1 : 1; return a.due < b.due ? -1 : a.due > b.due ? 1 : 0; });
     return out;
@@ -882,7 +893,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
       var circle = s.act === "interview" ? '<span class="done cal" aria-hidden="true"></span>' :
         '<button type="button" class="done" data-done="' + s.act + '" data-id="' + esc(s.o.id) + '" aria-label="Done: ' + esc(s.text) + '"></button>';
       return '<div class="task">' + circle + '<div>' + (compact ? "" : '<span class="tag">' + esc(s.kind) + '</span> ') + '<button type="button" class="link what" data-go="' + esc(s.go || "#job/" + s.o.id) + '">' + esc(s.text) + '</button>' +
-        '<div class="who">' + esc(s.o.company) + " · " + esc(s.o.title) + "</div>" +
+        '<div class="who">' + esc(s.o.company) + " · " + esc(s.o.title) + "</div>" + (compact || !s.why ? "" : '<div class="why">Why: ' + esc(s.why) + "</div>") +
         (!compact && (s.act === "followup" || s.act === "thanks") ? '<button type="button" class="small draft" data-email="' + s.act + '" data-id="' + esc(s.o.id) + '">Draft the email</button>' : "") + "</div>" + when(s.due) + "</div>";
     }).join("") + "</div>";
   }
@@ -1100,7 +1111,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
 
     // The banner: the single most useful thing to do now.
     var move;
-    if (top) move = { title: top.text, sub: esc(top.o.company) + " · " + esc(top.o.title) + (top.due ? " · " + when(top.due) : ""),
+    if (top) move = { title: top.text, sub: esc(top.o.company) + " · " + esc(top.o.title) + (top.due ? " · " + when(top.due) : "") + (top.why ? '<span class="hero-why">Why: ' + esc(top.why) + "</span>" : ""),
       btn: top.act === "followup" || top.act === "thanks" ? '<button type="button" class="hero-btn" data-email="' + top.act + '" data-id="' + esc(top.o.id) + '">Draft the email</button>'
         : '<button type="button" class="hero-btn" data-go="' + esc(top.go || "#job/" + top.o.id) + '">Let\'s do it</button>' };
     else if (!me) move = { title: "Add your resume", sub: "It powers your 1–100 match score for every job.", btn: '<button type="button" class="hero-btn" data-go="#resume">Add my resume</button>' };
@@ -1136,6 +1147,11 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
 
     // All to-dos, grouped. Long groups fold so 100 jobs stay readable.
     h += '<div class="grid2"><section class="card"><div class="card-h"><h3>All to-dos</h3><span class="count">' + plural(steps.length, "item") + " · tap the circle when it's done</span></div>";
+    h += '<details class="how-todos"><summary>How are these made?</summary><ul>' +
+      "<li><b>Saved job:</b> Apply by the closing date. If you haven't tailored your resume or found a contact, it says so.</li>" +
+      "<li><b>Applied:</b> Follow up two weeks after the posting closes (from the Career Services guide).</li>" +
+      "<li><b>Interview date:</b> Interview on the day, then a thank-you note the next day.</li>" +
+      "<li><b>Your next step:</b> anything you type in a job's \"Your next step\" shows up on its date.</li></ul></details>";
     if (!steps.length) h += '<p class="empty">Deadlines, follow-ups, interviews, and thank-you notes will show up here.</p>';
     groups.forEach(function (g, i) {
       if (!g[1].length) return;
@@ -1366,20 +1382,48 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   }
   function aiError(err) { return err && err.message && !/fetch|network|load failed/i.test(err.message) ? err.message : "Couldn't reach Anthropic. Check your connection. Previews can block this; it works on the live site."; }
   // One request to Claude from the browser with the user's own key; resolves to the reply text.
-  function callClaude(system, user) {
+  function callClaude(system, user, tools, history, round) {
+    var messages = history || [{ role: "user", content: user }], body = { model: MODEL, max_tokens: 16000, thinking: { type: "adaptive" }, system: system, messages: messages };
+    if (tools) body.tools = tools;
     return fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "x-api-key": getKey(), "anthropic-version": "2023-06-01", "content-type": "application/json", "anthropic-dangerous-direct-browser-access": "true" },
-      body: JSON.stringify({ model: MODEL, max_tokens: 16000, thinking: { type: "adaptive" }, system: system, messages: [{ role: "user", content: user }] })
+      body: JSON.stringify(body)
     }).then(function (res) {
       return res.json().catch(function () { return {}; }).then(function (j) {
         if (res.status === 401) throw new Error("Anthropic didn't accept that API key. Check it on My resume.");
         if (res.status === 429) throw new Error("Anthropic says you've hit a rate limit. Wait a minute and try again.");
         if (!res.ok) throw new Error("Anthropic returned an error" + (j.error && j.error.message ? ": " + j.error.message : " (" + res.status + ")."));
         if (j.stop_reason === "refusal") throw new Error("Claude declined this one. Try editing the text and run it again.");
+        // Server tools (web fetch) can pause a long turn; send it back as-is to let it finish.
+        if (j.stop_reason === "pause_turn" && (round || 0) < 3) return callClaude(system, user, tools, messages.concat([{ role: "assistant", content: j.content }]), (round || 0) + 1);
         return (j.content || []).filter(function (b) { return b.type === "text"; }).map(function (b) { return b.text; }).join("");
       });
     });
+  }
+  var LINK_SYSTEM = "You read job postings for a job tracker. Use web_fetch to open the URL you are given, then reply with only a JSON object, no other text: " +
+    '{"company": "", "title": "", "location": "City, ST or empty", "arrangement": "On-site, Hybrid, Remote, or empty", "deadline": "YYYY-MM-DD or empty", "description": "the full posting text: about the role, responsibilities, required and preferred qualifications, copied as closely as possible"}. ' +
+    'Use only what the page says; never guess. If the page needs a login, is blocked, or is not a job posting, reply {"error": "a short reason"}.';
+  function fillFromLink(btn, desc) {
+    var url = $("#f-url").value.trim(), msg = $("#linkMsg"), label = btn.innerHTML;
+    var say = function (t, bad) { msg.textContent = t; msg.className = "note" + (bad ? " err" : ""); };
+    if (!/^https?:\/\/\S+\.\S+/.test(url)) return say("Paste the full link, starting with https://", true);
+    if (/linkedin\.com|joinhandshake\.com|handshake\.com|indeed\.com/i.test(url)) return say("That site needs a login, so Claude can't open it. Open the posting, copy the text, and paste it below.", true);
+    if (!getKey()) return say("Filling from a link uses Claude. Add your Anthropic API key on My resume, or paste the posting text below.", true);
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Reading the page…'; say("This takes about 20–40 seconds.");
+    callClaude(LINK_SYSTEM, "Job posting URL: " + url, [{ type: "web_fetch_20260209", name: "web_fetch", max_uses: 3 }]).then(function (text) {
+      if (!$("#jobForm")) return;
+      var m = text.match(/\{[\s\S]*\}/), j = null; try { j = m && JSON.parse(m[0]); } catch (e) {}
+      if (!j) throw new Error("Claude couldn't read that page. Paste the posting text below instead.");
+      if (j.error) throw new Error("Claude couldn't read that page (" + j.error + "). Paste the posting text below instead.");
+      var n = 0, set = function (k, v) { var el = $("#f-" + k); if (el && v && !el.value) { el.value = v; n++; } };
+      set("company", j.company); set("title", j.title); set("location", j.location); set("link", url);
+      if (/^(On-site|Hybrid|Remote)$/.test(j.arrangement || "")) set("arrangement", j.arrangement);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(j.deadline || "")) set("deadline", j.deadline);
+      if (j.description && !desc.value.trim()) { desc.value = j.description; desc.dispatchEvent(new Event("input")); n++; }
+      btn.disabled = false; btn.innerHTML = label;
+      say(n ? "Filled in by Claude (AI) from the link. Check the details, then click Add job." : "Claude opened the page but found nothing new to fill in.");
+    }).catch(function (err) { if (!$("#jobForm")) return; btn.disabled = false; btn.innerHTML = label; say(aiError(err), true); });
   }
   function wireJobPage(o) {
     var b = $("#btnAI"); if (b) b.addEventListener("click", function () { runAI(o); });
@@ -1442,6 +1486,8 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     var isNew = !id, o = isNew ? prefill || blank() : JSON.parse(JSON.stringify(byId(id)));
     if (!o) return;
     var h = '<form id="jobForm" novalidate><div class="modal-h"><h2>' + (isNew ? "Add a job" : "Edit " + esc(o.company)) + '</h2><button type="button" class="x" data-close="1" aria-label="Close">✕</button></div><div class="modal-b">' +
+      (isNew ? '<div class="fromlink"><label for="f-url">Have a link to the posting? <span class="hint">Claude opens the page and fills in everything. Works on company career sites, not LinkedIn or Handshake (they need a login).</span></label>' +
+        '<div class="row"><input id="f-url" type="url" placeholder="https://…"><button type="button" id="btnLink"><span class="ai-tag">AI</span> Fill from link</button></div><p id="linkMsg" class="note" role="status"></p></div><p class="or-line">or</p>' : "") +
       '<div class="paste"><label>Paste the job posting <span class="hint">I\'ll fill in the details and score it against your resume.</span>' +
       '<textarea id="f-description" rows="' + (o.description ? 6 : 4) + '" placeholder="Copy the whole posting from the job site and paste it here">' + esc(o.description) + "</textarea></label>" +
       '<div class="actions"><button type="button" id="btnFill">Fill in the details</button><span id="fillMsg" class="note"></span></div><div id="scorePrev">' + previewScore(o.description) + "</div></div>" +
@@ -1466,6 +1512,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
       Object.keys(r).forEach(function (k) { var el = $("#f-" + k); if (el && r[k] && !el.value) { el.value = r[k]; n++; } });
       $("#fillMsg").textContent = !desc.value.trim() ? "Paste a posting first." : n ? "Filled in " + n + " field" + (n > 1 ? "s" : "") + ". Check them below." : "I couldn't find more details. Fill them in below.";
     });
+    var bl = $("#btnLink"); if (bl) bl.addEventListener("click", function () { fillFromLink(bl, desc); });
     desc.addEventListener("paste", function () { setTimeout(function () { $("#btnFill").click(); }, 0); }); // pasting a posting fills the form right away
     if (!isNew) $("#btnDel").addEventListener("click", function () {
       var left = $(".modal-f .left");
