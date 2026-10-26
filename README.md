@@ -7,11 +7,10 @@ A job and internship tracker for MSBA students. Upload your resume, save jobs, a
 ## How it works
 
 1. **Start with your resume.** Upload a PDF, Word, or .txt file, or try the sample resume. NextMove reads your skills, years of experience, and degree in the browser. You check them and save.
-2. **Add a job.** Paste the posting into the dashboard's "Add a job" box. NextMove fills in the company, title, location, work arrangement, deadline, and link, and takes you straight to your score.
-3. **Use the dashboard.** A banner shows your single next move with one button, plus three numbers: due this week, applications sent, and interview rate. Below it are the next few to-dos, a quick "Add a job" box, and your three best matches.
-4. **Go deeper on Progress.** Every to-do grouped by Overdue / Today / Next 7 days / Later, the pipeline with conversion rates, all saved jobs ranked by match, and Career Services links. Long lists fold behind "Show more", so it stays readable with 100+ jobs.
-5. **Track jobs on the board.** Drag a job between Saved, Applied, Interviewing, Offer, and Closed. A list view has filters and sorting.
-6. **Open a job** to see why it scored what it did, tailor your resume for it, and keep notes.
+2. **Add a job.** Paste a public job-posting link into the dashboard. NextMove retrieves the posting, fills in the details it can find, and opens an editable review form before saving. If a site blocks imports, paste the description instead.
+3. **Use the dashboard.** A "Get started" checklist guides new users. Then the dashboard shows this week's to-dos, your pipeline, and the saved jobs you're most qualified for.
+4. **Track jobs on the board.** Drag a job between Saved, Applied, Interviewing, Offer, and Closed. A list view has filters and sorting.
+5. **Open a job** to see why it scored what it did, tailor your resume for it, and keep notes.
 
 ## Assignment essentials
 
@@ -44,11 +43,11 @@ A job and internship tracker for MSBA students. Upload your resume, save jobs, a
 
 1. **Who it's for** (15s): MSBA students juggling many applications. The Career Services spreadsheet records what happened but doesn't tell you where you fit or what to do next.
 2. **Setup** (20s): Upload a resume (or click "Try it with a sample resume and jobs"). Show the skills, years, and degree it found.
-3. **Add a job** (20s): Paste a posting into the dashboard's Add a job box. It opens on the score.
+3. **Add a job** (20s): Paste a public posting link into the dashboard, review the autofilled details, and add it. If the site blocks importing, use the manual-paste fallback.
 4. **Score** (25s): Walk through the breakdown, then "How to raise your score". Click "I have this" and watch the score go up.
 5. **Tailor** (20s): Click Tailor my resume and show Claude's rewritten summary and bullets. Point out the rule-based fallback.
 6. **Track** (20s): On the Jobs board, drag the job to Applied. Back on the dashboard, open a thank-you to-do and click "Draft the email".
 
 ## Tech
 
-A single `index.html` with no build step. PDF and Word resumes are read with pdf.js and mammoth, loaded from cdnjs only when you upload one. Scoring runs in plain JavaScript in the browser. AI tailoring calls the Anthropic Messages API (`claude-opus-5-5`) directly from the browser with the user's key. Accounts use Supabase (email and password); each person's jobs and resume live in one row of a `user_data` table protected by row-level security. Without an account, data is stored in `localStorage`. The Claude API key always stays in the browser.
+A single `index.html` with no build step. PDF and Word resumes are read with pdf.js and mammoth, loaded from cdnjs only when you upload one. Public job links are sent to Jina AI Reader for page-text retrieval; field parsing and scoring then run in plain JavaScript in the browser. AI tailoring calls the Anthropic Messages API (`claude-opus-5-5`) directly from the browser with the user's key. Data is stored in `localStorage`.
