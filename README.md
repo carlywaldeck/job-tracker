@@ -8,9 +8,10 @@ A job and internship tracker for MSBA students. Upload your resume, save jobs, a
 
 1. **Start with your resume.** Upload a PDF, Word, or .txt file, or try the sample resume. NextMove reads your skills, years of experience, and degree in the browser. You check them and save.
 2. **Add a job.** Paste the posting into the dashboard's "Add a job" box. NextMove fills in the company, title, location, work arrangement, deadline, and link, and takes you straight to your score.
-3. **Use the dashboard.** A "Get started" checklist guides new users. Then the dashboard shows this week's to-dos, your pipeline, and the saved jobs you're most qualified for.
-4. **Track jobs on the board.** Drag a job between Saved, Applied, Interviewing, Offer, and Closed. A list view has filters and sorting.
-5. **Open a job** to see why it scored what it did, tailor your resume for it, and keep notes.
+3. **Use the dashboard.** A banner shows your single next move with one button, plus three numbers: due this week, applications sent, and interview rate. Below it are the next few to-dos, a quick "Add a job" box, and your three best matches.
+4. **Go deeper on Progress.** Every to-do grouped by Overdue / Today / Next 7 days / Later, the pipeline with conversion rates, all saved jobs ranked by match, and Career Services links. Long lists fold behind "Show more", so it stays readable with 100+ jobs.
+5. **Track jobs on the board.** Drag a job between Saved, Applied, Interviewing, Offer, and Closed. A list view has filters and sorting.
+6. **Open a job** to see why it scored what it did, tailor your resume for it, and keep notes.
 
 ## Assignment essentials
 
