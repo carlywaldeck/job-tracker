@@ -6,12 +6,11 @@ A job and internship tracker for MSBA students. Upload your resume, save jobs, a
 
 ## How it works
 
-1. **Start with your resume.** Upload a PDF, Word, or .txt file, or try the sample resume. NextMove reads your skills, years of experience, and degree in the browser. You check them, add the places you'd like to live (cities, regions like Bay Area, states, or Remote), and save. Jobs in your places get a 📍 tag and their own "My places" tab.
-2. **Add a job.** Click **+ Add a job** and paste the link: Claude opens the page (Anthropic's web fetch tool, labeled AI) and fills in everything. Works on company career sites (Greenhouse, Lever, Workday), not LinkedIn or Handshake, which need a login. Or paste the posting text. NextMove fills in the company, title, location, work arrangement, deadline, and link as soon as you paste, then takes you to your score.
-3. **Use the dashboard.** It's deliberately short: a banner with your single next move and one button, three numbers (due this week, applications sent, interview rate), and the three to-dos after that.
-4. **Go deeper on Progress.** A **What's working** section compares the applications that led to an interview with the ones that didn't (had a contact, tailored resume, match score 75+, applied a week early), shows the interview rate for each group, and lists what to try next, with a "why" for each tip and the skills that keep showing up in postings where you didn't hear back. It's rule-based (labeled), and it warns that small samples are noisy. Below that: Every to-do grouped by Overdue / Today / Next 7 days / Later, the pipeline with conversion rates, all saved jobs ranked by match, and Career Services links. Long lists fold behind "Show more", so it stays readable with 100+ jobs.
-5. **Track your applications.** The Jobs page is a table (Match, Company & role, Status, Location, Deadline, Next step): click any column name to sort, use the status tabs (Active, Saved, Applied, Interviewing, Offer, Closed, All) to filter, and change a status right in the row. Switch to Board to drag jobs between columns.
-6. **Open a job** to see why it scored what it did, tailor your resume for it, and keep notes.
+1. **Start with your resume.** Upload a PDF, Word, or .txt file, or try the sample resume. NextMove reads your skills, years of experience, and degree in the browser. You check them and save.
+2. **Add a job.** Paste a public job-posting link into the dashboard. NextMove retrieves the posting, fills in the details it can find, and opens an editable review form before saving. If a site blocks imports, paste the description instead.
+3. **Use the dashboard.** A "Get started" checklist guides new users. Then the dashboard shows this week's to-dos, your pipeline, and the saved jobs you're most qualified for.
+4. **Track jobs on the board.** Drag a job between Saved, Applied, Interviewing, Offer, and Closed. A list view has filters and sorting.
+5. **Open a job** to see why it scored what it did, tailor your resume for it, and keep notes.
 
 ## Assignment essentials
 
@@ -45,11 +44,11 @@ A job and internship tracker for MSBA students. Upload your resume, save jobs, a
 
 1. **Who it's for** (15s): MSBA students juggling many applications. The Career Services spreadsheet records what happened but doesn't tell you where you fit or what to do next.
 2. **Setup** (20s): Upload a resume (or click "Try it with a sample resume and jobs"). Show the skills, years, and degree it found.
-3. **Add a job** (20s): Click + Add a job and paste a posting. The form fills itself in; save and it opens on the score.
+3. **Add a job** (20s): Paste a public posting link into the dashboard, review the autofilled details, and add it. If the site blocks importing, use the manual-paste fallback.
 4. **Score** (25s): Walk through the breakdown, then "How to raise your score". Click "I have this" and watch the score go up.
 5. **Tailor** (20s): Click Tailor my resume and show Claude's rewritten summary and bullets. Point out the rule-based fallback.
 6. **Track** (20s): On the Jobs board, drag the job to Applied. Back on the dashboard, open a thank-you to-do and click "Draft the email".
 
 ## Tech
 
-A single `index.html` with no build step. PDF and Word resumes are read with pdf.js and mammoth, loaded from cdnjs only when you upload one. Scoring runs in plain JavaScript in the browser. AI tailoring calls the Anthropic Messages API (`claude-opus-5-5`) directly from the browser with the user's key. Accounts use Supabase (email and password); each person's jobs and resume live in one row of a `user_data` table protected by row-level security. Without an account, data is stored in `localStorage`. The Claude API key always stays in the browser.
+A single `index.html` with no build step. PDF and Word resumes are read with pdf.js and mammoth, loaded from cdnjs only when you upload one. Public job links are sent to Jina AI Reader for page-text retrieval; field parsing and scoring then run in plain JavaScript in the browser. AI tailoring calls the Anthropic Messages API (`claude-opus-5-5`) directly from the browser with the user's key. Data is stored in `localStorage`.
