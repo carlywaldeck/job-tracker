@@ -2,7 +2,7 @@
 
 A job and internship tracker for MSBA students. Upload your resume, save jobs, and NextMove scores how qualified you are for each one from 1 to 100, helps you tailor your resume to each posting, and shows everything on one dashboard.
 
-**Live app:** https://weekender-trips.com/job-tracker/ (served by GitHub Pages). Anyone can use it with no sign-up. Each person's data, including their resume, stays private in their own browser.
+**Live app:** https://carlywaldeck.github.io/job-tracker/. Create an account to keep your jobs and resume on any device, or continue without an account to keep everything in this browser only.
 
 ## How it works
 
@@ -20,7 +20,7 @@ A job and internship tracker for MSBA students. Upload your resume, save jobs, a
 | Track status: Saved, Applied, Interviewing, Offer, Rejected, Withdrawn | Drag cards on the Jobs board, or use the status dropdown in the list view and on each job page |
 | Next action + due date | "Your next step" and "Do it by" in the job form. They show up in the dashboard's To do list. |
 | Search, sort, filter | Jobs tab: search and sort on the board; the list view adds a status filter. Sort options: (highest score, deadline, company, recently updated). Clicking a pipeline bar filters too. |
-| Keep your work | Saved automatically in the browser's `localStorage`. The footer says where the data lives. |
+| Keep your work | Saved to your account (Supabase) when signed in, or to the browser's `localStorage` without an account. The footer says where the data lives. |
 
 ## Our improvements
 
