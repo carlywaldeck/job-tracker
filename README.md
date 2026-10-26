@@ -2,7 +2,7 @@
 
 A job and internship tracker for MSBA students. Upload your resume, save jobs, and NextMove scores how qualified you are for each one from 1 to 100, helps you tailor your resume to each posting, and shows everything on one dashboard.
 
-**Live app:** link coming soon. Anyone can use it with no sign-up. Each person's data, including their resume, stays private in their own browser.
+**Live app:** https://carlywaldeck.github.io/job-tracker/. Create an account to keep your jobs and resume on any device, or continue without an account to keep everything in this browser only.
 
 ## How it works
 
@@ -20,7 +20,7 @@ A job and internship tracker for MSBA students. Upload your resume, save jobs, a
 | Track status: Saved, Applied, Interviewing, Offer, Rejected, Withdrawn | Drag cards on the Jobs board, or use the status dropdown in the list view and on each job page |
 | Next action + due date | "Your next step" and "Do it by" in the job form. They show up in the dashboard's To do list. |
 | Search, sort, filter | Jobs tab: search and sort on the board; the list view adds a status filter. Sort options: (highest score, deadline, company, recently updated). Clicking a pipeline bar filters too. |
-| Keep your work | Saved automatically in the browser's `localStorage`. The footer says where the data lives. |
+| Keep your work | Saved to your account (Supabase) when signed in, or to the browser's `localStorage` without an account. The footer says where the data lives. |
 
 ## Our improvements
 
@@ -50,4 +50,4 @@ A job and internship tracker for MSBA students. Upload your resume, save jobs, a
 
 ## Tech
 
-A single `index.html` with no build step. PDF and Word resumes are read with pdf.js and mammoth, loaded from cdnjs only when you upload one. Scoring runs in plain JavaScript in the browser. AI tailoring calls the Anthropic Messages API (`claude-opus-5-5`) directly from the browser with the user's key. Data is stored in `localStorage`.
+A single `index.html` with no build step. PDF and Word resumes are read with pdf.js and mammoth, loaded from cdnjs only when you upload one. Scoring runs in plain JavaScript in the browser. AI tailoring calls the Anthropic Messages API (`claude-opus-5-5`) directly from the browser with the user's key. Accounts use Supabase (email and password); each person's jobs and resume live in one row of a `user_data` table protected by row-level security. Without an account, data is stored in `localStorage`. The Claude API key always stays in the browser.
