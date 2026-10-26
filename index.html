@@ -80,7 +80,8 @@ main > * { min-width: 0; }
 
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 22px; display: grid; gap: 14px; min-width: 0; align-content: start; }
 .card-h { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-.hero { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 28px; align-items: center; padding: 32px 36px; border-radius: 24px; color: #fff;
+.home { display: grid; gap: 20px; max-width: 760px; width: 100%; margin-inline: auto; }
+.hero { display: grid; gap: 26px; padding: 34px 36px; border-radius: 24px; color: #fff;
   background: radial-gradient(circle at 100% 0%, rgba(255,255,255,.12), transparent 45%), linear-gradient(135deg, #1d4b36 0%, #2f6e4e 60%, #3f8a62 100%); box-shadow: var(--shadow); }
 .hero-main { display: grid; gap: 10px; justify-items: start; min-width: 0; }
 .hero .eyebrow { margin: 0; text-transform: uppercase; letter-spacing: .08em; font-size: .8rem; font-weight: 700; color: #cfe8da; }
@@ -89,12 +90,13 @@ main > * { min-width: 0; }
 .hero .when, .hero .when.soon, .hero .when.late { color: #fff; background: rgba(255,255,255,.16); padding: 1px 8px; border-radius: 999px; font-weight: 700; }
 .hero-btn { margin-top: 6px; background: #fff; color: #1d4b36; border: 0; border-radius: 999px; padding: 12px 22px; font-weight: 700; font-size: 1rem; }
 .hero-btn:hover { background: #e9f5ee; }
-.hero-stats { display: grid; gap: 10px; }
-.hero-stats a { display: grid; grid-template-columns: auto 1fr; column-gap: 14px; align-items: baseline; text-decoration: none; color: #fff; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.14); border-radius: 16px; padding: 12px 18px; }
+.hero-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.hero-stats a { display: grid; align-content: start; text-decoration: none; color: #fff; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.14); border-radius: 16px; padding: 12px 18px; }
 .hero-stats a:hover { background: rgba(255,255,255,.18); }
-.hero-stats b { grid-row: span 2; font-size: 2.1rem; line-height: 1; letter-spacing: -0.02em; min-width: 2.2ch; }
+.hero-stats b { font-size: 2rem; line-height: 1; letter-spacing: -0.02em; min-width: 2.2ch; }
 .hero-stats span { font-weight: 600; }
 .hero-stats small { color: #cfe8da; font-size: .85rem; }
+.upnext .see-all { display: inline-block; margin-top: 10px; font-weight: 700; color: var(--accent-ink); }
 .mini { display: grid; gap: 6px; }
 .mini-r { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; text-align: left; background: none; border: 0; border-radius: 12px; padding: 8px; font-weight: 400; }
 .mini-r:hover { background: var(--soft-bg); }
@@ -307,7 +309,8 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
 @media (max-width: 860px) {
   .gsteps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .grid2 { grid-template-columns: minmax(0, 1fr); }
-  .hero { grid-template-columns: minmax(0, 1fr); padding: 24px 20px; gap: 20px; border-radius: 20px; }
+  .hero { padding: 24px 20px; gap: 20px; border-radius: 20px; }
+  .hero-stats { gap: 6px; } .hero-stats a { padding: 10px 12px; } .hero-stats b { font-size: 1.6rem; } .hero-stats span { font-size: .85rem; } .hero-stats small { display: none; }
   .hero h2 { font-size: 1.8rem; }
   .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
@@ -874,13 +877,13 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
     if (act === "thanks") { o.thankYouSent = true; o.updatedAt = today(); save(); render(); toast("Thank-you note logged.", "Undo", undo); return; }
     if (act === "followup") { o.followUpDate = today(); save(); render(); toast("Follow-up logged. I'll check back in two weeks.", "Undo", undo); }
   }
-  function tasksHTML(steps) {
+  function tasksHTML(steps, compact) {
     return '<div class="tasks">' + steps.map(function (s) {
       var circle = s.act === "interview" ? '<span class="done cal" aria-hidden="true"></span>' :
         '<button type="button" class="done" data-done="' + s.act + '" data-id="' + esc(s.o.id) + '" aria-label="Done: ' + esc(s.text) + '"></button>';
-      return '<div class="task">' + circle + '<div><span class="tag">' + esc(s.kind) + '</span> <button type="button" class="link what" data-go="' + esc(s.go || "#job/" + s.o.id) + '">' + esc(s.text) + '</button>' +
+      return '<div class="task">' + circle + '<div>' + (compact ? "" : '<span class="tag">' + esc(s.kind) + '</span> ') + '<button type="button" class="link what" data-go="' + esc(s.go || "#job/" + s.o.id) + '">' + esc(s.text) + '</button>' +
         '<div class="who">' + esc(s.o.company) + " · " + esc(s.o.title) + "</div>" +
-        (s.act === "followup" || s.act === "thanks" ? '<button type="button" class="small draft" data-email="' + s.act + '" data-id="' + esc(s.o.id) + '">Draft the email</button>' : "") + "</div>" + when(s.due) + "</div>";
+        (!compact && (s.act === "followup" || s.act === "thanks") ? '<button type="button" class="small draft" data-email="' + s.act + '" data-id="' + esc(s.o.id) + '">Draft the email</button>' : "") + "</div>" + when(s.due) + "</div>";
     }).join("") + "</div>";
   }
 
@@ -1092,7 +1095,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   function renderDashboard() {
     var steps = buildSteps(), t = today(), week = addDays(t, 7), f = funnel();
     var dueWeek = steps.filter(function (s) { return s.due && s.due <= week; }).length, late = steps.filter(function (s) { return s.due && s.due < t; }).length;
-    var ready = readyList(), top = steps[0], h = "";
+    var top = steps[0], h = "";
     var hi = esc(me && me.name ? "Hi " + me.name : "Hi there");
 
     // The banner: the single most useful thing to do now.
@@ -1101,32 +1104,23 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
       btn: top.act === "followup" || top.act === "thanks" ? '<button type="button" class="hero-btn" data-email="' + top.act + '" data-id="' + esc(top.o.id) + '">Draft the email</button>'
         : '<button type="button" class="hero-btn" data-go="' + esc(top.go || "#job/" + top.o.id) + '">Let\'s do it</button>' };
     else if (!me) move = { title: "Add your resume", sub: "It powers your 1–100 match score for every job.", btn: '<button type="button" class="hero-btn" data-go="#resume">Add my resume</button>' };
-    else if (!jobs.length) move = { title: "Save your first job", sub: "Paste a posting below and I'll score how well you fit.", btn: '<button type="button" class="hero-btn" data-act="focus-qa">Add a job</button>' };
+    else if (!jobs.length) move = { title: "Save your first job", sub: "Paste a posting and I'll score how well you fit.", btn: '<button type="button" class="hero-btn" data-act="focus-qa">Add a job</button>' };
     else move = { title: "You're all caught up", sub: "Save a few more jobs to keep things moving.", btn: '<button type="button" class="hero-btn" data-act="focus-qa">Add a job</button>' };
-    h += '<section class="hero"><div class="hero-main"><p class="eyebrow">' + hi + ", your next move</p><h2>" + esc(move.title) + '</h2><p class="hero-sub">' + move.sub + "</p>" + move.btn + "</div>" +
+    h += '<section class="hero"><div class="hero-main"><p class="eyebrow">' + hi + ", your next move</p><h2>" + esc(move.title) + '</h2><p class="hero-sub">' + move.sub + "</p>" + move.btn + "</div>" + (!jobs.length ? "" :
       '<div class="hero-stats">' +
       '<a href="#progress"><b>' + dueWeek + "</b><span>due this week</span>" + (late ? "<small>" + late + " overdue</small>" : "") + "</a>" +
       '<a href="#jobs"><b>' + f.applied + "</b><span>applications sent</span><small>" + plural(jobs.length, "job") + " tracked</small></a>" +
-      '<a href="#progress"><b>' + (f.applied ? Math.round(100 * f.iv / f.applied) + "%" : "–") + "</b><span>got an interview</span><small>" + plural(f.offers, "offer") + "</small></a>" +
-      "</div></section>";
+      '<a href="#progress"><b>' + (f.applied ? Math.round(100 * f.iv / f.applied) + "%" : "–") + "</b><span>got an interview</span><small>" + plural(f.offers, "offer") + "</small></a></div>") +
+      "</section>";
 
     h += guideHTML();
 
-    // Up next: only the top few, the rest live on Progress.
-    var rest = steps.slice(1, 6);
-    h += '<div class="grid2"><section class="card"><div class="card-h"><h3>Up next</h3>' + (steps.length > 6 ? '<a class="count" href="#progress">See all ' + steps.length + " →</a>" : "") + "</div>";
-    h += rest.length ? tasksHTML(rest) : '<p class="empty">' + (jobs.length ? "Nothing else right now. Deadlines, follow-ups, interviews, and thank-you notes show up here." : "Deadlines, follow-ups, interviews, and thank-you notes show up here once you add jobs.") + "</p>";
-    h += "</section>";
-
-    h += '<div class="side-col"><section class="card quick"><h3>Add a job</h3><label for="qa" class="muted" style="font-weight:400">Paste a job posting. I\'ll fill in the details and score it.</label>' +
-      '<textarea id="qa" rows="4" placeholder="Copy the whole posting from the job site and paste it here"></textarea>' +
-      '<div class="actions"><button type="button" class="primary" id="qaGo">Add and score it</button><span class="err" id="qaErr" role="alert"></span></div></section>';
-    var best = ready.filter(function (x) { return x.r; }).slice(0, 3);
-    if (best.length) h += '<section class="card"><div class="card-h"><h3>Best matches to apply to</h3><a class="count" href="#progress">All ' + ready.length + " →</a></div><div class=\"mini\">" + best.map(function (x) {
-      return '<button type="button" class="mini-r" data-go="#job/' + esc(x.o.id) + '">' + scoreDot(x.o) + '<span><b>' + esc(x.o.company) + "</b><small>" + esc(x.o.title) + "</small></span>" + (x.o.deadline ? when(x.o.deadline) : "") + "</button>";
-    }).join("") + "</div></section>";
-    h += "</div></div>";
-    return h;
+    // Up next: just three, the rest live on Progress.
+    var rest = steps.slice(1, 4);
+    if (jobs.length) h += '<section class="card upnext"><div class="card-h"><h3>After that</h3></div>' +
+      (rest.length ? tasksHTML(rest, true) : '<p class="empty">Nothing else right now.</p>') +
+      '<a class="see-all" href="#progress">' + (steps.length > 4 ? "See all " + steps.length + " to-dos and your pipeline" : "See your pipeline and best matches") + " →</a></section>";
+    return '<div class="home">' + h + "</div>";
   }
 
   // ---------- Progress: the in-depth view ----------
@@ -1466,12 +1460,13 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
       '<button type="button" data-close="1">Cancel</button><button type="submit" class="primary">' + (isNew ? "Add job" : "Save") + "</button></div></form>";
     openModal(h);
     var desc = $("#f-description"), timer;
-    desc.addEventListener("input", function () { clearTimeout(timer); timer = setTimeout(function () { $("#scorePrev").innerHTML = previewScore(desc.value); }, 250); });
+    desc.addEventListener("input", function () { clearTimeout(timer); timer = setTimeout(function () { var sp = $("#scorePrev"); if (sp) sp.innerHTML = previewScore(desc.value); }, 250); });
     $("#btnFill").addEventListener("click", function () {
       var r = extractJD(desc.value), n = 0;
       Object.keys(r).forEach(function (k) { var el = $("#f-" + k); if (el && r[k] && !el.value) { el.value = r[k]; n++; } });
       $("#fillMsg").textContent = !desc.value.trim() ? "Paste a posting first." : n ? "Filled in " + n + " field" + (n > 1 ? "s" : "") + ". Check them below." : "I couldn't find more details. Fill them in below.";
     });
+    desc.addEventListener("paste", function () { setTimeout(function () { $("#btnFill").click(); }, 0); }); // pasting a posting fills the form right away
     if (!isNew) $("#btnDel").addEventListener("click", function () {
       var left = $(".modal-f .left");
       left.innerHTML = '<span class="err">Delete this job?</span><button type="button" class="danger" id="delYes">Yes, delete</button>';
