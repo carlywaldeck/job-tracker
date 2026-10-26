@@ -9,8 +9,8 @@ A job and internship tracker for MSBA students. Upload your resume, save jobs, a
 1. **Start with your resume.** Upload a PDF, Word, or .txt file, or try the sample resume. NextMove reads your skills, years of experience, and degree in the browser. You check them and save.
 2. **Add a job.** Click **+ Add a job** and paste the link: Claude opens the page (Anthropic's web fetch tool, labeled AI) and fills in everything. Works on company career sites (Greenhouse, Lever, Workday), not LinkedIn or Handshake, which need a login. Or paste the posting text. NextMove fills in the company, title, location, work arrangement, deadline, and link as soon as you paste, then takes you to your score.
 3. **Use the dashboard.** It's deliberately short: a banner with your single next move and one button, three numbers (due this week, applications sent, interview rate), and the three to-dos after that.
-4. **Go deeper on Progress.** Every to-do grouped by Overdue / Today / Next 7 days / Later, the pipeline with conversion rates, all saved jobs ranked by match, and Career Services links. Long lists fold behind "Show more", so it stays readable with 100+ jobs.
-5. **Track jobs on the board.** Drag a job between Saved, Applied, Interviewing, Offer, and Closed. A list view has filters and sorting.
+4. **Go deeper on Progress.** A **What's working** section compares the applications that led to an interview with the ones that didn't (had a contact, tailored resume, match score 75+, applied a week early), shows the interview rate for each group, and lists what to try next, with a "why" for each tip and the skills that keep showing up in postings where you didn't hear back. It's rule-based (labeled), and it warns that small samples are noisy. Below that: Every to-do grouped by Overdue / Today / Next 7 days / Later, the pipeline with conversion rates, all saved jobs ranked by match, and Career Services links. Long lists fold behind "Show more", so it stays readable with 100+ jobs.
+5. **Track your applications.** The Jobs page is a table (Match, Company & role, Status, Location, Deadline, Next step): click any column name to sort, use the status tabs (Active, Saved, Applied, Interviewing, Offer, Closed, All) to filter, and change a status right in the row. Switch to Board to drag jobs between columns.
 6. **Open a job** to see why it scored what it did, tailor your resume for it, and keep notes.
 
 ## Assignment essentials
@@ -20,7 +20,7 @@ A job and internship tracker for MSBA students. Upload your resume, save jobs, a
 | Add and edit opportunities (company, title, link, location/work arrangement, deadline, notes) | **+ Add a job**, or **Edit** on any job |
 | Track status: Saved, Applied, Interviewing, Offer, Rejected, Withdrawn | Drag cards on the Jobs board, or use the status dropdown in the list view and on each job page |
 | Next action + due date | "Your next step" and "Do it by" in the job form. They show up in the dashboard's To do list. |
-| Search, sort, filter | Jobs tab: search and sort on the board; the list view adds a status filter. Sort options: (highest score, deadline, company, recently updated). Clicking a pipeline bar filters too. |
+| Search, sort, filter | Jobs page: search box, status tabs with counts, and click any column header to sort (match, company, status, location, deadline, next step). Clicking a pipeline bar on Progress filters too. |
 | Keep your work | Saved to your account (Supabase) when signed in, or to the browser's `localStorage` without an account. The footer says where the data lives. |
 
 ## Our improvements
