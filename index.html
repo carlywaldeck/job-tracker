@@ -448,19 +448,19 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 16px; }
   --bg: #eef0ee;
   --card: #fafafa;
   --soft-bg: #f0f1ee;
-  --ink: #111c2e;
-  --muted: #68717c;
+  --ink: #14291f;
+  --muted: #66716a;
   --line: #dde0dc;
-  --accent: #111c2e;
-  --accent-ink: #111c2e;
+  --accent: #154734;
+  --accent-ink: #154734;
   --on-accent: #ffffff;
-  --tint: #e9edf4;
+  --tint: #e5eee8;
   --warn: #9a7117;
   --warn-tint: #f7edcf;
   --late: #b44550;
   --yellow: #d8ae3e;
-  --blue: #416fba;
-  --shadow: 0 2px 5px rgba(17,28,46,.06), 0 18px 48px rgba(17,28,46,.08);
+  --blue: #2e7553;
+  --shadow: 0 2px 5px rgba(20,41,31,.06), 0 18px 48px rgba(20,41,31,.08);
   color-scheme: light;
 }
 html { background: var(--bg); }
@@ -482,8 +482,8 @@ h3 { font-size: 1.25rem; font-weight: 600; letter-spacing: -.025em; }
 a { text-underline-offset: 3px; }
 
 button { border-color: transparent; background: var(--soft-bg); border-radius: 5px; padding: 9px 15px; font-size: .9rem; }
-button:hover { border-color: color-mix(in srgb, var(--ink) 22%, transparent); box-shadow: 0 4px 12px rgba(17,28,46,.07); }
-button.primary { background: var(--ink); border-color: var(--ink); color: #fff; }
+button:hover { border-color: color-mix(in srgb, var(--ink) 22%, transparent); box-shadow: 0 4px 12px rgba(20,41,31,.07); }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 button.primary:hover { filter: none; background: #223149; border-color: #223149; }
 button.link { color: var(--ink); font-weight: 600; }
 button.small { padding: 6px 11px; font-size: .8rem; }
@@ -558,7 +558,7 @@ main { padding-block: 34px 76px; gap: 42px; }
 /* Job tables and boards borrow the theme's calm list rhythm and color markers. */
 .seg { background: var(--soft-bg); border-radius: 6px; padding: 3px; }
 .seg a { border-radius: 4px; padding: 7px 14px; font-size: .86rem; }
-.seg a[aria-current="page"] { background: #fff; box-shadow: 0 1px 3px rgba(17,28,46,.08); }
+.seg a[aria-current="page"] { background: #fff; box-shadow: 0 1px 3px rgba(20,41,31,.08); }
 .controls { padding: 4px 0 8px; }
 .board { gap: 14px; }
 .bcol { --stage: var(--yellow); position: relative; background: #f3f4f1; border: 1px solid #e3e5e1; border-radius: 8px; padding: 16px 12px 12px; min-height: 270px; }
@@ -571,8 +571,8 @@ main { padding-block: 34px 76px; gap: 42px; }
 .bcol:nth-child(2) h4::before { transform: rotate(-15deg); }
 .bcol:nth-child(3) h4::before { transform: rotate(12deg); }
 .bcol h4 span { margin-left: auto; }
-.bcard { border-color: #e0e3df; border-radius: 7px; padding: 13px; gap: 8px; box-shadow: 0 1px 1px rgba(17,28,46,.025); }
-.bcard:hover { border-color: color-mix(in srgb, var(--stage) 65%, #dfe2de); box-shadow: 0 8px 20px rgba(17,28,46,.08); transform: translateY(-1px); }
+.bcard { border-color: #e0e3df; border-radius: 7px; padding: 13px; gap: 8px; box-shadow: 0 1px 1px rgba(20,41,31,.025); }
+.bcard:hover { border-color: color-mix(in srgb, var(--stage) 65%, #dfe2de); box-shadow: 0 8px 20px rgba(20,41,31,.08); transform: translateY(-1px); }
 .bc-top .score { border-radius: 6px; }
 .job { border-width: 0 0 1px; border-radius: 0; background: transparent; padding: 19px 4px; }
 .job:first-child { border-top: 1px solid var(--line); }
@@ -596,8 +596,8 @@ main { padding-block: 34px 76px; gap: 42px; }
 .chip.plain { background: var(--soft-bg); color: var(--muted); }
 
 /* Forms and overlays keep every field and interaction, with quieter framing. */
-.overlay { background: rgba(17,28,46,.48); padding-top: max(32px, env(safe-area-inset-top, 0px)); }
-.modal { max-width: 720px; background: #fafafa; border: 1px solid rgba(255,255,255,.7); border-radius: 11px; box-shadow: 0 24px 80px rgba(17,28,46,.2); }
+.overlay { background: rgba(20,41,31,.48); padding-top: max(32px, env(safe-area-inset-top, 0px)); }
+.modal { max-width: 720px; background: #fafafa; border: 1px solid rgba(255,255,255,.7); border-radius: 11px; box-shadow: 0 24px 80px rgba(20,41,31,.2); }
 .modal-h { padding: 28px 30px 8px; }
 .modal-h h2 { font-size: 1.65rem; font-weight: 600; }
 .modal-b { padding: 18px 30px 12px; gap: 24px; }
@@ -652,11 +652,11 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
 .top-actions #btnAdd { margin-left: 0; }
 .acct.signin { width: auto; height: 38px; padding: 0 14px; border-radius: 5px; background: var(--soft-bg); color: var(--ink); }
 .acct { background: var(--soft-bg); color: var(--ink); border-radius: 50%; }
-.hero { background: radial-gradient(circle at 92% 8%, color-mix(in srgb, var(--yellow) 26%, transparent), transparent 42%), linear-gradient(135deg, #111c2e 0%, #1b2a44 100%); border-radius: 12px; }
+.hero { background: radial-gradient(circle at 92% 8%, color-mix(in srgb, var(--yellow) 26%, transparent), transparent 42%), linear-gradient(135deg, #154734 0%, #1f5f45 100%); border-radius: 12px; }
 .hero h2 { font-size: clamp(1.9rem, 4vw, 2.6rem); font-weight: 500; letter-spacing: -.035em; line-height: 1.05; }
 .hero .eyebrow, .hero-stats small, .hero-why { color: #e9cf86; }
 .hero-sub { color: #dfe4ec; }
-.hero-btn { background: var(--yellow); color: #111c2e; border-radius: 5px; }
+.hero-btn { background: var(--yellow); color: #154734; border-radius: 5px; }
 .hero-btn:hover { background: #e6c25e; }
 .hero-stats a { border-radius: 8px; background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.12); }
 .hero-stats a:hover { background: rgba(255,255,255,.13); }
@@ -665,7 +665,7 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
 .jt-job .company-copy { display: grid; min-width: 0; }
 .jt-job .company-copy > span { color: var(--muted); font-size: .9rem; }
 .ftabs button, .jtools .seg, .facts div, .factor, .tips, .fromlink, select.st { border-radius: 6px; }
-.ftabs button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+.ftabs button[aria-pressed="true"] { background: var(--accent); color: #fff; }
 .tips { background: color-mix(in srgb, var(--yellow) 14%, #fff); }
 .fromlink { background: var(--tint); }
 .lead-stat b { color: var(--ink); }
@@ -677,6 +677,12 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
   .top-actions { margin-left: auto; }
   .hero { padding: 24px 18px; }
 }
+/* Due today or overdue: highlighted so it's the first thing you see. */
+.task.urgent { background: color-mix(in srgb, var(--yellow) 16%, #fff); border-radius: 8px; padding-inline: 12px; box-shadow: inset 4px 0 0 var(--yellow); border-top-color: transparent; margin: 4px 0; }
+.jt-r.urgent { background: color-mix(in srgb, var(--yellow) 12%, #fff); box-shadow: inset 4px 0 0 var(--yellow); }
+.jt-r.urgent .jt-next { font-weight: 700; }
+.task.urgent .what { font-weight: 700; }
+.task.urgent .when { font-weight: 700; }
 </style>
 </head>
 <body>
@@ -1384,7 +1390,8 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     return '<div class="tasks">' + steps.map(function (s) {
       var circle = s.act === "interview" ? '<span class="done cal" aria-hidden="true"></span>' :
         '<button type="button" class="done" data-done="' + s.act + '" data-id="' + esc(s.o.id) + '" aria-label="Done: ' + esc(s.text) + '"></button>';
-      return '<div class="task">' + circle + '<div>' + (compact ? "" : '<span class="tag">' + esc(s.kind) + '</span> ') + '<button type="button" class="link what" data-go="' + esc(s.go || "#job/" + s.o.id) + '">' + esc(s.text) + '</button>' +
+      var urgent = s.due && s.due <= today();
+      return '<div class="task' + (urgent ? " urgent" : "") + '">' + circle + '<div>' + (compact ? "" : '<span class="tag">' + esc(s.kind) + '</span> ') + '<button type="button" class="link what" data-go="' + esc(s.go || "#job/" + s.o.id) + '">' + esc(s.text) + '</button>' +
         '<div class="who">' + esc(s.o.company) + " · " + esc(s.o.title) + "</div>" + (compact || !s.why ? "" : '<div class="why">Why: ' + esc(s.why) + "</div>") +
         (!compact && (s.act === "followup" || s.act === "thanks") ? '<button type="button" class="small draft" data-email="' + s.act + '" data-id="' + esc(s.o.id) + '">Draft the email</button>' : "") + "</div>" + when(s.due) + "</div>";
     }).join("") + "</div>";
@@ -1791,7 +1798,8 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     return '<div class="jt"><div class="jt-h">' + col("score", "Match") + col("company", "Company & role") + col("status", "Status") + col("location", "Location", "hide-s") + col("deadline", "Deadline", "hide-s") + col("next", "Next step") + "</div>" +
       list.map(function (o) {
         var r = scoreJob(o);
-        return '<div class="jt-r" tabindex="0" data-go="#job/' + esc(o.id) + '">' + scoreDot(o) +
+        var nd = nextDate(o), urgent = !CLOSED[o.status] && nd && nd <= today() && !(o.status === "saved" && o.deadline && o.deadline < today() && !o.nextAction);
+        return '<div class="jt-r' + (urgent ? " urgent" : "") + '" tabindex="0" data-go="#job/' + esc(o.id) + '">' + scoreDot(o) +
           '<div class="jt-job company-cell">' + companyMark(o, "small") + '<span class="company-copy"><b>' + esc(o.company || "Untitled") + "</b><span>" + esc(o.title) + (r ? ' · <em class="fit ' + band(r.score) + '">' + verdict(r.score) + "</em>" : "") + "</span>" + (inMyPlaces(o) ? '<span class="mine-s">📍 One of your places</span>' : "") + "</span></div>" +
           '<div><select class="st st-' + esc(o.status) + '" aria-label="Status for ' + esc(o.company) + '" data-status="' + esc(o.id) + '">' + STATUSES.map(function (s) { return '<option value="' + s[0] + '"' + (s[0] === o.status ? " selected" : "") + ">" + s[1] + "</option>"; }).join("") + "</select></div>" +
           '<span class="jt-c hide-s">' + (esc(o.location) || '<span class="muted">—</span>') + (o.arrangement && o.arrangement !== o.location ? '<small>' + esc(o.arrangement) + "</small>" : "") + (inMyPlaces(o) ? '<small class="mine">📍 Your place</small>' : "") + "</span>" +
