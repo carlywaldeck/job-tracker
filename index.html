@@ -484,7 +484,7 @@ a { text-underline-offset: 3px; }
 button { border-color: transparent; background: var(--soft-bg); border-radius: 5px; padding: 9px 15px; font-size: .9rem; }
 button:hover { border-color: color-mix(in srgb, var(--ink) 22%, transparent); box-shadow: 0 4px 12px rgba(20,41,31,.07); }
 button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-button.primary:hover { filter: none; background: #223149; border-color: #223149; }
+button.primary:hover { filter: none; background: #1f5f45; border-color: #1f5f45; }
 button.link { color: var(--ink); font-weight: 600; }
 button.small { padding: 6px 11px; font-size: .8rem; }
 :focus-visible { outline-color: var(--blue); outline-width: 3px; }
@@ -604,7 +604,7 @@ main { padding-block: 34px 76px; gap: 42px; }
 .modal-f { padding: 18px 30px 28px; border-top: 1px solid var(--line); margin-top: 12px; }
 .paste { background: var(--soft-bg); border-radius: 8px; padding: 20px; }
 #btnImport { background: var(--ink); border-color: var(--ink); color: #fff; }
-#btnImport:hover { background: #223149; border-color: #223149; }
+#btnImport:hover { background: #1f5f45; border-color: #1f5f45; }
 .extra-fields { border-color: var(--line); border-radius: 6px; background: #fff; padding: 14px 16px; }
 .import-review { border-left: 4px solid var(--yellow); border-radius: 4px; }
 label.needs-review input, label.needs-review select { border-color: var(--yellow); box-shadow: 0 0 0 3px color-mix(in srgb, var(--yellow) 18%, transparent); }
@@ -683,6 +683,50 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
 .jt-r.urgent .jt-next { font-weight: 700; }
 .task.urgent .what { font-weight: 700; }
 .task.urgent .when { font-weight: 700; }
+/* Dark mode for the green-and-gold theme. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b120e; --card: #16211a; --soft-bg: #1d2a22; --ink: #e6eee9; --muted: #9eaca3; --line: #2a3a30;
+    --accent: #2f8a5f; --accent-ink: #86d0a8; --on-accent: #ffffff; --tint: #1b3326;
+    --warn: #e2b75a; --warn-tint: #3a3120; --late: #f08a80; --yellow: #d8ae3e; --blue: #2f8a5f;
+    --shadow: 0 2px 5px rgba(0,0,0,.3), 0 18px 48px rgba(0,0,0,.4);
+    color-scheme: dark;
+  }
+  :root:not([data-theme="light"]) .site-shell { background: #121c16; border-color: #24332a; }
+  :root:not([data-theme="light"]) input, select, textarea { background: #0d150f; border-color: #33453a; color: var(--ink); }
+  :root:not([data-theme="light"]) .top { background: color-mix(in srgb, #121c16 92%, transparent); }
+  :root:not([data-theme="light"]) .gbar { background: #2a3a30; }
+  :root:not([data-theme="light"]) .quick details { border-color: #2a3a30; }
+  :root:not([data-theme="light"]) .pipe .bar, .cmp .bar, .row .bar { background: #26352c; }
+  :root:not([data-theme="light"]) .seg a[aria-current="page"] { background: #2a3d31; color: var(--ink); }
+  :root:not([data-theme="light"]) .bcol { background: #16211a; border-color: #26352c; }
+  :root:not([data-theme="light"]) .bcard { background: #1b2820; border-color: #2a3a30; }
+  :root:not([data-theme="light"]) .bcard:hover { border-color: color-mix(in srgb, var(--stage) 55%, #2a3a30); box-shadow: 0 8px 20px rgba(0,0,0,.35); }
+  :root:not([data-theme="light"]) .score.low { background: color-mix(in srgb, var(--blue) 55%, #16211a); }
+  :root:not([data-theme="light"]) .chip { background: color-mix(in srgb, var(--blue) 24%, #16211a); color: #a8dcc0; }
+  :root:not([data-theme="light"]) .chip.miss { background: var(--warn-tint); color: var(--warn); }
+  :root:not([data-theme="light"]) .modal { background: #16211a; border-color: #2a3a30; }
+  :root:not([data-theme="light"]) #btnImport { background: var(--accent); border-color: var(--accent); }
+  :root:not([data-theme="light"]) .extra-fields { background: #0d150f; }
+  :root:not([data-theme="light"]) .toast { background: #2a3d31; color: var(--ink); }
+  :root:not([data-theme="light"]) .tips { background: color-mix(in srgb, var(--yellow) 12%, #16211a); }
+  :root:not([data-theme="light"]) .tagg.up { background: color-mix(in srgb, var(--yellow) 22%, #16211a); }
+  :root:not([data-theme="light"]) .task.urgent { background: color-mix(in srgb, var(--yellow) 14%, #16211a); }
+  :root:not([data-theme="light"]) .jt-r.urgent { background: color-mix(in srgb, var(--yellow) 11%, #16211a); }
+  :root:not([data-theme="light"]) .jt-r:hover { background: #1d2a22; }
+  :root:not([data-theme="light"]) button.primary:hover, :root:not([data-theme="light"]) #btnImport:hover { background: #3a9d6f; border-color: #3a9d6f; }
+  :root:not([data-theme="light"]) input:hover, :root:not([data-theme="light"]) select:hover, :root:not([data-theme="light"]) textarea:hover { border-color: #4a6153; }
+  :root:not([data-theme="light"]) .company-logo .company-initials { background: color-mix(in srgb, var(--yellow) 22%, #16211a); }
+  :root:not([data-theme="light"]) select.st-saved { background-color: #1f2d3f; color: #a9c4ea; }
+  :root:not([data-theme="light"]) select.st-interviewing { background-color: #2c2540; color: #cdb8f0; }
+  :root:not([data-theme="light"]) select.st-applied { background-color: #3a3120; color: #e9c46a; }
+  :root:not([data-theme="light"]) .fromlink { background: #1b3326; }
+  :root:not([data-theme="light"]) button { color: var(--ink); }
+  :root:not([data-theme="light"]) .hero-btn { color: #12301f; }
+  :root:not([data-theme="light"]) .jt-job b, :root:not([data-theme="light"]) .company-copy b { color: var(--ink); }
+  :root:not([data-theme="light"]) button.primary, :root:not([data-theme="light"]) .ftabs button[aria-pressed="true"] { color: #fff; }
+  :root:not([data-theme="light"]) .hero { background: radial-gradient(circle at 92% 8%, color-mix(in srgb, var(--yellow) 20%, transparent), transparent 42%), linear-gradient(135deg, #12392a 0%, #1a5139 100%); border: 1px solid #24503b; }
+}
 </style>
 </head>
 <body>
