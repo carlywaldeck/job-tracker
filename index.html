@@ -863,15 +863,16 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     sync.busy = true; if (!quiet) setSync("Loading your jobs…");
     withAuth(function () { return sbFetch("/rest/v1/user_data?select=jobs,profile&user_id=eq." + encodeURIComponent(session.user.id)); }).then(function (rows) {
       sync.busy = false;
-      if (sync.dirty) return; // a local change is about to be saved; don't overwrite it
+      if (sync.dirty) { applyPendingAdd(); return; } // a local change is about to be saved; don't overwrite it
       if (rows && rows.length) {
         jobs = Array.isArray(rows[0].jobs) ? rows[0].jobs : []; me = rows[0].profile || null;
-        writeLocal(); version++; render(); setSync("Saved to your account."); return;
+        writeLocal(); version++; render(); setSync("Saved to your account."); applyPendingAdd(); return;
       }
       // New account: bring over anything saved in this browser before accounts existed.
       var anonJobs = [], anonMe = null;
       try { anonJobs = JSON.parse(localStorage.getItem(KEY) || "[]") || []; anonMe = JSON.parse(localStorage.getItem(PROFILE_KEY) || "null"); } catch (e) {}
       if (anonJobs.length || anonMe) { jobs = anonJobs; me = anonMe; writeLocal(); version++; render(); }
+      applyPendingAdd();
       pushNow().then(function () {
         if (anonJobs.length || anonMe) { try { localStorage.removeItem(KEY); localStorage.removeItem(PROFILE_KEY); } catch (e) {} toast("Moved what was saved in this browser into your account."); }
       });
@@ -880,6 +881,45 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
       if (err.status === 400 || err.status === 401) { signOut(); toast("Please sign in again."); return; }
       setSync(err.status === 404 ? "Your account storage isn't set up yet (the user_data table is missing)." : "Couldn't reach your account. Showing what's saved on this device.");
     });
+  }
+  // ---------- Add-job links ----------
+  // A link like #add=<base64url JSON list of jobs> adds those jobs to whoever is signed in on this browser,
+  // so jobs can be added from outside the app without sharing a password or key. It always asks first.
+  var ADD_KEY = "nextmove.v3.pendingAdd";
+  function takeAddLink() {
+    var m = /^#add=([A-Za-z0-9_-]+)/.exec(location.hash || "");
+    if (!m) return false;
+    try { sessionStorage.setItem(ADD_KEY, m[1]); } catch (e) {}
+    history.replaceState(null, "", location.pathname + location.search + "#jobs");
+    return true;
+  }
+  function applyPendingAdd() {
+    var raw = null; try { raw = sessionStorage.getItem(ADD_KEY); sessionStorage.removeItem(ADD_KEY); } catch (e) {}
+    if (!raw) return;
+    var list;
+    try {
+      var b = raw.replace(/-/g, "+").replace(/_/g, "/"); while (b.length % 4) b += "=";
+      var bin = atob(b), bytes = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      list = JSON.parse(new TextDecoder().decode(bytes));
+      if (!Array.isArray(list)) list = [list];
+    } catch (e) { toast("That add-job link didn't work. It may have been cut off when copied."); return; }
+    var FIELDS = ["company", "title", "link", "location", "arrangement", "deadline", "status", "appliedDate", "nextAction", "nextDue", "followUpDate", "contact", "notes", "description"];
+    var fresh = list.filter(function (x) { return x && typeof x === "object" && (x.company || x.title); }).map(function (x) {
+      var o = blank();
+      FIELDS.forEach(function (f) { if (typeof x[f] === "string") o[f] = x[f].slice(0, f === "description" ? 20000 : 500); });
+      if (!STATUSES.some(function (st) { return st[0] === o.status; })) o.status = "saved";
+      if (o.status === "applied" && !o.appliedDate) o.appliedDate = today();
+      if (!/^https?:\/\//i.test(o.link)) o.link = "";
+      return o;
+    }).filter(function (o) { return !o.link || !jobs.some(function (j) { return j.link === o.link; }); });
+    if (!fresh.length) { toast("That job is already in your list."); return; }
+    var names = fresh.map(function (o) { return "\u2022 " + o.company + (o.title ? ", " + o.title : ""); }).join("\n");
+    var who = session ? " to " + session.user.email : "";
+    if (!window.confirm("Add " + (fresh.length === 1 ? "this job" : "these " + fresh.length + " jobs") + who + "?\n\n" + names)) return;
+    jobs = fresh.concat(jobs); ui.skippedWelcome = true; save();
+    go("#jobs"); render();
+    toast("Added " + fresh.length + (fresh.length === 1 ? " job." : " jobs."));
   }
   function writeLocal() { try { localStorage.setItem(k(KEY), JSON.stringify(jobs)); localStorage.setItem(k(PROFILE_KEY), JSON.stringify(me)); } catch (e) {} }
 
@@ -2223,7 +2263,7 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     var t = e.target;
     var am = t.closest("[data-auth]"); if (am) { e.preventDefault(); ui.authMode = am.dataset.auth; render(); return; }
     if (t.closest("#btnAcct")) { if (session) go("#resume"); else { setGuest(false); ui.authMode = "in"; render(); } return; }
-    if (t.closest("[data-act='guest']")) { setGuest(true); ui.skippedWelcome = false; load(); render(); return; }
+    if (t.closest("[data-act='guest']")) { setGuest(true); ui.skippedWelcome = false; load(); render(); applyPendingAdd(); return; }
     if (t.closest("#btnAdd") || t.closest("[data-act='add']")) { openJob(null); return; }
     if (t.closest("#btnSamples") || t.closest("[data-act='samples']")) { toggleSamples(); return; }
     if (t.closest("[data-act='sample-all']")) { me = sampleProfile(); saveMe(); jobs = samples().concat(jobs); save(); go("#dashboard"); toast("Loaded a sample resume and 6 sample jobs."); return; }
@@ -2277,14 +2317,19 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     var o = byId(e.dataTransfer.getData("text/plain")), st = col.dataset.col; if (!o) return;
     if (st === "closed") { if (!CLOSED[o.status]) changeStatus(o, "rejected"); } else changeStatus(o, st);
   });
-  window.addEventListener("hashchange", function () { closeModal(); render(); window.scrollTo(0, 0); });
+  window.addEventListener("hashchange", function () {
+    if (takeAddLink()) { if (session) pull(true); else if (guest || !AUTH) applyPendingAdd(); }
+    closeModal(); render(); window.scrollTo(0, 0);
+  });
 
   // Boot: with accounts on, show the cached copy right away, then load the latest from the account.
   if (AUTH) { try { session = JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); } catch (e) { session = null; } }
   if (AUTH && !session) { try { guest = localStorage.getItem(GUEST_KEY) === "1"; } catch (e) {} }
+  var addLink = takeAddLink();
   load();
   render();
   if (session) pull();
+  else if (addLink && (guest || !AUTH)) applyPendingAdd();
   document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible" && session && !sync.dirty) pull(true); });
   window.addEventListener("pagehide", function () { if (sync.dirty) pushNow(); });
 })();
