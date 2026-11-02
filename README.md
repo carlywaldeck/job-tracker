@@ -26,10 +26,12 @@ A job and internship tracker for MSBA students. Upload your resume, save jobs, a
 ## Our improvements
 
 1. **Qualification score from 1 to 100 (machine learning, in the browser).** Each job gets a score with a breakdown:
-   - Skills the posting asks for (45 pts): required skills count fully, preferred skills count half.
-   - Wording match (30 pts): TF-IDF cosine similarity between your resume and the posting.
-   - Years of experience (15 pts): years the posting asks for vs. years estimated from your resume's dates.
+   - Skills the posting asks for (45 pts): required skills count fully, preferred skills count half, and skills only named in the role description count a quarter. "Python, Scala, or R" counts as one skill you meet with any of them, and common other names count (ML, PySpark, PostgreSQL, sklearn).
+   - Wording match (30 pts): TF-IDF cosine similarity between your resume and the posting, ignoring pay, benefits and legal text.
+   - Years of experience (15 pts): years the posting requires vs. years estimated from your resume's dates. Preferred years count a fifth as much. The company's own history ("over 125 years of experience") is ignored.
    - Education (10 pts): the degree the posting asks for vs. yours.
+
+   When a posting offers options ("a bachelor's plus 5 years, or a master's plus 3 years, or a PhD"), the years and education points use the option that fits you best.
 
    **How to raise your score** lists the three changes worth the most points (for example "+9: add A/B testing to your resume, if you have it"). Clicking "I have this" adds the skill and re-scores instantly. The app labels the score as an estimate of fit, not a hiring prediction.
 2. **Resume tailoring with AI (Claude).** On any job, "Tailor my resume" sends your resume and the posting to Claude, which returns a tailored summary, rewritten bullets, skills to add if true, and gaps to address. It is told never to invent experience. It needs the user's own Anthropic API key, stored only in their browser. Without a key, users still get **Quick suggestions** clearly labeled *rule-based, not AI*.
