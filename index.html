@@ -986,19 +986,43 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
   var SKILLS = ["SQL", "Python", "R", "Tableau", "Power BI", "Excel", "VBA", "SAS", "SPSS", "Stata", "Snowflake", "AWS", "Azure", "GCP", "BigQuery", "Spark",
     "Looker", "Alteryx", "dbt", "Git", "JavaScript", "Java", "machine learning", "deep learning", "NLP", "statistics", "regression", "forecasting", "A/B testing",
     "data visualization", "ETL", "data modeling", "dashboards", "pandas", "scikit-learn", "TensorFlow", "Salesforce", "Google Analytics", "SAP", "project management",
-    "Agile", "financial modeling", "market research", "supply chain", "optimization", "Jira", "PowerPoint", "stakeholder management", "storytelling", "time series", "Databricks", "Qualtrics"];
-  function findSkills(text) {
-    if (!text) return [];
-    var low = text.toLowerCase();
-    return SKILLS.filter(function (s) {
-      if (s === "R") return /(^|[\s,(/;])R(?=[\s,)/;.]|$)/.test(text);
-      return new RegExp("(^|[^a-z0-9])" + s.toLowerCase().replace(/[.*+?^${}()|[\]\\\/]/g, "\\$&") + "(?=[^a-z0-9]|$)").test(low);
+    "Agile", "financial modeling", "market research", "supply chain", "optimization", "Jira", "PowerPoint", "stakeholder management", "storytelling", "time series", "Databricks", "Qualtrics",
+    "PyTorch", "Scala", "Airflow", "Hadoop", "experimentation", "causal inference"];
+  // Other ways postings and resumes write the same skill.
+  var ALIASES = {
+    "SQL": ["PostgreSQL", "Postgres", "MySQL", "T-SQL", "SQL Server", "Spark SQL", "SparkSQL"], "Power BI": ["PowerBI", "Power-BI"], "Spark": ["PySpark", "Apache Spark"],
+    "machine learning": ["ML", "machine-learning"], "deep learning": ["neural network", "neural networks"], "NLP": ["natural language processing"],
+    "statistics": ["statistical"], "regression": ["regressions"], "forecasting": ["forecast", "forecasts"], "A/B testing": ["A/B test", "A/B tests", "AB testing", "split testing"],
+    "data visualization": ["visualization", "visualizations", "visualisation", "data viz"], "dashboards": ["dashboard", "dashboarding"], "ETL": ["ELT", "data pipeline", "data pipelines"],
+    "data modeling": ["data modelling"], "scikit-learn": ["sklearn", "scikit learn"], "AWS": ["Amazon Web Services"], "GCP": ["Google Cloud"], "Git": ["GitHub", "GitLab"],
+    "time series": ["time-series"], "optimization": ["optimisation"], "experimentation": ["experiments", "experiment design", "experimental design"], "causal inference": ["causal"]
+  };
+  var CASED = { "R": 1, "ML": 1 }; // short names that only count in capitals
+  var esc_rx = function (n) { return n.replace(/[.*+?^${}()|[\]\\\/]/g, "\\$&"); };
+  var SKILL_RX = SKILLS.map(function (s) {
+    if (s === "R") return { s: s, rx: [/(^|[\s,(/;])R(?=[\s,)/;.]|$)/g] };
+    var names = [s].concat(ALIASES[s] || []), loose = names.filter(function (n) { return !CASED[n]; }), cased = names.filter(function (n) { return CASED[n]; });
+    var rx = [new RegExp("(^|[^a-z0-9])(?:" + loose.map(esc_rx).join("|") + ")(?=[^a-z0-9]|$)", "gi")];
+    if (cased.length) rx.push(new RegExp("(^|[^A-Za-z0-9])(?:" + cased.map(esc_rx).join("|") + ")(?=[^A-Za-z0-9]|$)", "g"));
+    return { s: s, rx: rx };
+  });
+  // Every skill in the text, with where it first appears: [{ s, i, end }], in reading order.
+  function skillHits(text) {
+    var out = [];
+    if (!text) return out;
+    SKILL_RX.forEach(function (k) {
+      var best = null;
+      k.rx.forEach(function (rx) { rx.lastIndex = 0; var m = rx.exec(text); if (m && (!best || m.index < best.i)) best = { s: k.s, i: m.index + m[1].length, end: m.index + m[0].length }; });
+      if (best) out.push(best);
     });
+    return out.sort(function (a, b) { return a.i - b.i; });
   }
+  function findSkills(text) { return skillHits(text).map(function (h) { return h.s; }); }
   function mySkillSet() {
     var set = {};
     if (!me) return set;
-    splitList(me.skills).concat(findSkills(me.resumeText || "")).forEach(function (s) { set[s.toLowerCase()] = 1; });
+    splitList(me.skills).forEach(function (s) { set[s.toLowerCase()] = 1; findSkills(s).forEach(function (k) { set[k.toLowerCase()] = 1; }); });
+    findSkills(me.resumeText || "").forEach(function (s) { set[s.toLowerCase()] = 1; });
     return set;
   }
 
@@ -1036,11 +1060,18 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
 
   // ---------- Resume parsing (rule-based) ----------
   var EDU_LINE = /universit|college|school of|bachelor|master|degree|b\.s\.|b\.a\.|m\.s\.|msba|mba|gpa|expected|graduat/i;
+  // Degree names, highest first. Skips look-alikes such as "MS Excel", "Scrum master", "master data" and "undergraduate degree".
+  var DEG_RX = [
+    [3, /\bph\.?\s?d(?=s?\b)|\bdoctorate|\bdoctoral/gi],
+    [2, /(?<!scrum\s)\bmaster['’]?s?\b(?!\s+data)|\bm\.s\.|\bms\b(?!\s+(?:excel|office|word|access|sql|project|teams|powerpoint|azure|dynamics|outlook|visio))|\bmsba\b|\bmba\b|\bm\.a\.|(?<!under)graduate degree|advanced degree/gi],
+    [1, /\bbachelor|\bb\.s\.|\bb\.a\.|\bbs\b|\bba\b|\bb\.sc|\bundergraduate|4-year degree|four-year degree/gi]];
+  function degreeHits(text) {
+    var out = [], low = String(text || "").toLowerCase();
+    DEG_RX.forEach(function (d) { var m; d[1].lastIndex = 0; while ((m = d[1].exec(low))) out.push({ lvl: d[0], i: m.index, deg: 1 }); });
+    return out;
+  }
   function degreeLevel(text, minimum) {
-    var low = (text || "").toLowerCase(), found = [];
-    if (/ph\.?\s?d|doctorate|doctoral/.test(low)) found.push(3);
-    if (/master|m\.s\.|\bms\b|msba|\bmba\b|m\.a\.|graduate degree|advanced degree/.test(low)) found.push(2);
-    if (/bachelor|b\.s\.|b\.a\.|\bbs\b|\bba\b|b\.sc|undergraduate|4-year degree|four-year degree/.test(low)) found.push(1);
+    var found = degreeHits(text).map(function (h) { return h.lvl; });
     if (!found.length) return 0;
     return minimum ? Math.min.apply(null, found) : Math.max.apply(null, found);
   }
@@ -1262,22 +1293,112 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
       throw new Error("I couldn't import that link. The site may block automated reading; paste the posting instead.");
     });
   }
-  // Splits the posting's skills into required and preferred, by section headings and by sentences that say "preferred" / "nice to have".
-  function jdSkills(text) {
-    var mode = "req", req = {}, pref = {}, PREF = /\b(preferred|nice[- ]to[- ]have|bonus|a plus|desired|ideally)\b/i;
-    text.split(/\n|[.!?;]\s+/).forEach(function (seg) {
-      var s = seg.trim(); if (!s) return;
-      var sk = findSkills(s), head = s.length < 60 && !sk.length;
-      if (head && PREF.test(s)) { mode = "pref"; return; }
-      if (head && /\b(require|qualification|must|responsibilit|what you|about you|you have)/i.test(s)) { mode = "req"; return; }
-      var target = PREF.test(s) ? pref : /\b(required|requirements|must)\b/i.test(s) ? req : mode === "pref" ? pref : req;
-      sk.forEach(function (k) { target[k] = 1; });
+  // ---------- Reading a posting ----------
+  // Splits a posting into sentences and tags each with its section: "req" (qualifications), "pref" (preferred / nice to have),
+  // "duty" (about the role, what you'll do) or "other" (company story, pay, benefits, legal text).
+  var PREF_RX = /\b(preferred|nice[- ]to[- ]have|bonus|a plus|desired|ideally)\b/i;
+  var REQ_HEAD = /\b(require|qualification|must|about you|you have|you bring|you'?ll bring|ideal candidate|who you are|looking for|skills|experience)/i;
+  var DUTY_HEAD = /\b(responsibilit|what you'?ll do|what you will do|in this role|you will|you'?ll|the role|about the (role|job|team|position)|team description|day[- ]to[- ]day|your impact|duties|overview)/i;
+  var OTHER_HEAD = /\b(benefits|perks|compensation|salary|pay range|equal (employment )?opportunit|eeo|about (us|the company)|who we are|our company|why join|life at)\b/i;
+  var OTHER_LINE = /equal opportunity|\$\s?\d|salar|benefits|sponsor|criminal|accommodation|discriminat|background check|drug-free|agencies/i;
+  function jdSections(text) {
+    var segs = [];
+    String(text || "").split(/\n/).forEach(function (line) {
+      line.split(/(?<!\b[A-Za-z]|\be\.g|\bi\.e)[.!?;]\s+(?=[A-Z("“*•-])|[!?;]\s+/).forEach(function (seg) {
+        seg = seg.replace(/^[\s*•·\-–]+/, "").trim(); if (seg) segs.push({ s: seg });
+      });
     });
-    return { req: Object.keys(req), pref: Object.keys(pref).filter(function (k) { return !req[k]; }) };
+    var isHead = function (g) { return g.s.length < 60 && !skillHits(g.s).length && !/\d/.test(g.s); };
+    var hasQualHead = segs.some(function (g) { return isHead(g) && (PREF_RX.test(g.s) || REQ_HEAD.test(g.s)) && !OTHER_HEAD.test(g.s); });
+    var mode = hasQualHead ? "duty" : "req";
+    var out = [];
+    segs.forEach(function (g) {
+      if (isHead(g)) {
+        var m = OTHER_HEAD.test(g.s) ? "other" : PREF_RX.test(g.s) ? "pref" : REQ_HEAD.test(g.s) ? "req" : DUTY_HEAD.test(g.s) ? "duty" : null;
+        if (m) { mode = m; return; }
+      }
+      var here = mode === "other" || OTHER_LINE.test(g.s) ? "other" : PREF_RX.test(g.s) ? "pref" : /\b(required|requirements|must)\b/i.test(g.s) ? "req"
+        : /^(you will|you'?ll (?!have|bring|need)|in this role|responsibilities)/i.test(g.s) ? "duty" : mode;
+      out.push({ s: g.s, mode: here });
+    });
+    return out;
   }
-  function jdYears(text) {
-    var m = text.match(/(\d{1,2})\s*\+?\s*(?:(?:-|–|to)\s*\d{1,2}\s*)?\+?\s*years?\b[^.\n]{0,40}?experience/i) || text.match(/experience[^.\n]{0,30}?(\d{1,2})\s*\+?\s*years?/i);
-    return m ? +m[1] : null;
+  // The posting minus pay, benefits and legal text, for the wording match.
+  function coreText(text) { return jdSections(text).filter(function (g) { return g.mode !== "other"; }).map(function (g) { return g.s; }).join("\n"); }
+
+  // Skills by section. "Python, Scala, or R" becomes one item you meet with any of them. Degree subjects ("a degree in Statistics") don't count as skills.
+  function jdSkills(text) {
+    var bins = { req: {}, pref: {}, duty: {} }, groups = {};
+    jdSections(text).forEach(function (g) {
+      if (g.mode === "other") return;
+      var s = g.s;
+      if (degreeHits(s).length) s = s.replace(/\([^)]*\)/g, " ").replace(/\bin\s+[^()]{0,120}?\b(?:or\s+(?:a\s+)?(?:related|similar|equivalent)|related\s+field|quantitative\s+field|field|discipline)\b/gi, " ");
+      var hits = skillHits(s), run = [], isOr = false;
+      var flush = function () {
+        if (run.length > 1 && isOr) {
+          var names = run.map(function (h) { return h.s; });
+          var label = names.length === 2 ? names.join(" or ") : names.slice(0, -1).join(", ") + ", or " + names[names.length - 1];
+          groups[label] = names; bins[g.mode][label] = 1;
+        } else run.forEach(function (h) { bins[g.mode][h.s] = 1; });
+        run = []; isOr = false;
+      };
+      hits.forEach(function (h) {
+        if (run.length) {
+          var sep = s.slice(run[run.length - 1].end, h.i);
+          if (/^[\s,\/]*(?:(?:,\s*)?(?:or|and\/or)\s+)?$/i.test(sep)) { if (/\bor\b|\//i.test(sep) || /\b(e\.g\.?|such as|for example|like)[\s,:(]*$/i.test(s.slice(Math.max(0, run[0].i - 14), run[0].i))) isOr = true; }
+          else flush();
+        }
+        run.push(h);
+      });
+      flush();
+    });
+    // A group adds nothing when one of its skills is already asked for on its own.
+    Object.keys(groups).forEach(function (k) {
+      ["req", "pref", "duty"].forEach(function (b) { if (bins[b][k] && groups[k].some(function (m) { return bins.req[m] || bins[b][m]; })) delete bins[b][k]; });
+    });
+    var covered = {};
+    ["req", "pref"].forEach(function (b) { Object.keys(bins[b]).forEach(function (k) { covered[k] = 1; (groups[k] || []).forEach(function (m) { covered[m] = 1; }); }); });
+    return {
+      req: Object.keys(bins.req),
+      pref: Object.keys(bins.pref).filter(function (k) { return !bins.req[k]; }),
+      duty: Object.keys(bins.duty).filter(function (k) { return !covered[k] && !(groups[k] || []).some(function (m) { return covered[m]; }); }),
+      groups: groups
+    };
+  }
+
+  // Degree and years. Each "or" option ("bachelor's + 5 years, or master's + 3 years, or a PhD") becomes its own path;
+  // the score uses the path that fits you best. Years in the company's own story ("over 125 years of experience serving clients") are skipped.
+  var NUMW = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
+  var YRS_RX = /(?<![\w.$])(\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten)\s*\+?\s*(?:(?:-|–|to)\s*\d{1,2}\s*)?\+?\s*(?:years?|yrs?)\b(?!\s+(?:old|ago))/gi;
+  var BRAG_RX = /\b(we have|we've|has over|for over|over \d+ years|serving|history|founded|since \d{4}|in business)\b/i;
+  function yearHits(s) {
+    var out = [], m; YRS_RX.lastIndex = 0;
+    if (BRAG_RX.test(s)) return out;
+    while ((m = YRS_RX.exec(s))) { var w = m[1].toLowerCase(); out.push({ n: NUMW[w] || +w, i: m.index }); }
+    return out;
+  }
+  function jdQuals(text) {
+    var q = { paths: [], years: null, prefYears: null };
+    jdSections(text).forEach(function (g) {
+      if (g.mode !== "req" && g.mode !== "pref") return;
+      var degs = degreeHits(g.s), yrs = yearHits(g.s);
+      if (!degs.length && !/experien|\bexp\b|work|industry|professional/i.test(g.s)) yrs = [];
+      if (g.mode === "pref") { yrs.forEach(function (y) { q.prefYears = Math.max(q.prefYears || 0, y.n); }); return; }
+      if (!degs.length) { yrs.forEach(function (y) { q.years = Math.max(q.years || 0, y.n); }); return; }
+      var items = degs.concat(yrs).sort(function (a, b) { return a.i - b.i; });
+      if (!yrs.length) { degs.forEach(function (d) { q.paths.push({ deg: d.lvl, years: null }); }); return; }
+      if (!items[0].deg) {           // "5+ years with a bachelor's, or 3+ with a master's"
+        var last = null; items.forEach(function (it) { if (it.deg) q.paths.push({ deg: it.lvl, years: last }); else last = it.n; });
+      } else {                       // "a bachelor's plus 5 years, or a master's plus 3 years, or a PhD"
+        var pending = [];
+        items.forEach(function (it) {
+          if (it.deg) pending.push(it.lvl);
+          else { pending.forEach(function (l) { q.paths.push({ deg: l, years: it.n }); }); pending = []; }
+        });
+        pending.forEach(function (l) { q.paths.push({ deg: l, years: 0 }); });
+      }
+    });
+    return q;
   }
 
   // ---------- Qualification score (TF-IDF text similarity + skills + experience + education) ----------
@@ -1301,7 +1422,7 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
   var model = { v: -1 };
   function corpus() {
     if (model.v === version) return model;
-    var docs = jobs.filter(function (o) { return o.description; }).map(function (o) { return tf(tokens(o.description)); });
+    var docs = jobs.filter(function (o) { return o.description; }).map(function (o) { return tf(tokens(coreText(o.description))); });
     var resumeTF = tf(tokens(resumeDoc()));
     docs.push(resumeTF);
     var df = {}, N = docs.length;
@@ -1324,43 +1445,68 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     var c = corpus(), key = o.id + "|" + o.description.length + "|" + o.description.slice(0, 40);
     if (c.cache[key]) return c.cache[key];
     var mine = mySkillSet(), sk = jdSkills(o.description);
-    var has = function (s) { return !!mine[s.toLowerCase()]; };
-    var r = { haveReq: sk.req.filter(has), missReq: sk.req.filter(function (s) { return !has(s); }), havePref: sk.pref.filter(has), missPref: sk.pref.filter(function (s) { return !has(s); }) };
+    var has = function (s) { return sk.groups[s] ? sk.groups[s].some(function (m) { return !!mine[m.toLowerCase()]; }) : !!mine[s.toLowerCase()]; };
+    var miss = function (s) { return !has(s); };
+    var r = { haveReq: sk.req.filter(has), missReq: sk.req.filter(miss), havePref: sk.pref.filter(has), missPref: sk.pref.filter(miss),
+      haveDuty: sk.duty.filter(has), missDuty: sk.duty.filter(miss), groups: sk.groups };
 
-    var jv = weigh(tf(tokens(o.description)), c.idf), cos = cosine(c.resume, jv);
+    var jv = weigh(tf(tokens(coreText(o.description))), c.idf), cos = cosine(c.resume, jv);
     var simPart = clamp((cos - 0.04) / 0.26, 0, 1);
     var coTok = tf(tokens([o.company, o.location, o.arrangement, "hybrid remote onsite site", SKILLS.join(" ")].join(" ")));
     r.keywords = Object.keys(jv).filter(function (t) { return !c.resumeTF[t] && !coTok[t] && t.length > 3; })
       .sort(function (a, b) { return jv[b] - jv[a]; }).slice(0, 8).map(function (t) { return display[t] || t; });
 
-    var skillW = sk.req.length + 0.5 * sk.pref.length;
-    var skillPart = skillW ? (r.haveReq.length + 0.5 * r.havePref.length) / skillW : null;
+    // Required skills count fully, preferred half, and skills only named in the role description a quarter.
+    var W_REQ = 1, W_PREF = 0.5, W_DUTY = 0.25;
+    var skillW = W_REQ * sk.req.length + W_PREF * sk.pref.length + W_DUTY * sk.duty.length;
+    var skillPart = skillW ? (W_REQ * r.haveReq.length + W_PREF * r.havePref.length + W_DUTY * r.haveDuty.length) / skillW : null;
 
-    var need = jdYears(o.description), have = me.years === "" || me.years == null ? null : +me.years;
-    var expPart = need == null ? 1 : have == null ? 0.5 : clamp(have / need, 0, 1);
-    var needDeg = degreeLevel(o.description, true), haveDeg = +me.degree || 0;
-    var eduPart = !needDeg ? 1 : haveDeg >= needDeg ? 1 : haveDeg === needDeg - 1 ? 0.5 : 0;
+    // Degree + years: score every path the posting allows and keep the one that fits best.
+    var q = jdQuals(o.description), have = me.years === "" || me.years == null ? null : +me.years, haveDeg = +me.degree || 0;
+    var paths = q.paths.length ? q.paths : [{ deg: 0, years: null }];
+    // Only consider options whose degree you have, when there are any; otherwise every option.
+    var mine = paths.filter(function (p) { return haveDeg >= p.deg; });
+    if (mine.length) paths = mine;
+    var best = null;
+    paths.forEach(function (p) {
+      var need = p.years == null ? q.years : p.years;
+      var reqPart = !need ? 1 : have == null ? 0.5 : clamp(have / need, 0, 1);
+      var prefPart = !q.prefYears ? 1 : have == null ? 0.5 : clamp(have / q.prefYears, 0, 1);
+      var expPart = 0.8 * reqPart + 0.2 * prefPart;   // preferred years count a fifth as much as required ones
+      var eduPart = !p.deg ? 1 : haveDeg >= p.deg ? 1 : haveDeg === p.deg - 1 ? 0.5 : 0;
+      var pts = 15 * expPart + 10 * eduPart;
+      if (!best || pts > best.pts + 1e-9 || (Math.abs(pts - best.pts) < 1e-9 && (need || 0) < (best.need || 0))) best = { pts: pts, need: need, deg: p.deg, expPart: expPart, eduPart: eduPart };
+    });
+    var need = best.need, multi = q.paths.length > 1;
+    var nOpts = q.paths.filter(function (p, i) { return q.paths.findIndex(function (x) { return x.deg === p.deg && x.years === p.years; }) === i; }).length;
+    var pathName = multi ? (best.deg ? degreeName(best.deg) : "no degree") + (need ? " plus " + need + "+ years" : "") : "";
+    var expDetail = !need && !q.prefYears ? (multi ? "The option that fits you best (" + pathName + ") doesn't need years of experience." : "The posting doesn't ask for a number of years.")
+      : (need ? (multi ? "Of the " + nOpts + " options in the posting, the closest for you is " + pathName + ". " : "Asks for " + need + "+ years. ") : "No years required. ") +
+        (q.prefYears && q.prefYears !== need ? "Prefers " + q.prefYears + "+ years. " : "") + (have == null ? "Add your years on My resume." : "You have about " + have + ".");
+    var eduDetail = !best.deg ? (q.paths.some(function (p) { return p.deg; }) ? "One option in the posting doesn't need a degree." : "The posting doesn't name a degree.")
+      : "Asks for " + degreeName(best.deg) + (multi ? " (on the option closest to you)" : "") + ". You have " + (haveDeg ? degreeName(haveDeg) : "none listed") + ".";
 
+    var count = function (h, all, name) { return all ? h + " of " + all + " " + name : ""; };
     var parts = [];
     if (skillPart != null) parts.push({ label: "Skills they ask for", w: 45, part: skillPart,
-      detail: "You have " + r.haveReq.length + " of " + sk.req.length + " required" + (sk.pref.length ? " and " + r.havePref.length + " of " + sk.pref.length + " preferred" : "") + " skills." });
+      detail: "You have " + [count(r.haveReq.length, sk.req.length, "required"), count(r.havePref.length, sk.pref.length, "preferred"), count(r.haveDuty.length, sk.duty.length, "other skills the role mentions")]
+        .filter(Boolean).join(", ") + (sk.duty.length ? "" : " skills") + "." });
     var wordW = skillPart == null ? 75 : 30;
     parts.push({ label: "Wording match", w: wordW, part: simPart,
       detail: "How much of the posting's language your resume already uses. Using their words (truthfully) raises this." });
-    parts.push({ label: "Years of experience", w: 15, part: expPart,
-      detail: need == null ? "The posting doesn't ask for a number of years." : have == null ? "Asks for " + need + "+ years. Add your years on My resume." : "Asks for " + need + "+ years. You have about " + have + "." });
-    parts.push({ label: "Education", w: 10, part: eduPart,
-      detail: !needDeg ? "The posting doesn't name a degree." : "Asks for " + degreeName(needDeg) + ". You have " + (haveDeg ? degreeName(haveDeg) : "none listed") + "." });
+    parts.push({ label: "Years of experience", w: 15, part: best.expPart, detail: expDetail });
+    parts.push({ label: "Education", w: 10, part: best.eduPart, detail: eduDetail });
     var total = 0; parts.forEach(function (p) { p.pts = Math.round(p.w * p.part); total += p.w * p.part; });
     r.parts = parts; r.cos = cos;
-    // "How to raise your score": the few changes worth the most points.
-    var boosts = [];
+    // "How to raise your score": the few changes worth the most points. For "A, B, or C" the button adds the first one.
+    var boosts = [], first = function (k) { return sk.groups[k] ? sk.groups[k][0] : k; };
     if (skillW) {
-      r.missReq.forEach(function (k) { boosts.push({ gain: 45 / skillW, text: "Add " + k + " to your resume, if you have it", skill: k }); });
-      r.missPref.forEach(function (k) { boosts.push({ gain: 22.5 / skillW, text: "Add " + k + " (a preferred skill), if you have it", skill: k }); });
+      r.missReq.forEach(function (k) { boosts.push({ gain: 45 * W_REQ / skillW, text: "Add " + k + " to your resume, if you have it", skill: first(k) }); });
+      r.missPref.forEach(function (k) { boosts.push({ gain: 45 * W_PREF / skillW, text: "Add " + k + " (a preferred skill), if you have it", skill: first(k) }); });
+      r.missDuty.forEach(function (k) { boosts.push({ gain: 45 * W_DUTY / skillW, text: "Add " + k + " (the role uses it), if you have it", skill: first(k) }); });
     }
     if (simPart < 0.9 && r.keywords.length) boosts.push({ gain: wordW * (1 - simPart) * 0.5, text: "Use the posting's words in your bullets: " + r.keywords.slice(0, 3).join(", "), go: "#job/" + o.id + "/tailor", btn: "Tailor" });
-    if (need != null && have == null) boosts.push({ gain: 7.5, text: "Add your years of experience", go: "#resume", btn: "Add years" });
+    if ((need || q.prefYears) && have == null) boosts.push({ gain: 7.5, text: "Add your years of experience", go: "#resume", btn: "Add years" });
     r.boosts = boosts.filter(function (b) { return b.gain >= 1; }).sort(function (a, b) { return b.gain - a.gain; }).slice(0, 3)
       .map(function (b) { b.gain = Math.round(b.gain); return b; });
     r.score = clamp(Math.round(total), 1, 100);
@@ -1960,6 +2106,7 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     var chips = function (arr, cls) { return '<div class="chips">' + arr.map(function (s) { return '<span class="chip ' + cls + '">' + esc(s) + "</span>"; }).join("") + "</div>"; };
     if (r.haveReq.length + r.missReq.length) h += '<div class="section-label">Required skills</div>' + chips(r.haveReq, "") + (r.missReq.length ? chips(r.missReq, "miss") : "");
     if (r.havePref.length + r.missPref.length) h += '<div class="section-label">Preferred skills</div>' + chips(r.havePref, "") + (r.missPref.length ? chips(r.missPref, "miss") : "");
+    if (r.haveDuty.length + r.missDuty.length) h += '<div class="section-label">Also used in the role</div>' + chips(r.haveDuty, "") + (r.missDuty.length ? chips(r.missDuty, "miss") : "");
     if (r.keywords.length) h += '<div class="section-label">Words in the posting your resume doesn\'t use</div>' + chips(r.keywords, "plain");
     h += '<p class="note">Green = on your resume. Yellow = missing. Computed in your browser. Wording match uses TF-IDF text similarity, a machine-learning technique (similarity ' + r.cos.toFixed(2) + '); the rest are rules. It estimates fit; it doesn\'t predict hiring decisions.</p></section>';
     return h;
