@@ -1451,7 +1451,8 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
       haveDuty: sk.duty.filter(has), missDuty: sk.duty.filter(miss), groups: sk.groups };
 
     var jv = weigh(tf(tokens(coreText(o.description))), c.idf), cos = cosine(c.resume, jv);
-    var simPart = clamp((cos - 0.04) / 0.26, 0, 1);
+    // A resume and a posting rarely share more than ~20% of their weighted wording, even for a strong fit, so 0.20 earns full points.
+    var simPart = clamp((cos - 0.02) / 0.18, 0, 1);
     var coTok = tf(tokens([o.company, o.location, o.arrangement, "hybrid remote onsite site", SKILLS.join(" ")].join(" ")));
     r.keywords = Object.keys(jv).filter(function (t) { return !c.resumeTF[t] && !coTok[t] && t.length > 3; })
       .sort(function (a, b) { return jv[b] - jv[a]; }).slice(0, 8).map(function (t) { return display[t] || t; });
@@ -1488,10 +1489,10 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
 
     var count = function (h, all, name) { return all ? h + " of " + all + " " + name : ""; };
     var parts = [];
-    if (skillPart != null) parts.push({ label: "Skills they ask for", w: 45, part: skillPart,
+    if (skillPart != null) parts.push({ label: "Skills they ask for", w: 55, part: skillPart,
       detail: "You have " + [count(r.haveReq.length, sk.req.length, "required"), count(r.havePref.length, sk.pref.length, "preferred"), count(r.haveDuty.length, sk.duty.length, "other skills the role mentions")]
         .filter(Boolean).join(", ") + (sk.duty.length ? "" : " skills") + "." });
-    var wordW = skillPart == null ? 75 : 30;
+    var wordW = skillPart == null ? 75 : 20;
     parts.push({ label: "Wording match", w: wordW, part: simPart,
       detail: "How much of the posting's language your resume already uses. Using their words (truthfully) raises this." });
     parts.push({ label: "Years of experience", w: 15, part: best.expPart, detail: expDetail });
@@ -1501,9 +1502,9 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     // "How to raise your score": the few changes worth the most points. For "A, B, or C" the button adds the first one.
     var boosts = [], first = function (k) { return sk.groups[k] ? sk.groups[k][0] : k; };
     if (skillW) {
-      r.missReq.forEach(function (k) { boosts.push({ gain: 45 * W_REQ / skillW, text: "Add " + k + " to your resume, if you have it", skill: first(k) }); });
-      r.missPref.forEach(function (k) { boosts.push({ gain: 45 * W_PREF / skillW, text: "Add " + k + " (a preferred skill), if you have it", skill: first(k) }); });
-      r.missDuty.forEach(function (k) { boosts.push({ gain: 45 * W_DUTY / skillW, text: "Add " + k + " (the role uses it), if you have it", skill: first(k) }); });
+      r.missReq.forEach(function (k) { boosts.push({ gain: 55 * W_REQ / skillW, text: "Add " + k + " to your resume, if you have it", skill: first(k) }); });
+      r.missPref.forEach(function (k) { boosts.push({ gain: 55 * W_PREF / skillW, text: "Add " + k + " (a preferred skill), if you have it", skill: first(k) }); });
+      r.missDuty.forEach(function (k) { boosts.push({ gain: 55 * W_DUTY / skillW, text: "Add " + k + " (the role uses it), if you have it", skill: first(k) }); });
     }
     if (simPart < 0.9 && r.keywords.length) boosts.push({ gain: wordW * (1 - simPart) * 0.5, text: "Use the posting's words in your bullets: " + r.keywords.slice(0, 3).join(", "), go: "#job/" + o.id + "/tailor", btn: "Tailor" });
     if ((need || q.prefYears) && have == null) boosts.push({ gain: 7.5, text: "Add your years of experience", go: "#resume", btn: "Add years" });
