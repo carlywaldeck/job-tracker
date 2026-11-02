@@ -1308,15 +1308,19 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
         seg = seg.replace(/^[\s*•·\-–]+/, "").trim(); if (seg) segs.push({ s: seg });
       });
     });
-    var isHead = function (g) { return g.s.length < 60 && !skillHits(g.s).length && !/\d/.test(g.s); };
+    var isHead = function (g) { return g.s.length < 60 && !skillHits(g.s).length && !/\d/.test(g.s) && !/\.$/.test(g.s); };
+    var kind = function (t) { return OTHER_HEAD.test(t) ? "other" : PREF_RX.test(t) ? "pref" : REQ_HEAD.test(t) ? "req" : DUTY_HEAD.test(t) ? "duty" : null; };
     var hasQualHead = segs.some(function (g) { return isHead(g) && (PREF_RX.test(g.s) || REQ_HEAD.test(g.s)) && !OTHER_HEAD.test(g.s); });
     var mode = hasQualHead ? "duty" : "req";
     var out = [];
     segs.forEach(function (g) {
       if (isHead(g)) {
-        var m = OTHER_HEAD.test(g.s) ? "other" : PREF_RX.test(g.s) ? "pref" : REQ_HEAD.test(g.s) ? "req" : DUTY_HEAD.test(g.s) ? "duty" : null;
+        var m = kind(g.s);
         if (m) { mode = m; return; }
       }
+      // An inline label ("Requirements: SQL, Python") sets the section for this sentence and the ones after it.
+      var lab = g.s.match(/^([A-Za-z][^:]{2,40}):\s*\S/), lm = lab && kind(lab[1]);
+      if (lm) mode = lm;
       var here = mode === "other" || OTHER_LINE.test(g.s) ? "other" : PREF_RX.test(g.s) ? "pref" : /\b(required|requirements|must)\b/i.test(g.s) ? "req"
         : /^(you will|you'?ll (?!have|bring|need)|in this role|responsibilities)/i.test(g.s) ? "duty" : mode;
       out.push({ s: g.s, mode: here });
@@ -1332,20 +1336,28 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     jdSections(text).forEach(function (g) {
       if (g.mode === "other") return;
       var s = g.s;
-      if (degreeHits(s).length) s = s.replace(/\([^)]*\)/g, " ").replace(/\bin\s+[^()]{0,120}?\b(?:or\s+(?:a\s+)?(?:related|similar|equivalent)|related\s+field|quantitative\s+field|field|discipline)\b/gi, " ");
-      var hits = skillHits(s), run = [], isOr = false;
+      if (degreeHits(s).length) s = s.replace(/\([^)]*\)/g, " ").replace(/\bin\s+[^()]{0,120}?\b(?:or\s+(?:a\s+)?(?:related|similar|equivalent)|related\s+field|quantitative\s+field|field|discipline)\b/gi, " ")
+        .replace(/\b(?:degree|[Bb]achelor['’]?s?|[Mm]aster['’]?s?|Ph\.?\s?D|MBA|B\.?S\.?|M\.?S\.?)(?:\s+degree)?\s+in\s+(?:a\s+)?[A-Z][\w&]*(?:(?:\s*,\s*|\s+or\s+|\s+and\s+|\s+)[A-Z][\w&]*)*/g, " ");
+      // A run is skills joined only by commas, "or" or "/". "A, B, or C" and "e.g. A, B, C" are one either-or group;
+      // otherwise only the skills joined by "or" or "/" group together ("SQL, Python or R, statistics" -> SQL | Python or R | statistics).
+      var hits = skillHits(s), run = [], seps = [];
+      var addGroup = function (names) {
+        if (names.length < 2) { bins[g.mode][names[0]] = 1; return; }
+        var label = names.length === 2 ? names.join(" or ") : names.slice(0, -1).join(", ") + ", or " + names[names.length - 1];
+        groups[label] = names; bins[g.mode][label] = 1;
+      };
       var flush = function () {
-        if (run.length > 1 && isOr) {
-          var names = run.map(function (h) { return h.s; });
-          var label = names.length === 2 ? names.join(" or ") : names.slice(0, -1).join(", ") + ", or " + names[names.length - 1];
-          groups[label] = names; bins[g.mode][label] = 1;
-        } else run.forEach(function (h) { bins[g.mode][h.s] = 1; });
-        run = []; isOr = false;
+        if (!run.length) return;
+        var names = run.map(function (h) { return h.s; }), isOr = seps.map(function (x) { return /\bor\b|\//i.test(x); });
+        var example = /\b(e\.g\.?|such as|for example|like)[\s,:(]*$/i.test(s.slice(Math.max(0, run[0].i - 14), run[0].i));
+        if (example || (isOr.length && isOr[isOr.length - 1] && isOr.slice(0, -1).every(function (o, k) { return !o && /^\s*,\s*$/.test(seps[k]); }))) addGroup(names);
+        else { var cur = [names[0]]; isOr.forEach(function (o, k) { if (o) cur.push(names[k + 1]); else { addGroup(cur); cur = [names[k + 1]]; } }); addGroup(cur); }
+        run = []; seps = [];
       };
       hits.forEach(function (h) {
         if (run.length) {
           var sep = s.slice(run[run.length - 1].end, h.i);
-          if (/^[\s,\/]*(?:(?:,\s*)?(?:or|and\/or)\s+)?$/i.test(sep)) { if (/\bor\b|\//i.test(sep) || /\b(e\.g\.?|such as|for example|like)[\s,:(]*$/i.test(s.slice(Math.max(0, run[0].i - 14), run[0].i))) isOr = true; }
+          if (/^[\s,\/]*(?:(?:,\s*)?(?:or|and\/or)\s+)?$/i.test(sep)) seps.push(sep);
           else flush();
         }
         run.push(h);
