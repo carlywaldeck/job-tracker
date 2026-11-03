@@ -1389,6 +1389,15 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     while ((m = YRS_RX.exec(s))) { var w = m[1].toLowerCase(); out.push({ n: NUMW[w] || +w, i: m.index }); }
     return out;
   }
+  // Years a job title implies when the posting doesn't say.
+  function titleYears(title) {
+    var t = String(title || "").toLowerCase();
+    if (/\b(intern|internship|new grad|graduate program|entry[- ]level|junior|jr\.?|fellow|apprentice|trainee)\b/.test(t)) return null;
+    if (/\b(director|head of|vp|vice president|chief)\b/.test(t)) return 10;
+    if (/\b(principal|staff|distinguished)\b/.test(t)) return 8;
+    if (/\b(senior|sr\.?|lead)\b/.test(t) || /\bmanager\b/.test(t) && !/\bproduct manager\b/.test(t) || /\b(iii|3)\s*$/.test(t)) return 5;
+    return null;
+  }
   function jdQuals(text) {
     var q = { paths: [], years: null, prefYears: null };
     jdSections(text).forEach(function (g) {
@@ -1472,10 +1481,13 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     // Required skills count fully, preferred half, and skills only named in the role description a quarter.
     var W_REQ = 1, W_PREF = 0.5, W_DUTY = 0.25;
     var skillW = W_REQ * sk.req.length + W_PREF * sk.pref.length + W_DUTY * sk.duty.length;
-    var skillPart = skillW ? (W_REQ * r.haveReq.length + W_PREF * r.havePref.length + W_DUTY * r.haveDuty.length) / skillW : null;
+    // With only one or two recognizable skills a perfect match says little, so the share is pulled toward 30%: K pseudo-skills at 30% credit, since skills I can't recognize
+    // (Canva, Kubernetes, Go) are usually outside an analytics resume.
+    var K = 0.75, haveW = W_REQ * r.haveReq.length + W_PREF * r.havePref.length + W_DUTY * r.haveDuty.length;
+    var skillPart = (haveW + 0.3 * K) / (skillW + K);
 
     // Degree + years: score every path the posting allows and keep the one that fits best.
-    var q = jdQuals(o.description), have = me.years === "" || me.years == null ? null : +me.years, haveDeg = +me.degree || 0;
+    var q = jdQuals(o.description), seniority = titleYears(o.title), have = me.years === "" || me.years == null ? null : +me.years, haveDeg = +me.degree || 0;
     var paths = q.paths.length ? q.paths : [{ deg: 0, years: null }];
     // Only consider options whose degree you have, when there are any; otherwise every option.
     var mine = paths.filter(function (p) { return haveDeg >= p.deg; });
@@ -1483,43 +1495,53 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     var best = null;
     paths.forEach(function (p) {
       var need = p.years == null ? q.years : p.years;
-      var reqPart = !need ? 1 : have == null ? 0.5 : clamp(have / need, 0, 1);
-      var prefPart = !q.prefYears ? 1 : have == null ? 0.5 : clamp(have / q.prefYears, 0, 1);
+      if (need == null && !q.prefYears) need = seniority;   // "Senior", "Staff", "Director"... imply years even when the posting doesn't list them
+      // Falling short matters more the bigger the gap: 2 of 3 years keeps 54%, 3 of 8 keeps 23%.
+      var reqPart = !need ? 1 : have == null ? 0.5 : Math.pow(clamp(have / need, 0, 1), 1.5);
+      var prefPart = !q.prefYears ? 1 : have == null ? 0.5 : Math.pow(clamp(have / q.prefYears, 0, 1), 1.5);
       var expPart = 0.8 * reqPart + 0.2 * prefPart;   // preferred years count a fifth as much as required ones
       var eduPart = !p.deg ? 1 : haveDeg >= p.deg ? 1 : haveDeg === p.deg - 1 ? 0.5 : 0;
-      var pts = 15 * expPart + 10 * eduPart;
+      var pts = 0.6 * expPart + 0.4 * eduPart;
       if (!best || pts > best.pts + 1e-9 || (Math.abs(pts - best.pts) < 1e-9 && (need || 0) < (best.need || 0))) best = { pts: pts, need: need, deg: p.deg, expPart: expPart, eduPart: eduPart };
     });
     var need = best.need, multi = q.paths.length > 1;
     var nOpts = q.paths.filter(function (p, i) { return q.paths.findIndex(function (x) { return x.deg === p.deg && x.years === p.years; }) === i; }).length;
     var pathName = multi ? (best.deg ? degreeName(best.deg) : "no degree") + (need ? " plus " + need + "+ years" : "") : "";
-    var expDetail = !need && !q.prefYears ? (multi ? "The option that fits you best (" + pathName + ") doesn't need years of experience." : "The posting doesn't ask for a number of years.")
+    var fromTitle = need != null && need === seniority && q.years == null && !q.paths.some(function (p) { return p.years != null; });
+    var expDetail = fromTitle ? "The posting doesn't list years, but \"" + (o.title || "") + "\" usually means about " + need + "+. " + (have == null ? "Add your years on My resume." : "You have about " + have + ".")
+      : !need && !q.prefYears ? (multi ? "The option that fits you best (" + pathName + ") doesn't need years of experience." : "The posting doesn't ask for a number of years.")
       : (need ? (multi ? "Of the " + nOpts + " options in the posting, the closest for you is " + pathName + ". " : "Asks for " + need + "+ years. ") : "No years required. ") +
         (q.prefYears && q.prefYears !== need ? "Prefers " + q.prefYears + "+ years. " : "") + (have == null ? "Add your years on My resume." : "You have about " + have + ".");
     var eduDetail = !best.deg ? (q.paths.some(function (p) { return p.deg; }) ? "One option in the posting doesn't need a degree." : "The posting doesn't name a degree.")
       : "Asks for " + degreeName(best.deg) + (multi ? " (on the option closest to you)" : "") + ". You have " + (haveDeg ? degreeName(haveDeg) : "none listed") + ".";
 
     var count = function (h, all, name) { return all ? h + " of " + all + " " + name : ""; };
+    // Score = how well you fit the work (skills 70 + wording 30) × whether you meet the bar (years and degree).
+    // Missing the bar can cut the fit by up to 60%, so a role you can't get yet ranks low even when the work suits you.
+    var fit = 70 * skillPart + 30 * simPart;
+    var elig = best.pts, factor = 0.4 + 0.6 * elig, total = fit * factor, cut = fit - total;
+    var cutYears = elig < 1 ? cut * 0.6 * (1 - best.expPart) / (1 - elig) : 0, cutEdu = cut - cutYears;
     var parts = [];
-    if (skillPart != null) parts.push({ label: "Skills they ask for", w: 55, part: skillPart,
-      detail: "You have " + [count(r.haveReq.length, sk.req.length, "required"), count(r.havePref.length, sk.pref.length, "preferred"), count(r.haveDuty.length, sk.duty.length, "other skills the role mentions")]
-        .filter(Boolean).join(", ") + (sk.duty.length ? "" : " skills") + "." });
-    var wordW = skillPart == null ? 75 : 20;
-    parts.push({ label: "Wording match", w: wordW, part: simPart,
+    parts.push({ label: "Skills they ask for", w: 70, part: skillPart,
+      detail: sk.req.length + sk.pref.length + sk.duty.length ? "You have " + [count(r.haveReq.length, sk.req.length, "required"), count(r.havePref.length, sk.pref.length, "preferred"), count(r.haveDuty.length, sk.duty.length, "other skills the role mentions")]
+        .filter(Boolean).join(", ") + (sk.duty.length ? "" : " skills") + "." + (skillW < 3 ? " Few skills are named, so this counts for less." : "")
+        : "The posting doesn't name skills I recognize, which usually means the work is outside your resume." });
+    parts.push({ label: "Wording match", w: 30, part: simPart,
       detail: "How much of the posting's language your resume already uses. Using their words (truthfully) raises this." });
-    parts.push({ label: "Years of experience", w: 15, part: best.expPart, detail: expDetail });
-    parts.push({ label: "Education", w: 10, part: best.eduPart, detail: eduDetail });
-    var total = 0; parts.forEach(function (p) { p.pts = Math.round(p.w * p.part); total += p.w * p.part; });
+    parts.push({ label: "Years of experience", part: best.expPart, show: cutYears >= 0.5 ? "−" + Math.round(cutYears) + " pts" : "Meets it", detail: expDetail });
+    parts.push({ label: "Education", part: best.eduPart, show: cutEdu >= 0.5 ? "−" + Math.round(cutEdu) + " pts" : "Meets it", detail: eduDetail });
+    parts.forEach(function (p) { if (p.w) p.pts = Math.round(p.w * p.part * factor); });
     r.parts = parts; r.cos = cos;
     // "How to raise your score": the few changes worth the most points. For "A, B, or C" the button adds the first one.
     var boosts = [], first = function (k) { return sk.groups[k] ? sk.groups[k][0] : k; };
     if (skillW) {
-      r.missReq.forEach(function (k) { boosts.push({ gain: 55 * W_REQ / skillW, text: "Add " + k + " to your resume, if you have it", skill: first(k) }); });
-      r.missPref.forEach(function (k) { boosts.push({ gain: 55 * W_PREF / skillW, text: "Add " + k + " (a preferred skill), if you have it", skill: first(k) }); });
-      r.missDuty.forEach(function (k) { boosts.push({ gain: 55 * W_DUTY / skillW, text: "Add " + k + " (the role uses it), if you have it", skill: first(k) }); });
+      var per = 70 * factor / (skillW + K);
+      r.missReq.forEach(function (k) { boosts.push({ gain: per * W_REQ, text: "Add " + k + " to your resume, if you have it", skill: first(k) }); });
+      r.missPref.forEach(function (k) { boosts.push({ gain: per * W_PREF, text: "Add " + k + " (a preferred skill), if you have it", skill: first(k) }); });
+      r.missDuty.forEach(function (k) { boosts.push({ gain: per * W_DUTY, text: "Add " + k + " (the role uses it), if you have it", skill: first(k) }); });
     }
-    if (simPart < 0.9 && r.keywords.length) boosts.push({ gain: wordW * (1 - simPart) * 0.5, text: "Use the posting's words in your bullets: " + r.keywords.slice(0, 3).join(", "), go: "#job/" + o.id + "/tailor", btn: "Tailor" });
-    if ((need || q.prefYears) && have == null) boosts.push({ gain: 7.5, text: "Add your years of experience", go: "#resume", btn: "Add years" });
+    if (simPart < 0.9 && r.keywords.length) boosts.push({ gain: 30 * factor * (1 - simPart) * 0.5, text: "Use the posting's words in your bullets: " + r.keywords.slice(0, 3).join(", "), go: "#job/" + o.id + "/tailor", btn: "Tailor" });
+    if ((need || q.prefYears) && have == null) boosts.push({ gain: cutYears / 2, text: "Add your years of experience", go: "#resume", btn: "Add years" });
     r.boosts = boosts.filter(function (b) { return b.gain >= 1; }).sort(function (a, b) { return b.gain - a.gain; }).slice(0, 3)
       .map(function (b) { b.gain = Math.round(b.gain); return b; });
     r.score = clamp(Math.round(total), 1, 100);
@@ -2114,7 +2136,7 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
       return '<div class="boost"><span class="gain">+' + b.gain + "</span><span>" + esc(b.text) + "</span>" + act + "</div>";
     }).join("") + "</div></section>";
     h += '<section class="card"><h3>How this score is calculated</h3><div class="rows">' + r.parts.map(function (p) {
-      return '<div class="row"><div class="row-h">' + esc(p.label) + "<span>" + p.pts + " / " + p.w + ' pts</span></div><div class="bar"><i style="width:' + Math.round(100 * p.part) + '%"></i></div><p>' + esc(p.detail) + "</p></div>";
+      return '<div class="row"><div class="row-h">' + esc(p.label) + "<span>" + (p.show || p.pts + " / " + p.w + " pts") + '</span></div><div class="bar"><i style="width:' + Math.round(100 * p.part) + '%"></i></div><p>' + esc(p.detail) + "</p></div>";
     }).join("") + "</div>";
     var chips = function (arr, cls) { return '<div class="chips">' + arr.map(function (s) { return '<span class="chip ' + cls + '">' + esc(s) + "</span>"; }).join("") + "</div>"; };
     if (r.haveReq.length + r.missReq.length) h += '<div class="section-label">Required skills</div>' + chips(r.haveReq, "") + (r.missReq.length ? chips(r.missReq, "miss") : "");
