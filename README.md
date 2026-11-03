@@ -25,13 +25,14 @@ A job and internship tracker for MSBA students. Upload your resume, save jobs, a
 
 ## Our improvements
 
-1. **Qualification score from 1 to 100 (machine learning, in the browser).** The score is **fit × eligibility**:
-   - **Fit (out of 100):**
-     - Skills the posting asks for (70 pts): required skills count fully, preferred skills half, and skills only named in the role description a quarter. "Python, Scala, or R" counts as one skill you meet with any of them, and common other names count (ML, PySpark, PostgreSQL, sklearn). When a posting names only one or two skills, the share is pulled toward 30%, so one lucky match can't give full marks.
-     - Wording match (30 pts): TF-IDF cosine similarity between your resume and the posting, ignoring pay, benefits and legal text. Half is absolute (full at 0.25 similarity) and, once you have 5+ saved postings, half is relative to your other saved jobs, so similar-looking jobs still spread out by how close each is to your background.
-   - **Eligibility (years 60%, degree 40%)** scales fit from 40% to 100%. Falling short on years costs more the bigger the gap (2 of 3 years keeps 54% of that part, 3 of 8 keeps 23%). Preferred years count a fifth as much as required ones, and the company's own history ("over 125 years of experience") is ignored. When a posting lists no years, titles like Senior/Lead (5), Staff/Principal (8) or Director (10) stand in.
+1. **Qualification score from 1 to 100 (machine learning, in the browser).** The score is **fit × eligibility**, put on a calibrated scale:
+   - **Fit:**
+     - Skills (70 pts): required skills count fully, preferred skills half, and skills only named in the role description a quarter. Either-or lists ("Python, Scala, or R", "e.g. R, SAS", "(Hadoop, Spark)") count as one skill you meet with any of them, and common other names count (ML, PySpark, PostgreSQL, sklearn). When a posting names few skills, the score leans on a prior set by the wording match: a generic analyst posting that reads like your resume starts near 60%, and a marketing posting starts near 20%.
+     - Wording match (30 pts): TF-IDF cosine similarity between your resume and the posting, ignoring pay, benefits and legal text. It is 65% absolute (full credit at 0.20) and, with 5+ saved postings, 35% relative to your other saved jobs.
+   - **Eligibility** (years 60%, degree 40%) scales fit from 30% to 100%. Year shortfalls count as (have/need)², and preferred years count a fifth as much. Titles imply years: Senior/Lead/Manager 5, Staff/Principal 8, Director 10. They apply in full when the posting lists none, and 80% of them acts as a floor otherwise.
+   - **Calibration:** score = 100 × (raw/100)^0.9. The constants (`CAL` in `index.html`) were fitted to a real resume and 20 postings, each with a hand-rated fit, which gave an RMSE of 6.6 points. The target scale is about 85–95 for a great fit, 65–80 for a solid one, and under 50 for a poor one.
 
-   When a posting offers options ("a bachelor's plus 5 years, or a master's plus 3 years, or a PhD"), the years and education points use the option that fits you best.
+   When a posting offers options ("a bachelor's plus 5 years, or a master's plus 3 years, or a PhD"), eligibility uses the option that fits you best.
 
    **Copy jobs for scoring help** (footer) copies each job's title, company, posting text and score plus your years, degree and skills, so someone tuning the score can test it on real postings. Notes and contacts are left out.
 
