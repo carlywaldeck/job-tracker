@@ -988,22 +988,22 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     "Looker", "Alteryx", "dbt", "Git", "JavaScript", "Java", "machine learning", "deep learning", "NLP", "statistics", "regression", "forecasting", "A/B testing",
     "data visualization", "ETL", "data modeling", "dashboards", "pandas", "scikit-learn", "TensorFlow", "Salesforce", "Google Analytics", "SAP", "project management",
     "Agile", "financial modeling", "market research", "supply chain", "optimization", "Jira", "PowerPoint", "stakeholder management", "storytelling", "time series", "Databricks", "Qualtrics",
-    "PyTorch", "Scala", "Airflow", "Hadoop", "experimentation", "causal inference"];
+    "PyTorch", "Scala", "Airflow", "Hadoop", "experimentation", "causal inference", "econometrics", "Power Platform"];
   // Other ways postings and resumes write the same skill.
   var ALIASES = {
     "SQL": ["PostgreSQL", "Postgres", "MySQL", "T-SQL", "SQL Server", "Spark SQL", "SparkSQL"], "Power BI": ["PowerBI", "Power-BI"], "Spark": ["PySpark", "Apache Spark"],
     "machine learning": ["ML", "machine-learning"], "deep learning": ["neural network", "neural networks"], "NLP": ["natural language processing"],
     "statistics": ["statistical"], "regression": ["regressions"], "forecasting": ["forecast", "forecasts"], "A/B testing": ["A/B test", "A/B tests", "AB testing", "split testing"],
     "data visualization": ["visualization", "visualizations", "visualisation", "data viz"], "dashboards": ["dashboard", "dashboarding"], "ETL": ["ELT", "data pipeline", "data pipelines"],
-    "data modeling": ["data modelling"], "scikit-learn": ["sklearn", "scikit learn"], "AWS": ["Amazon Web Services"], "GCP": ["Google Cloud"], "Git": ["GitHub", "GitLab"],
-    "time series": ["time-series"], "optimization": ["optimisation"], "experimentation": ["experiments", "experiment design", "experimental design"], "causal inference": ["causal"]
+    "data modeling": ["data modelling"], "scikit-learn": ["sklearn", "scikit learn"], "AWS": ["Amazon Web Services"], "Azure": ["Microsoft Azure"], "GCP": ["Google Cloud"], "Git": ["GitHub", "GitLab"],
+    "time series": ["time-series"], "optimization": ["optimisation"], "experimentation": ["experiments", "experiment design", "experimental design"], "causal inference": ["causal"], "Power Platform": ["Power Apps", "Power Automate", "PowerApps"]
   };
-  var CASED = { "R": 1, "ML": 1 }; // short names that only count in capitals
+  var CASED = { "R": 1, "ML": 1, "Excel": 1 }; // names that only count in capitals ("you excel at" is not Excel)
   var esc_rx = function (n) { return n.replace(/[.*+?^${}()|[\]\\\/]/g, "\\$&"); };
   var SKILL_RX = SKILLS.map(function (s) {
     if (s === "R") return { s: s, rx: [/(^|[\s,(/;])R(?=[\s,)/;.]|$)/g] };
     var names = [s].concat(ALIASES[s] || []), loose = names.filter(function (n) { return !CASED[n]; }), cased = names.filter(function (n) { return CASED[n]; });
-    var rx = [new RegExp("(^|[^a-z0-9])(?:" + loose.map(esc_rx).join("|") + ")(?=[^a-z0-9]|$)", "gi")];
+    var rx = loose.length ? [new RegExp("(^|[^a-z0-9])(?:" + loose.map(esc_rx).join("|") + ")(?=[^a-z0-9]|$)", "gi")] : [];
     if (cased.length) rx.push(new RegExp("(^|[^A-Za-z0-9])(?:" + cased.map(esc_rx).join("|") + ")(?=[^A-Za-z0-9]|$)", "g"));
     return { s: s, rx: rx };
   });
@@ -1350,8 +1350,13 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
       var flush = function () {
         if (!run.length) return;
         var names = run.map(function (h) { return h.s; }), isOr = seps.map(function (x) { return /\bor\b|\//i.test(x); });
-        var example = /\b(e\.g\.?|such as|for example|like)[\s,:(]*$/i.test(s.slice(Math.max(0, run[0].i - 14), run[0].i));
-        if (example || (isOr.length && isOr[isOr.length - 1] && isOr.slice(0, -1).every(function (o, k) { return !o && /^\s*,\s*$/.test(seps[k]); }))) addGroup(names);
+        // Examples: "e.g. R, SAS", "such as Java, Scala", or a list in parentheses ("big-data platforms (Hadoop, Spark)").
+        var example = /\b(e\.g\.?|such as|for example|like)[\s,:(]*$/i.test(s.slice(Math.max(0, run[0].i - 14), run[0].i)) ||
+          (run.length > 1 && /\(\s*$/.test(s.slice(0, run[0].i)) && /^\s*\)/.test(s.slice(run[run.length - 1].end)));
+        var commas = function (list) { return list.every(function (x) { return /^\s*,\s*$/.test(x); }); };
+        // "R, Python, SAS, SQL, Java, C or C++": a comma list that ends in "or <something>" is either-or too.
+        var tailOr = run.length > 1 && commas(seps) && /^\s*,?\s*or\s+\S/i.test(s.slice(run[run.length - 1].end));
+        if (example || tailOr || (isOr.length && isOr[isOr.length - 1] && commas(seps.slice(0, -1)))) addGroup(names);
         else { var cur = [names[0]]; isOr.forEach(function (o, k) { if (o) cur.push(names[k + 1]); else { addGroup(cur); cur = [names[k + 1]]; } }); addGroup(cur); }
         run = []; seps = [];
       };
@@ -1464,6 +1469,8 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
   }
   function resumeDoc() { return me ? (me.resumeText || "") + " " + splitList(me.skills).join(" ") : ""; }
 
+  // Scoring constants, fitted on a resume and 18 real postings against a hand-rated fit for each (see README).
+  var CAL = { simLo: 0.02, simHi: 0.2, rel: 0.35, K: 0.75, p0: 0.2, p1: 5, wSkill: 70, gamma: 0.9, yrExp: 2, floor: 0.3 };
   function scoreJob(o) {
     if (!me || !o || !o.description || !resumeDoc().trim()) return null;
     var c = corpus(), key = o.id + "|" + o.description.length + "|" + o.description.slice(0, 40);
@@ -1478,9 +1485,9 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     // A resume and a posting rarely share more than ~20% of their weighted wording, even for a strong fit, so 0.20 earns full points.
     // Wording: half absolute (full credit at 0.25 similarity), half relative to your other saved jobs, so jobs that all
     // look "pretty good" still spread out by how close each one is to your background. Needs 5+ saved postings.
-    var absSim = clamp((cos - 0.03) / 0.22, 0, 1), others = c.sims.length - 1, pct = null;
+    var absSim = clamp((cos - CAL.simLo) / (CAL.simHi - CAL.simLo), 0, 1), others = c.sims.length - 1, pct = null;
     if (others >= 4) pct = clamp((c.sims.filter(function (x) { return x < cos - 1e-9; }).length + 0.5 * (c.sims.filter(function (x) { return Math.abs(x - cos) <= 1e-9; }).length - 1)) / others, 0, 1);
-    var simPart = pct == null ? absSim : 0.5 * absSim + 0.5 * pct;
+    var simPart = pct == null ? absSim : (1 - CAL.rel) * absSim + CAL.rel * pct;
     var coTok = tf(tokens([o.company, o.location, o.arrangement, "hybrid remote onsite site", SKILLS.join(" ")].join(" ")));
     r.keywords = Object.keys(jv).filter(function (t) { return !c.resumeTF[t] && !coTok[t] && t.length > 3; })
       .sort(function (a, b) { return jv[b] - jv[a]; }).slice(0, 8).map(function (t) { return display[t] || t; });
@@ -1490,8 +1497,11 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     var skillW = W_REQ * sk.req.length + W_PREF * sk.pref.length + W_DUTY * sk.duty.length;
     // With only one or two recognizable skills a perfect match says little, so the share is pulled toward 30%: K pseudo-skills at 30% credit, since skills I can't recognize
     // (Canva, Kubernetes, Go) are usually outside an analytics resume.
-    var K = 0.75, haveW = W_REQ * r.haveReq.length + W_PREF * r.havePref.length + W_DUTY * r.haveDuty.length;
-    var skillPart = (haveW + 0.3 * K) / (skillW + K);
+    var K = CAL.K, haveW = W_REQ * r.haveReq.length + W_PREF * r.havePref.length + W_DUTY * r.haveDuty.length;
+    // The prior follows the wording: a posting that names few skills but reads like your resume (a generic analyst role)
+    // starts near 60%; one that names few skills and reads nothing like it (marketing, nursing) starts near 20%.
+    var prior = clamp(CAL.p0 + CAL.p1 * cos, 0.2, 0.75);
+    var skillPart = (haveW + prior * K) / (skillW + K);
 
     // Degree + years: score every path the posting allows and keep the one that fits best.
     var q = jdQuals(o.description), seniority = titleYears(o.title), have = me.years === "" || me.years == null ? null : +me.years, haveDeg = +me.degree || 0;
@@ -1501,21 +1511,24 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     if (mine.length) paths = mine;
     var best = null;
     paths.forEach(function (p) {
-      var need = p.years == null ? q.years : p.years;
-      if (need == null && !q.prefYears) need = seniority;   // "Senior", "Staff", "Director"... imply years even when the posting doesn't list them
+      var need = p.years == null ? q.years : p.years, stated = need;
+      // "Senior", "Staff", "Manager", "Director"... imply years: in full when the posting lists none, and as a floor
+      // (80% of it) when the posting's own number is lower than the title suggests.
+      if (need == null && !q.prefYears) need = seniority;
+      else if (seniority && need != null) need = Math.max(need, Math.round(seniority * 0.8));
       // Falling short matters more the bigger the gap: 2 of 3 years keeps 54%, 3 of 8 keeps 23%.
-      var reqPart = !need ? 1 : have == null ? 0.5 : Math.pow(clamp(have / need, 0, 1), 1.5);
-      var prefPart = !q.prefYears ? 1 : have == null ? 0.5 : Math.pow(clamp(have / q.prefYears, 0, 1), 1.5);
+      var reqPart = !need ? 1 : have == null ? 0.5 : Math.pow(clamp(have / need, 0, 1), CAL.yrExp);
+      var prefPart = !q.prefYears ? 1 : have == null ? 0.5 : Math.pow(clamp(have / q.prefYears, 0, 1), CAL.yrExp);
       var expPart = 0.8 * reqPart + 0.2 * prefPart;   // preferred years count a fifth as much as required ones
       var eduPart = !p.deg ? 1 : haveDeg >= p.deg ? 1 : haveDeg === p.deg - 1 ? 0.5 : 0;
       var pts = 0.6 * expPart + 0.4 * eduPart;
-      if (!best || pts > best.pts + 1e-9 || (Math.abs(pts - best.pts) < 1e-9 && (need || 0) < (best.need || 0))) best = { pts: pts, need: need, deg: p.deg, expPart: expPart, eduPart: eduPart };
+      if (!best || pts > best.pts + 1e-9 || (Math.abs(pts - best.pts) < 1e-9 && (need || 0) < (best.need || 0))) best = { pts: pts, need: need, stated: stated, deg: p.deg, expPart: expPart, eduPart: eduPart };
     });
     var need = best.need, multi = q.paths.length > 1;
     var nOpts = q.paths.filter(function (p, i) { return q.paths.findIndex(function (x) { return x.deg === p.deg && x.years === p.years; }) === i; }).length;
     var pathName = multi ? (best.deg ? degreeName(best.deg) : "no degree") + (need ? " plus " + need + "+ years" : "") : "";
-    var fromTitle = need != null && need === seniority && q.years == null && !q.paths.some(function (p) { return p.years != null; });
-    var expDetail = fromTitle ? "The posting doesn't list years, but \"" + (o.title || "") + "\" usually means about " + need + "+. " + (have == null ? "Add your years on My resume." : "You have about " + have + ".")
+    var fromTitle = need != null && need !== best.stated;
+    var expDetail = fromTitle ? (best.stated == null ? "The posting doesn't list years, but " : "The posting asks for " + best.stated + "+ years, but ") + "a \"" + (o.title || "") + "\" role usually means about " + need + "+. " + (have == null ? "Add your years on My resume." : "You have about " + have + ".")
       : !need && !q.prefYears ? (multi ? "The option that fits you best (" + pathName + ") doesn't need years of experience." : "The posting doesn't ask for a number of years.")
       : (need ? (multi ? "Of the " + nOpts + " options in the posting, the closest for you is " + pathName + ". " : "Asks for " + need + "+ years. ") : "No years required. ") +
         (q.prefYears && q.prefYears !== need ? "Prefers " + q.prefYears + "+ years. " : "") + (have == null ? "Add your years on My resume." : "You have about " + have + ".");
@@ -1525,33 +1538,39 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     var count = function (h, all, name) { return all ? h + " of " + all + " " + name : ""; };
     // Score = how well you fit the work (skills 70 + wording 30) × whether you meet the bar (years and degree).
     // Missing the bar can cut the fit by up to 60%, so a role you can't get yet ranks low even when the work suits you.
-    var fit = 70 * skillPart + 30 * simPart;
-    var elig = best.pts, factor = 0.4 + 0.6 * elig, total = fit * factor, cut = fit - total;
-    var cutYears = elig < 1 ? cut * 0.6 * (1 - best.expPart) / (1 - elig) : 0, cutEdu = cut - cutYears;
+    var fit = CAL.wSkill * skillPart + (100 - CAL.wSkill) * simPart;
+    var elig = best.pts, factor = CAL.floor + (1 - CAL.floor) * elig, total = fit * factor;
+    // Calibration curve: raw fit runs low on real postings (even a great fit rarely maxes every part), so a gentle curve
+    // maps it onto the scale people expect: about 85-95 for a great fit, 65-80 solid, under 50 poor.
+    var curve = function (x) { return 100 * Math.pow(clamp(x, 0, 100) / 100, CAL.gamma); };
+    var shown = curve(fit), final = curve(total), lost = shown - final, scale = fit ? shown / fit : 1;
+    var cutYears = elig < 1 ? lost * 0.6 * (1 - best.expPart) / (1 - elig) : 0, cutEdu = lost - cutYears;
     var parts = [];
-    parts.push({ label: "Skills they ask for", w: 70, part: skillPart,
+    parts.push({ label: "Skills they ask for", w: CAL.wSkill, part: skillPart,
       detail: sk.req.length + sk.pref.length + sk.duty.length ? "You have " + [count(r.haveReq.length, sk.req.length, "required"), count(r.havePref.length, sk.pref.length, "preferred"), count(r.haveDuty.length, sk.duty.length, "other skills the role mentions")]
         .filter(Boolean).join(", ") + (sk.duty.length ? "" : " skills") + "." + (skillW < 3 ? " Few skills are named, so this counts for less." : "")
-        : "The posting doesn't name skills I recognize, which usually means the work is outside your resume." });
-    parts.push({ label: "Wording match", w: 30, part: simPart,
+        : "The posting doesn't name skills I recognize, so this leans on how closely its wording matches your resume." });
+    parts.push({ label: "Wording match", w: 100 - CAL.wSkill, part: simPart,
       detail: "How much of the posting's language your resume already uses" + (pct == null ? "." : ", compared with your other saved jobs (closer than " + Math.round(pct * 100) + "% of them).") + " Using their words (truthfully) raises this." });
     parts.push({ label: "Years of experience", part: best.expPart, show: cutYears >= 0.5 ? "−" + Math.round(cutYears) + " pts" : "Meets it", detail: expDetail });
     parts.push({ label: "Education", part: best.eduPart, show: cutEdu >= 0.5 ? "−" + Math.round(cutEdu) + " pts" : "Meets it", detail: eduDetail });
-    parts.forEach(function (p) { if (p.w) p.pts = Math.round(p.w * p.part * factor); });
+    // Skill and wording points are shown on the curved scale, so they add up to the score before any deductions.
+    parts.forEach(function (p) { if (p.w) p.pts = Math.min(p.w, Math.round(p.w * p.part * scale)); });
     r.parts = parts; r.cos = cos;
     // "How to raise your score": the few changes worth the most points. For "A, B, or C" the button adds the first one.
     var boosts = [], first = function (k) { return sk.groups[k] ? sk.groups[k][0] : k; };
     if (skillW) {
-      var per = 70 * factor / (skillW + K);
+      var per = CAL.wSkill * (fit ? final / fit : factor) / (skillW + K);
       r.missReq.forEach(function (k) { boosts.push({ gain: per * W_REQ, text: "Add " + k + " to your resume, if you have it", skill: first(k) }); });
       r.missPref.forEach(function (k) { boosts.push({ gain: per * W_PREF, text: "Add " + k + " (a preferred skill), if you have it", skill: first(k) }); });
       r.missDuty.forEach(function (k) { boosts.push({ gain: per * W_DUTY, text: "Add " + k + " (the role uses it), if you have it", skill: first(k) }); });
     }
-    if (simPart < 0.9 && r.keywords.length) boosts.push({ gain: 30 * factor * (1 - simPart) * 0.5, text: "Use the posting's words in your bullets: " + r.keywords.slice(0, 3).join(", "), go: "#job/" + o.id + "/tailor", btn: "Tailor" });
+    if (simPart < 0.9 && r.keywords.length) boosts.push({ gain: (100 - CAL.wSkill) * (fit ? final / fit : factor) * (1 - simPart) * 0.5, text: "Use the posting's words in your bullets: " + r.keywords.slice(0, 3).join(", "), go: "#job/" + o.id + "/tailor", btn: "Tailor" });
     if ((need || q.prefYears) && have == null) boosts.push({ gain: cutYears / 2, text: "Add your years of experience", go: "#resume", btn: "Add years" });
     r.boosts = boosts.filter(function (b) { return b.gain >= 1; }).sort(function (a, b) { return b.gain - a.gain; }).slice(0, 3)
       .map(function (b) { b.gain = Math.round(b.gain); return b; });
-    r.score = clamp(Math.round(total), 1, 100);
+    r.raw = total;
+    r.score = clamp(Math.round(final), 1, 100);
     c.cache[key] = r;
     return r;
   }
