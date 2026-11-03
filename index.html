@@ -752,6 +752,7 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
   <span id="storeNote">Saved privately in this browser on this device. Your resume is never uploaded, except to Anthropic when you choose AI tailoring.</span>
   <span id="syncState" aria-live="polite"></span>
   <button type="button" class="link" id="btnSamples" hidden></button>
+  <button type="button" class="link" id="btnScoreData" hidden title="Copies each job's title, company, posting text and score, plus your years, degree and skills. No notes or contacts.">Copy jobs for scoring help</button>
 </div></footer>
 </div>
 
@@ -1450,6 +1451,8 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     docs.forEach(function (d) { Object.keys(d).forEach(function (t) { df[t] = (df[t] || 0) + 1; }); });
     var idf = function (t) { return Math.log((1 + N) / (1 + (df[t] || 0))) + 1; };
     model = { v: version, idf: idf, resume: weigh(resumeTF, idf), resumeTF: resumeTF, cache: {} };
+    // Each saved job's wording similarity, so a job can be compared with the rest of your list.
+    model.sims = docs.slice(0, -1).map(function (d) { return cosine(model.resume, weigh(d, idf)); });
     return model;
   }
   function weigh(counts, idf) { var v = {}; Object.keys(counts).forEach(function (t) { v[t] = (1 + Math.log(counts[t])) * idf(t); }); return v; }
@@ -1473,7 +1476,11 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
 
     var jv = weigh(tf(tokens(coreText(o.description))), c.idf), cos = cosine(c.resume, jv);
     // A resume and a posting rarely share more than ~20% of their weighted wording, even for a strong fit, so 0.20 earns full points.
-    var simPart = clamp((cos - 0.02) / 0.18, 0, 1);
+    // Wording: half absolute (full credit at 0.25 similarity), half relative to your other saved jobs, so jobs that all
+    // look "pretty good" still spread out by how close each one is to your background. Needs 5+ saved postings.
+    var absSim = clamp((cos - 0.03) / 0.22, 0, 1), others = c.sims.length - 1, pct = null;
+    if (others >= 4) pct = clamp((c.sims.filter(function (x) { return x < cos - 1e-9; }).length + 0.5 * (c.sims.filter(function (x) { return Math.abs(x - cos) <= 1e-9; }).length - 1)) / others, 0, 1);
+    var simPart = pct == null ? absSim : 0.5 * absSim + 0.5 * pct;
     var coTok = tf(tokens([o.company, o.location, o.arrangement, "hybrid remote onsite site", SKILLS.join(" ")].join(" ")));
     r.keywords = Object.keys(jv).filter(function (t) { return !c.resumeTF[t] && !coTok[t] && t.length > 3; })
       .sort(function (a, b) { return jv[b] - jv[a]; }).slice(0, 8).map(function (t) { return display[t] || t; });
@@ -1527,7 +1534,7 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
         .filter(Boolean).join(", ") + (sk.duty.length ? "" : " skills") + "." + (skillW < 3 ? " Few skills are named, so this counts for less." : "")
         : "The posting doesn't name skills I recognize, which usually means the work is outside your resume." });
     parts.push({ label: "Wording match", w: 30, part: simPart,
-      detail: "How much of the posting's language your resume already uses. Using their words (truthfully) raises this." });
+      detail: "How much of the posting's language your resume already uses" + (pct == null ? "." : ", compared with your other saved jobs (closer than " + Math.round(pct * 100) + "% of them).") + " Using their words (truthfully) raises this." });
     parts.push({ label: "Years of experience", part: best.expPart, show: cutYears >= 0.5 ? "−" + Math.round(cutYears) + " pts" : "Meets it", detail: expDetail });
     parts.push({ label: "Education", part: best.eduPart, show: cutEdu >= 0.5 ? "−" + Math.round(cutEdu) + " pts" : "Meets it", detail: eduDetail });
     parts.forEach(function (p) { if (p.w) p.pts = Math.round(p.w * p.part * factor); });
@@ -1765,12 +1772,13 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     if (!session) { $("#btnAcct").textContent = "Sign in"; $("#btnAcct").title = "Sign in to save your jobs to an account"; $("#btnAcct").setAttribute("aria-label", "Sign in"); }
     if (session) { $("#btnAcct").textContent = session.user.email.charAt(0).toUpperCase(); $("#btnAcct").title = "Signed in as " + session.user.email; $("#btnAcct").setAttribute("aria-label", "Account: " + session.user.email); }
     $("#storeNote").textContent = session ? "Saved to your NextMove account. Your Claude API key stays only in this browser." : gate ? "Each account's jobs and resume are private to that account." : "Saved privately in this browser on this device. Your resume is never uploaded, except to Anthropic when you choose AI tailoring.";
-    if (gate) { $("#btnAdd").hidden = true; $("#tabs").hidden = true; $("#btnSamples").hidden = true; setSync(""); $("#view").innerHTML = renderAuth(); wireAuth($("#view")); return; }
+    if (gate) { $("#btnAdd").hidden = true; $("#tabs").hidden = true; $("#btnSamples").hidden = true; $("#btnScoreData").hidden = true; setSync(""); $("#view").innerHTML = renderAuth(); wireAuth($("#view")); return; }
     var welcome = !me && !jobs.length && !ui.skippedWelcome, r = route();
     if (r.tab === "job" && !byId(r.id)) r = { tab: "dashboard" }; // a deleted or unknown job
     $("#btnAdd").hidden = welcome; $("#tabs").hidden = welcome;
     $all("#tabs a").forEach(function (a) { var on = a.dataset.tab === r.tab || (r.tab === "job" && a.dataset.tab === "jobs"); if (on) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
     var hasSamples = jobs.some(function (o) { return o.sample; });
+    $("#btnScoreData").hidden = welcome || !jobs.some(function (o) { return o.description; });
     var bs = $("#btnSamples"); bs.hidden = welcome; bs.textContent = hasSamples ? "Remove sample jobs" : "Try sample jobs";
     var view = $("#view");
     if (welcome) { view.innerHTML = renderWelcome(); wireUpload(view, true); return; }
@@ -2448,6 +2456,13 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     if (t.closest("[data-act='guest']")) { setGuest(true); ui.skippedWelcome = false; load(); render(); applyPendingAdd(); return; }
     if (t.closest("#btnAdd") || t.closest("[data-act='add']")) { openJob(null); return; }
     if (t.closest("#btnSamples") || t.closest("[data-act='samples']")) { toggleSamples(); return; }
+    if (t.closest("#btnScoreData")) {
+      // For sharing with whoever is tuning the score: postings and scores only, no notes, contacts or dates.
+      var data = JSON.stringify({ profile: me ? { years: me.years, degree: me.degree, skills: me.skills } : null,
+        jobs: jobs.filter(function (o) { return o.description; }).map(function (o) { var r = scoreJob(o); return { title: o.title || "", company: o.company || "", score: r ? r.score : null, description: o.description }; }) });
+      (navigator.clipboard ? navigator.clipboard.writeText(data) : Promise.reject()).then(function () { toast("Copied " + jobs.length + " jobs. Paste them into your message."); }, function () { toast("Couldn't copy. Try again in Chrome or Safari."); });
+      return;
+    }
     if (t.closest("[data-act='sample-all']")) { me = sampleProfile(); saveMe(); jobs = samples().concat(jobs); save(); go("#dashboard"); toast("Loaded a sample resume and 6 sample jobs."); return; }
     if (t.closest("[data-act='skip']")) { ui.skippedWelcome = true; go("#dashboard"); return; }
     var mo = t.closest("[data-more]"); if (mo) { ui.more[mo.dataset.more] = !ui.more[mo.dataset.more]; if (route().tab === "jobs") renderJobList(); else render(); return; }
