@@ -28,10 +28,12 @@ A job and internship tracker for MSBA students. Upload your resume, save jobs, a
 1. **Qualification score from 1 to 100 (machine learning, in the browser).** The score is **fit × eligibility**:
    - **Fit (out of 100):**
      - Skills the posting asks for (70 pts): required skills count fully, preferred skills half, and skills only named in the role description a quarter. "Python, Scala, or R" counts as one skill you meet with any of them, and common other names count (ML, PySpark, PostgreSQL, sklearn). When a posting names only one or two skills, the share is pulled toward 30%, so one lucky match can't give full marks.
-     - Wording match (30 pts): TF-IDF cosine similarity between your resume and the posting, ignoring pay, benefits and legal text. A similarity of 0.20 or more earns full points.
+     - Wording match (30 pts): TF-IDF cosine similarity between your resume and the posting, ignoring pay, benefits and legal text. Half is absolute (full at 0.25 similarity) and, once you have 5+ saved postings, half is relative to your other saved jobs, so similar-looking jobs still spread out by how close each is to your background.
    - **Eligibility (years 60%, degree 40%)** scales fit from 40% to 100%. Falling short on years costs more the bigger the gap (2 of 3 years keeps 54% of that part, 3 of 8 keeps 23%). Preferred years count a fifth as much as required ones, and the company's own history ("over 125 years of experience") is ignored. When a posting lists no years, titles like Senior/Lead (5), Staff/Principal (8) or Director (10) stand in.
 
    When a posting offers options ("a bachelor's plus 5 years, or a master's plus 3 years, or a PhD"), the years and education points use the option that fits you best.
+
+   **Copy jobs for scoring help** (footer) copies each job's title, company, posting text and score plus your years, degree and skills, so someone tuning the score can test it on real postings. Notes and contacts are left out.
 
    **How to raise your score** lists the three changes worth the most points (for example "+9: add A/B testing to your resume, if you have it"). Clicking "I have this" adds the skill and re-scores instantly. The app labels the score as an estimate of fit, not a hiring prediction.
 2. **Resume tailoring with AI (Claude).** On any job, "Tailor my resume" sends your resume and the posting to Claude, which returns a tailored summary, rewritten bullets, skills to add if true, and gaps to address. It is told never to invent experience. It needs the user's own Anthropic API key, stored only in their browser. Without a key, users still get **Quick suggestions** clearly labeled *rule-based, not AI*.
