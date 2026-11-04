@@ -988,7 +988,9 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     "Looker", "Alteryx", "dbt", "Git", "JavaScript", "Java", "machine learning", "deep learning", "NLP", "statistics", "regression", "forecasting", "A/B testing",
     "data visualization", "ETL", "data modeling", "dashboards", "pandas", "scikit-learn", "TensorFlow", "Salesforce", "Google Analytics", "SAP", "project management",
     "Agile", "financial modeling", "market research", "supply chain", "optimization", "Jira", "PowerPoint", "stakeholder management", "storytelling", "time series", "Databricks", "Qualtrics",
-    "PyTorch", "Scala", "Airflow", "Hadoop", "experimentation", "causal inference", "econometrics", "Power Platform"];
+    "PyTorch", "Scala", "Airflow", "Hadoop", "experimentation", "causal inference", "econometrics", "Power Platform",
+    // Field knowledge that sports and research postings ask for in words rather than tools.
+    "baseball", "sports analytics", "scouting", "player development", "research", "data analysis", "presenting"];
   // Other ways postings and resumes write the same skill.
   var ALIASES = {
     "SQL": ["PostgreSQL", "Postgres", "MySQL", "T-SQL", "SQL Server", "Spark SQL", "SparkSQL"], "Power BI": ["PowerBI", "Power-BI"], "Spark": ["PySpark", "Apache Spark"],
@@ -996,7 +998,10 @@ footer .wrap { min-height: 92px; padding-block: 26px; border-top: 1px solid var(
     "statistics": ["statistical"], "regression": ["regressions"], "forecasting": ["forecast", "forecasts"], "A/B testing": ["A/B test", "A/B tests", "AB testing", "split testing"],
     "data visualization": ["visualization", "visualizations", "visualisation", "data viz"], "dashboards": ["dashboard", "dashboarding"], "ETL": ["ELT", "data pipeline", "data pipelines"],
     "data modeling": ["data modelling"], "scikit-learn": ["sklearn", "scikit learn"], "AWS": ["Amazon Web Services"], "Azure": ["Microsoft Azure"], "GCP": ["Google Cloud"], "Git": ["GitHub", "GitLab"],
-    "time series": ["time-series"], "optimization": ["optimisation"], "experimentation": ["experiments", "experiment design", "experimental design"], "causal inference": ["causal"], "Power Platform": ["Power Apps", "Power Automate", "PowerApps"]
+    "time series": ["time-series"], "optimization": ["optimisation"], "experimentation": ["experiments", "experiment design", "experimental design"], "causal inference": ["causal"], "Power Platform": ["Power Apps", "Power Automate", "PowerApps"],
+    "baseball": ["MLB", "softball"], "sports analytics": ["sports data", "sports science", "player tracking", "TrackMan", "Statcast"], "scouting": ["scouts", "scouting reports"],
+    "player development": ["player evaluation", "player acquisition", "player projections"], "research": ["researcher", "research projects", "empirical research", "quantitative research"],
+    "data analysis": ["data analytics", "analyzing data", "analyze data", "analysis of data"], "presenting": ["presentations", "presentation", "present findings", "presented"]
   };
   var CASED = { "R": 1, "ML": 1, "Excel": 1 }; // names that only count in capitals ("you excel at" is not Excel)
   var esc_rx = function (n) { return n.replace(/[.*+?^${}()|[\]\\\/]/g, "\\$&"); };
